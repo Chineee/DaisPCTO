@@ -2,7 +2,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Integer, String, Column, Date 
 from flask_login import UserMixin
 from flask_bcrypt import Bcrypt
-from datetime import datetime
+from sqlalchemy import *
+from sqlalchemy.orm import *
 
 engine = create_engine("postgresql://postgres:123456@localhost/testone2", echo=True)
 

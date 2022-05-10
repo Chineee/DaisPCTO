@@ -9,7 +9,10 @@ from sqlalchemy import *
 engine = create_engine("postgresql://postgres:123456@localhost/testone2", echo=True) #!teniamo true echo solo per puro debugging, quando avremo finito settiamolo a false per anche velocizzare l'app dato che le print sono molto pesanti
 Session = sessionmaker(bind=engine)
 
-def add_database(obj_add):
+def create_user(obj_formed):
+    pass
+
+def add_database(user):
     try:
         pass 
     except:
