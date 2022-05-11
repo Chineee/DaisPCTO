@@ -1,17 +1,22 @@
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Integer, String, Column, Date 
-from flask_login import UserMixin
-from flask_bcrypt import Bcrypt
-from sqlalchemy import *
-from sqlalchemy.orm import *
-from flask import Flask
+# from sqlalchemy.ext.declarative import *
+# from sqlalchemy import Integer, String, Column, Date 
+# from flask_login import UserMixin
+# from flask_bcrypt import Bcrypt
+# from sqlalchemy import *
+# from sqlalchemy.orm import *
+# from flask import Flask
 
-engine = create_engine("postgresql://postgres:123456@localhost/testone2", echo=True)
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, PrimaryKeyConstraint, String, Integer, Date, ForeignKey, CheckConstraint, Time, Boolean, or_, and_, UniqueConstraint
+from sqlalchemy.orm import relationship
+from flask_login import UserMixin
+
+# engine = create_engine("postgresql://postgres:123456@localhost/testone8", echo=True)
 
 Base = declarative_base()
 
-Session = sessionmaker(bind=engine)
-session = Session()
+# Session = sessionmaker(bind=engine)
+# session = Session()
 
 class User(Base, UserMixin):
     __tablename__ = "Users"
@@ -52,13 +57,14 @@ class School(Base):
     __tablename__ = "Schools"
 
     SchoolID = Column(Integer, primary_key=True)
+    SchoolName = Column(String)
     Address = Column(String)
     City = Column(String)
-    OfficesContacts = Column(String)
+    OfficesContacts = Column(String, unique=True)
 
     Students = relationship("Student", backref = "School")
 
-    __table_args__ = ()
+    __table_args__ = (UniqueConstraint(SchoolName, Address, City),)
 
 class Role(Base):
     __tablename__ = "roles"
@@ -217,38 +223,51 @@ class Material(Base):
 
     __table_args__ = ()
 
-
-app = Flask(__name__)
-bcrypt = Bcrypt(app)
-
-
-session.add_all([Classroom(Seats = 150, Floor = 0, Name = 'Aula 1', Building = 'Zeta'),
-                 Classroom(Seats = 150, Floor = 0, Name = 'Aula 2', Building = "Zeta"),
-                 Classroom(Seats = 48, Floor = 1, Name = 'Aula A', Building = 'Zeta'),
-                 Classroom(Seats = 35, Floor = 0, Name ='Laboratorio 5', Building ='Zeta'),
-                 Classroom(Seats = 35, Floor = 0, Name ='Laboratorio 6', Building ='Zeta'),
-                 Classroom(Seats = 70, Floor = 1, Name = 'Aula B', Building = 'Zeta'),
-                 Classroom(Seats = 90, Floor = 1, Name = 'Aula C', Building = 'Zeta'),
-                 Classroom(Seats = 50, Floor = 1, Name = 'Aula D', Building = 'Zeta')])
-
-session.add_all([User(Name='Elisa', Surname='Rizzo', Gender='Female', Address='Francia', email='elisa@gmail.com', Password=bcrypt.generate_password_hash("mylittlepony").decode("utf-8"), PhoneNumber= "347 666 66 56"),
-                 User(Name='Marco', Surname='Chinellato', Gender='Male', Address='Lussemburgo', email='skele@gmail.com', Password=bcrypt.generate_password_hash("ediolognomomongoloide").decode("utf-8"), PhoneNumber="23409478904"),
-                 User(Name='Davide', Surname='Tonetto', Gender='Male', Address='Seattle', email="tonetto@libero.com", Password=bcrypt.generate_password_hash("solo30elode"), PhoneNumber="666666"),
-                 User(Name='Chiara', Surname='Pareschi', Gender='Female', Address='Vaticano', email='pareschirulez@gmail.com', Password=bcrypt.generate_password_hash("abbassogliuominibianchieterocisprivilegiati").decode("utf-8"), PhoneNumber="6666969666"),
-                 User(Name='Dumitru', Surname='Zotea', Gender='Other', Address='Terra della Fantasia', email='darkythedragon@gmail.com', Password=bcrypt.generate_password_hash("sonomoltostelthconimieipornofurryneltablet").decode("utf-8"), PhoneNumber='123456')])
+# Base.metadata.create_all(engine)
+# app = Flask(__name__)
+# bcrypt = Bcrypt(app)
 
 
-session.add_all([School(SchoolID = 1), School(SchoolID = 2), School(SchoolID = 3), School(SchoolID = 4), School(SchoolID = 5)])
+# session.add_all([Classroom(Seats = 150, Floor = 0, Name = 'Aula 1', Building = 'Zeta'),
+#                  Classroom(Seats = 150, Floor = 0, Name = 'Aula 2', Building = "Zeta"),
+#                  Classroom(Seats = 48, Floor = 1, Name = 'Aula A', Building = 'Zeta'),
+#                  Classroom(Seats = 35, Floor = 0, Name ='Laboratorio 5', Building ='Zeta'),
+#                  Classroom(Seats = 35, Floor = 0, Name ='Laboratorio 6', Building ='Zeta'),
+#                  Classroom(Seats = 70, Floor = 1, Name = 'Aula B', Building = 'Zeta'),
+#                  Classroom(Seats = 90, Floor = 1, Name = 'Aula C', Building = 'Zeta'),
+#                  Classroom(Seats = 50, Floor = 1, Name = 'Aula D', Building = 'Zeta')])
 
-session.add_all([Student(UserID=1, SchoolID=1, birthDate='2000-12-05', SchoolYear = 2),
-                 Student(UserID=2, SchoolID=1, birthDate=Date(2000, 12, 5), SchoolYear = 2),
-                 Student(UserID=3, SchoolID=2, birthDate=Date(2000, 12, 5), SchoolYear = 2),
-                 Student(UserID=4, SchoolID=3, birthDate=Date(2000, 12, 5), SchoolYear = 2),
-                 Student(UserID=5, SchoolID=4, birthDate=Date(2000, 12, 5), SchoolYear = 2)])
+# session.add_all([User(Name='Elisa', Surname='Rizzo', Gender='Female', Address='Francia', email='elisa@gmail.com', Password=bcrypt.generate_password_hash("mylittlepony").decode("utf-8"), PhoneNumber= "347 666 66 56"),
+#                  User(Name='Marco', Surname='Chinellato', Gender='Male', Address='Lussemburgo', email='skele@gmail.com', Password=bcrypt.generate_password_hash("ediolognomomongoloide").decode("utf-8"), PhoneNumber="23409478904"),
+#                  User(Name='Davide', Surname='Tonetto', Gender='Male', Address='Seattle', email="tonetto@libero.com", Password=bcrypt.generate_password_hash("solo30elode"), PhoneNumber="666666"),
+#                  User(Name='Chiara', Surname='Pareschi', Gender='Female', Address='Vaticano', email='pareschirulez@gmail.com', Password=bcrypt.generate_password_hash("abbassogliuominibianchieterocisprivilegiati").decode("utf-8"), PhoneNumber="6666969666"),
+#                  User(Name='Dumitru', Surname='Zotea', Gender='Other', Address='Terra della Fantasia', email='darkythedragon@gmail.com', Password=bcrypt.generate_password_hash("sonomoltostelthconimieipornofurryneltablet").decode("utf-8"), PhoneNumber='123456')])
 
-#creare dei docenti e poi basta cominciare con il progetto
 
-session.commit()
+# session.add_all([School(SchoolID = 1), School(SchoolID = 2), School(SchoolID = 3), School(SchoolID = 4), School(SchoolID = 5)])
 
-if __name__ == "__main__":
-    app.run()
+# session.add_all([Student(UserID=1, SchoolID=1, birthDate='2000-12-05', SchoolYear = 2),
+#                  Student(UserID=2, SchoolID=1, birthDate='2000-12-05', SchoolYear = 2),
+#                  Student(UserID=3, SchoolID=2, birthDate='2000-12-05', SchoolYear = 2),
+#                  Student(UserID=4, SchoolID=3, birthDate='2000-12-05', SchoolYear = 2),
+#                  Student(UserID=5, SchoolID=4, birthDate='2000-12-05', SchoolYear = 2)])
+
+# #creare dei docenti e poi basta cominciare con il progetto
+
+# session.commit()
+
+# session.add_all([User(Name="Stefano", Surname="Calzavara", Gender="Male", Address="L'isola che non c'è", Password=bcrypt.generate_password_hash("12345678").decode("utf-8"), PhoneNumber="333333333"),
+#                 User(Name="Alessandra", Surname="Raffaetà", Gender="Female", Address="L'isola che non c'è", Password=bcrypt.generate_password_hash("6543210").decode("utf-8"), PhoneNumber="111111111")])
+
+
+# session.commit()
+# session.add_all([Professor(UserID=6), Professor(UserID=7)])
+# session.commit()
+# session.add_all([Role(RoleID=1, Name='Admin'), Role(RoleID=2, Name='Student'), Role(RoleID=3, Name='Professor')])
+# session.commit()
+# session.add_all([UserRole(UserID=6, RoleID=3), UserRole(UserID=7, RoleID=3)])
+# session.commit()
+
+# if __name__ == "__main__":
+#     app.run()
+    
