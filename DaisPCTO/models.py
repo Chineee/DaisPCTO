@@ -4,6 +4,7 @@ from flask_login import UserMixin
 from flask_bcrypt import Bcrypt
 from sqlalchemy import *
 from sqlalchemy.orm import *
+from flask import Flask
 
 engine = create_engine("postgresql://postgres:123456@localhost/testone2", echo=True)
 
