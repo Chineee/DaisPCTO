@@ -7,7 +7,7 @@
 # from flask import Flask
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, PrimaryKeyConstraint, String, Integer, Date, ForeignKey, CheckConstraint, Time, Boolean, or_, and_, UniqueConstraint
+from sqlalchemy import Column, String, Integer, Date, ForeignKey, CheckConstraint, Time, Boolean, or_, and_, UniqueConstraint
 from sqlalchemy.orm import relationship
 from flask_login import UserMixin
 
@@ -35,6 +35,9 @@ class User(Base, UserMixin):
     __table_args__ = (
         CheckConstraint(or_(Gender == 'Female', Gender=='Male', Gender=='Non Binary', Gender == 'Other')),
     )
+
+    def get_id(self):
+        return self.UserID
 
 class Student(Base):
     __tablename__ = "Students"

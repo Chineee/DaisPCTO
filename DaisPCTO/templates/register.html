@@ -1,33 +1,35 @@
-{% extends "bootstrap/base.html" %}
+{% extends "page.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
-
-{% block title %}
-Register
-{% endblock %}
-
-{% block styles %}
-{{super()}}
-<link rel="stylesheet" href="{{url_for('static', filename='signin.css')}}">
-{% endblock %}
 
 {% block content %}
 
-    <form method='POST', class="form-signin"f>
-        {{form.hidden_tag()}}
-        {% for i in form %}
+<form method='POST' class="form-signin" novalidate>
+
+    {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            <ul class="flashes">
+                {% for category, message in messages %}
+                    <div class="alert-{{category}}">
+                    <li> {{ message }} </li>
+                    </div>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+    
+    
+    {{form.hidden_tag()}}
+    {% for i in form %}
+        {% if i.id != "csrf_token" %}
             {{wtf.form_field(i)}}
-        {% endfor %}    
-        <style>
-            label[for=sos] {
-                color: yellow;
-                border-color: blue;
-            }
-        </style>
+        {% endif %}
+
+    {% endfor %}   
+    <br>
+
+    <button class="btn btn-lg btn-primary btn-block" type="submit">Sign-Up</button>
+</form>
+
+{% endblock content %}
     
 
-    </form>
-    
-    
-        
-    
-{% endblock %}

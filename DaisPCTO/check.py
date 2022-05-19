@@ -7,15 +7,15 @@ def checkPasswordNumber(password):
 
 def checkPasswordCaps(password):
     isCaps = False
-    for char in password:
-        if char in ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']:
+    for c in password:
+        if c.isupper() == True:
             isCaps = True
     return isCaps
 
 def checkPasswordSpecial(password):
     isSpecial = False
     for char in password:
-        if char in ['@','#','_','-','*','$','%','&','+','£']:
+        if char in ['@','_','-','*','$','%','&','+','£']:
             isSpecial = True
     return isSpecial
 
