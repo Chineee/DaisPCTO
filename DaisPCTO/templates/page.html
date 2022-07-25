@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>DaisPCTO</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
     <link href="./static/signin.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13" crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 </head>
 <body>
       <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-3">
@@ -40,20 +42,19 @@
                       <li> <a href="/logout" class="dropdown-item">Logout</a></li>
                       <li><hr class="dropdown-divider"></li>
                       <li><a class="dropdown-item" href="/private"> Profilo </a></li>
+                      <li><a class="dropdown-item" href="/courses/mycourses"> I Miei Corsi </a></li>
                     {% endif %}
                   </ul>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link disabled">Disabled</a>
+                  {% if is_professor %}
+                        <a class="nav-link {% if request.path == '/courses/add' %} active {% endif %}" aria-current="page" href="/courses/add""> Aggiungi Corso </a>
+                  {% endif %}
                 </li>
               </ul>
               {% block searchbar %} 
 
               {% endblock %}
-              <!-- <form class="d-flex" role="search">
-                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                <button class="btn btn-outline-success" type="submit">Search</button>
-              </form> -->
             </div>
           </div>
         </nav>
@@ -63,7 +64,6 @@
             
         {% endblock %}
 
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script> 
-</body>
+      </div>
+    </body>
 </html>

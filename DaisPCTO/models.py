@@ -1,5 +1,5 @@
 # from sqlalchemy.ext.declarative import *
-# from sqlalchemy import Integer, String, Column, Date 
+# from sqlalchemy import Integer, String, Column, Date
 # from flask_login import UserMixin
 # from flask_bcrypt import Bcrypt
 # from sqlalchemy import *
@@ -7,7 +7,7 @@
 # from flask import Flask
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, String, Integer, Date, ForeignKey, CheckConstraint, Time, Boolean, or_, and_, UniqueConstraint
+from sqlalchemy import Column, String, Integer, Date, ForeignKey, CheckConstraint, Time, Boolean, or_, and_, UniqueConstraint, Text
 from sqlalchemy.orm import relationship
 from flask_login import UserMixin
 
@@ -39,6 +39,15 @@ class User(Base, UserMixin):
     def get_id(self):
         return self.UserID
 
+    
+    def hasRole(self, role):
+        for r in self.Roles:
+            if r.Name == role or r.Name == 'Admin':
+                return True
+        return False
+
+
+
 class Student(Base):
     __tablename__ = "Students"
 
@@ -46,6 +55,7 @@ class Student(Base):
     SchoolID = Column(Integer, ForeignKey("Schools.SchoolID"))
     birthDate = Column(Date)
     SchoolYear = Column(Integer)
+    HasSentFeedback = Column(Boolean)
 
     __table_args__ = ()
 
@@ -90,11 +100,23 @@ class Course(Base):
 
     CourseID = Column(String, primary_key=True)
     Name = Column(String)
-
+    Description = Column(String)
+    MaxStudents = Column(Integer)
+    MinHourCertificate = Column(Integer)
+    OpenFeedback = Column(Boolean)
+    
     Professors = relationship("Professor", secondary="ProfessorsCourses", backref="Courses")
     Students = relationship("Student", secondary="StudentsCourses", backref="Courses")
 
+
     __table_args__ = ()
+
+    def hasStudent(self, student):
+
+        for s in self.Students:
+            if s.UserID == student.UserID:
+                return True 
+        return False
 
 class Certificate(Base):
     __tablename__ = "Certificates"
@@ -184,6 +206,7 @@ class Classroom(Base):
     Seats = Column(Integer)
     Floor = Column(Integer)
     Building = Column(String)
+    Address = Column(String)
 
     __table_args__ = (
         CheckConstraint(Seats > 0),

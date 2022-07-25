@@ -1,33 +1,184 @@
 {% extends "page.html" %}
-{% import "bootstrap/wtf.html" as wtf %}
 
 {% block content %}
 
-<form method='POST' class="form-signin" novalidate>
-
+<form method='POST' novalidate>
+    
     {% with messages = get_flashed_messages(with_categories=True) %}
         {% if messages %}
-            <ul class="flashes">
-                {% for category, message in messages %}
-                    <div class="alert-{{category}}">
-                    <li> {{ message }} </li>
-                    </div>
-                {% endfor %}
-            </ul>
+            <div class="alert alert-secondary alert-dismissible fade show" role="alert">
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <div class="alert-{{category}}">
+                        <li> {{ message }} </li>
+                        </div>
+                    {% endfor %}
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         {% endif %}
     {% endwith %}
-    
-    
-    {{form.hidden_tag()}}
-    {% for i in form %}
-        {% if i.id != "csrf_token" %}
-            {{wtf.form_field(i)}}
-        {% endif %}
 
-    {% endfor %}   
-    <br>
+    {{ form.hidden_tag() }}
 
-    <button class="btn btn-lg btn-primary btn-block" type="submit">Sign-Up</button>
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            {{ form.name.label }}
+            {% if form.name.errors %}
+                {{ form.name(class="form-control is-invalid") }}
+                <div class = "invalid-feedback">
+                    {{form.name.errors[0]}}
+                </div>
+            {% else %} 
+                {{ form.name(class="form-control")}}
+            {% endif %}
+        </div>
+        <div class="col-md-4 mb-3">
+            {{ form.surname.label }}
+            {% if form.surname.errors %}
+                {{ form.surname(class="form-control is-invalid") }}
+                <div class = "invalid-feedback">
+                    {{form.surname.errors[0]}}
+                </div>
+            {% else %}
+                {{ form.surname(class="form-control") }}
+            {% endif %}
+
+        </div>
+        <div class="col-md-4 mb-3">
+            {{ form.gender.label }}
+            {% if form.gender.errors %}
+                {{ form.gender(class="form-control is-invalid") }}
+                <div class="invalid-feedback">
+                    {{ form.gender.errors[0]}}
+                </div>
+            {% else %} 
+            {{ form.gender(class="form-control")}}
+            {% endif %}
+        
+        </div>
+    </div>
+
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            {{ form.email.label }}
+            <div class="input-group mb-3">
+                <label class="input-group-text" for="email">@</label>
+                {% if form.email.errors %}
+                    {{form.email(class="form-control is-invalid", id="email")}}
+                    <div class="invalid-feedback">
+                        {{form.email.errors[0]}}
+                    </div>
+                {% else %}
+                    {{form.email(class="form-control", id="email")}}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            {{ form.repeat_email.label }}
+            <div class="input-group mb-3">
+                <label class="input-group-text" for="repeat_email">@</label>
+                {% if form.repeat_email.errors %} 
+                    {{form.repeat_email(class="form-control is-invalid", id="repeat_email")}}
+                    <div class="invalid-feedback">
+                        {{form.repeat_email.errors[0]}}
+                    </div>
+                {% else %}
+                    {{ form.repeat_email(class="form-control", id="repeat_email") }}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            {{ form.address.label }}
+            {% if form.address.errors %} 
+                {{ form.address(class="form-control is-invalid")}}
+                <div class="invalid-feedback">
+                    {{ form.address.errors[0] }}
+                </div>
+            {% else %}
+                {{form.address(class="form-control")}}
+            {% endif %}
+        </div>
+    </div>
+
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            {{ form.password.label }}
+            {% if form.password.errors %}
+                {{form.password(class="form-control is-invalid")}}
+                <div class="invalid-feedback">
+                    {{form.password.errors[0]}}
+                </div>
+            {% elif form.repeat_password.errors %}
+                {{form.password(class="form-control is-invalid")}}
+            {% else %}
+                {{form.password(class="form-control")}}
+            {% endif %}
+           
+        </div>
+
+        <div class="col-md-6 mb-3">
+            {{ form.repeat_password.label }}
+            {% if form.repeat_password.errors %}
+                {{form.repeat_password(class="form-control is-invalid")}}
+                <div class="invalid-feedback">
+                    {{form.repeat_password.errors[0]}}
+                </div>
+            {% else %}
+                {{form.repeat_password(class="form-control")}}
+            {% endif %}
+        </div>
+    </div>
+
+
+    <div class="row"> 
+        <div class="col-md-6 mb-3">
+            {{form.phone.label}}
+            {% if form.phone.errors %}
+                {{form.phone(class="form-control is-invalid")}}
+                <div class="invalid-feedback">
+                    {{form.phone.errors[0]}}
+                </div>
+            {% else %} 
+                {{form.phone(class="form-control")}}
+            {% endif %}
+        </div>
+
+
+        <div class="col-md-6 mb-3">
+            {{form.birth_date.label}}
+            {% if form.birth_date.errors %}
+                {{form.birth_date(class="form-control is-invalid")}}
+                <div class="invalid-feedback">
+                    {{form.birth_date.errors[0]}}
+                </div>
+            {% else %}
+                {{form.birth_date(class="form-control")}}
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            {{ form.school_name.label }}
+            {{form.school_name(class="form-control")}}
+        </div>
+        <div class="col-md-4 mb-3">
+            {{form.school_city.label}}
+            {{form.school_city(class="form-control")}}
+        </div>
+        <div class="col-md-4 mb-3">
+            {{form.school_year.label}}
+            {{form.school_year(class="form-control")}}
+        </div>
+    </div>
+
+      <button class="btn btn-success" type="submit">Registrati</button>
+    
 </form>
 
 {% endblock content %}

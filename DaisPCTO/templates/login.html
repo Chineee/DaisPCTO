@@ -1,35 +1,64 @@
 {% extends "page.html" %}
-{% import "bootstrap/wtf.html" as wtf %}
 
-{% block content %}
+{% block content %} 
 
-<form method='POST' class="form-signin" novalidate>
+<form method="POST" novalidate>
 
     {% with messages = get_flashed_messages(with_categories=True) %}
         {% if messages %}
-            <ul class="flashes">
-                {% for category, message in messages %}
-                    <div class="alert-{{category}}">
-                    <li> {{ message }} </li>
-                    </div>
-                {% endfor %}
-            </ul>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{messages[0][1]}}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         {% endif %}
     {% endwith %}
-    
-    
+
     {{form.hidden_tag()}}
-    {% for i in form %}
-        {% if i.id != "csrf_token" %}
-            {{wtf.form_field(i)}}
-        {% endif %}
 
-    {% endfor %}   
-    <br>
+    <div class="row">
+        <div class="col-md-12 mb-3">
+            {{ form.email.label }}
+            <div class="input-group mb-3">
+                {% if form.email.errors %}
+                    {{form.email(class="form-control is-invalid", id="email")}}
+                    <div class="invalid-feedback">
+                        {{form.email.errors[0]}}
+                    </div>
+                {% else %}
+                    {{form.email(class="form-control", id="email")}}
+                {% endif %}
+            </div>
+        </div>
+    </div>
 
-    <button class="btn btn-lg btn-primary btn-block" type="submit">Sign-Up</button>
+    <div class="row">
+        <div class="col-md-12 mb-3">
+            {{form.password.label}}
+            <div class="input-group mb-3">
+                {% if form.password.errors %} 
+                    {{form.password(class="form-control is-invalid", id="email")}}
+                    <div class="invalid-feedback">
+                        {{form.password.errors[0]}}
+                    </div>
+                {% else %} 
+                    {{form.password(class="form-control", id="password")}}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 mb-3">
+            {{form.rememebr_me(class="form-check-input", id="rememebr_me")}}
+            {{form.rememebr_me.label}}
+        </div>
+        
+    </div>
+    
+    <button class="btn btn-success" type="submit" > Sign-In</button>
+        
+    
+    
 </form>
 
 {% endblock content %}
-    
-
