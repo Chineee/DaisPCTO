@@ -14,7 +14,13 @@ import secrets
 # class MyView(ModelView):
 #     def is_accessible(self):
 #         return False
-    
+
+
+def is_professor(user):
+    if not current_user.is_authenticated:
+        return False
+    return current_user.hasRole("Professor")
+
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = "mysecretkey"

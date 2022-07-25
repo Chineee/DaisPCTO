@@ -6,6 +6,7 @@ from flask import Blueprint, render_template, url_for, redirect, flash, abort, r
 from DaisPCTO.models import *
 from DaisPCTO.check import checkPasswordLength, checkPasswordCaps, checkPasswordSpecial, checkPasswordNumber
 from DaisPCTO.db import *
+from . import is_professor
 from functools import wraps
 
 

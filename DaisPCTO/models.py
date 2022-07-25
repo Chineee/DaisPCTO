@@ -41,10 +41,12 @@ class User(Base, UserMixin):
 
     
     def hasRole(self, role):
+        
         for r in self.Roles:
             if r.Name == role or r.Name == 'Admin':
                 return True
         return False
+        
 
 
 
@@ -63,6 +65,8 @@ class Professor(Base):
     __tablename__ = "Professors"
 
     UserID = Column(Integer, ForeignKey("Users.UserID"), primary_key=True)
+
+    LessonsList = relationship("Lesson", backref="Professor")
 
     __table_args__ = ()
 
@@ -167,6 +171,7 @@ class Lesson(Base):
 
     LessonID = Column(Integer, primary_key=True)
     CourseID = Column(String, ForeignKey("Courses.CourseID"))
+    ProfessorID = Column(Integer, ForeignKey("Professors.UserID"))
     Date = Column(Date)
     StartTime = Column(Time)
     EndTime = Column(Time)
@@ -244,10 +249,21 @@ class Material(Base):
     MaterialID = Column(Integer, primary_key=True)
     LessonID = Column(Integer, ForeignKey("Lessons.LessonID"))
     MarkDownFile = Column(String)
-
     Lessons = relationship("Lesson", backref="Materials")
 
     __table_args__ = ()
+
+
+class Reservation(Base):
+    __tablename__ = "Reservation"
+
+    StudentID = Column(Integer, ForeignKey("Student.StudentID"), primary_key=True)
+    FrontalLessonID = Column(Integer, ForeignKey("FrontalLesson.LessonID"), primary_key=True)
+    ReservetionID = Column(String) 
+    HasValidation = Column(Boolean)
+
+    __table_args__= ()
+
 
 # Base.metadata.create_all(engine)
 # app = Flask(__name__)
