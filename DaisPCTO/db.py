@@ -147,3 +147,6 @@ def count_student(course_id):
     session = Session()
 
     return session.query(StudentCourse).filter(StudentCourse.CourseID == course_id).count()
+
+def sos():
+    pass
