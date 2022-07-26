@@ -148,5 +148,5 @@ def count_student(course_id):
 
     return session.query(StudentCourse).filter(StudentCourse.CourseID == course_id).count()
 
-def sossone():
+def sossone2():
     pass
