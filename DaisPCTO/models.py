@@ -10,7 +10,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, String, Integer, Date, ForeignKey, CheckConstraint, Time, Boolean, or_, and_, UniqueConstraint, Text
 from sqlalchemy.orm import relationship
 from flask_login import UserMixin
-
+import DaisPCTO.db as db
 # engine = create_engine("postgresql://postgres:123456@localhost/testone8", echo=True)
 
 Base = declarative_base()
@@ -42,10 +42,19 @@ class User(Base, UserMixin):
     
     def hasRole(self, role):
         
-        for r in self.Roles:
-            if r.Name == role or r.Name == 'Admin':
-                return True
-        return False
+        return db.exists_role_user(self.UserID, role)
+
+        # for r in self.Roles:
+        #     if r.Name == role or r.Name == 'Admin':
+        #         return True
+        # return False
+
+    @property
+    def is_active(self):
+        if self.hasRole("Professor"):
+            return True
+        return True
+
         
 
 

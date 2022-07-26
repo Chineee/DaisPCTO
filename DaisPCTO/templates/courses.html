@@ -47,14 +47,14 @@
         </div>
 
         <div class="col-md-6 mb-3">
-            {{ form.min_hours_certificate.label }}
-            {% if form.min_hours_certificate.errors %}
-                {{form.min_hours_certificate(class="form-control is-invalid", id="min_hours_certificate") }}
+            {{ form.min_hour_certificate.label }}
+            {% if form.min_hour_certificate.errors %}
+                {{form.min_hour_certificate(class="form-control is-invalid", id="min_hours_certificate") }}
                 <div class = "invalid-feedback">
-                    {{form.min_hours_certificate.errors[0]}}
+                    {{form.min_hour_certificate.errors[0]}}
                 </div>
             {% else %} 
-                {{form.min_hours_certificate(class="form-control", id="min_hours_certificate")}}
+                {{form.min_hour_certificate(class="form-control", id="min_hours_certificate")}}
             {% endif %}
         </div>
     </div>

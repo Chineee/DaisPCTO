@@ -1,5 +1,5 @@
 from DaisPCTO.models import Feedback, ProfessorCourse, StudentCourse, User, Student, Professor, UserRole, Course, Lesson, Role
-from sqlalchemy import create_engine, and_, or_
+from sqlalchemy import create_engine, and_, not_, or_, not_
 from sqlalchemy.orm import sessionmaker
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import current_user, user_accessed
@@ -48,13 +48,24 @@ def extestone():
     except:
         session.rollback()
         #roleList = session.query(Role).all()
-   
-def get_course_by_id(id):
-    session = Session()
-    return session.query(Course).filter(Course.CourseID == id).first()
+
+def exists_role_user(user_id, role):
+    try:
+        session = Session()
+        return session.query(UserRole).filter(and_(UserRole.UserID == user_id, Role.Name == role, UserRole.RoleID == Role.RoleID)).first() is not None
+    except:
+        return False
+
+def get_course_by_id(course_id):
+    try:
+        session = Session()
+        return session.query(Course).filter(Course.CourseID == course_id).first()
+    except:
+        return None
 
 def get_user_by_id(id):
-    session = Session()
+    try:
+        session = Session()
     # session.connection(execution_options={'isolation_level': 'SERIALIZABLE', "postgresql_readonly" : True})
     # try:
     #     session.add(User(UserID=10))
@@ -62,7 +73,9 @@ def get_user_by_id(id):
     #     session.rollback()
     #     print("roll back")
     # print("OK")
-    return session.query(User).filter(User.UserID == id).first()
+        return session.query(User).filter(User.UserID == id).first()
+    except:
+        return None
 
 def get_user_id_by_email(email):
     pass
@@ -71,8 +84,11 @@ def get_user_email_by_id(userId):
     pass 
 
 def get_user_by_email(email):
-    session = Session()
-    return session.query(User).filter(User.email == email).first()
+    try:
+        session = Session()
+        return session.query(User).filter(User.email == email).first()
+    except:
+        return None
     
 def create_user(form):
 
@@ -93,14 +109,24 @@ def add_user(User):
         session = Session()
         session.add(User)
         session.commit()
+        add_student(User)
     except:
         session.rollback()
         return False 
     return True
 
+def add_student(user):
+    try:
+        session = Session()
+        session.add(Student(UserID = user.UserID, SchoolID=None))
+        session.commit()
+    except:
+        session.rollback()
+
 def compare_password(db_password, inserted_password):
     return check_password_hash(db_password, inserted_password)
 
+        
 
 def add_course(form):
     
@@ -108,7 +134,7 @@ def add_course(form):
     course_id = form.course_id.data
     description = form.description.data 
     max_students = form.max_students.data
-    min_hours = form.min_hours_certificate.data
+    min_hours = form.min_hour_certificate.data
     
     try:
         session = Session()
@@ -123,7 +149,6 @@ def can_professor_modify(prof_id, course_id):
     try:
         session = Session()
         return session.query(ProfessorCourse).filter(and_(ProfessorCourse.ProfessorID == prof_id, ProfessorCourse.CourseID == course_id)).first() is not None
-        
     except:
         return False
 
@@ -139,14 +164,70 @@ def get_professor_by_course_id(course_id):
 # from ( user u natural join professor p ) natural join professorcourse pc
 # where pc.courseid = 'id'
 
-def change_course_attr(form):
-    if form.description.data is not None:
-        Description = form.description.data
-
 def count_student(course_id):
-    session = Session()
+    try:
+        session = Session()
 
-    return session.query(StudentCourse).filter(StudentCourse.CourseID == course_id).count()
+        return session.query(StudentCourse).filter(StudentCourse.CourseID == course_id).count()
+    except:
+        return None
 
-def sossone2():
-    pass
+def change_course_attr(form, course_id):
+    try:
+        session = Session()
+        
+        course = session.query(Course).filter(Course.CourseID == course_id)
+
+        if form.name.data is not None:
+            course.update({Course.Name : form.name.data})
+        if form.description.data is not None:
+            course.update({Course.Description : form.description.data})
+        if form.max_students.data is not None:
+            course.update({Course.MaxStudents : form.max_students.data})
+        if form.min_hour_certificate is not None:
+            course.update({Course.MinHourCertificate : form.min_hour_certificate.data})
+
+        session.commit()
+    except:
+        session.rollback()
+    finally:
+        session.close()
+
+def change_feedback(course_id):
+    
+
+    try: 
+        session = Session()       
+        session.query(Course).filter(Course.CourseID == course_id).update({Course.OpenFeedback : not_(Course.OpenFeedback)})
+        session.commit()
+    except:
+        session.rollback()
+    finally:
+        session.close()
+
+def subscribe_course(student_id, course_id):
+    try:
+        session = Session()
+        session.add(StudentCourse(StudentID=student_id, CourseID=course_id))
+        session.commit()
+    except:
+        session.rollback()
+
+def is_subscribed(student_id, course_id):
+    try:
+        session = Session()
+        
+        if session.query(StudentCourse).filter(and_(StudentCourse.StudentID == student_id, StudentCourse.CourseID == course_id)).first() is None:
+            return False
+        return True
+    except:
+        return False
+
+def delete_subscription(student_id, course_id): 
+    try:
+        session = Session()      
+
+        session.query(StudentCourse).filter(and_(StudentCourse.StudentID == student_id, StudentCourse.CourseID == course_id)).delete()
+        session.commit()
+    except:
+        session.rollback()
