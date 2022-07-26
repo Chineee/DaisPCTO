@@ -2,7 +2,6 @@ from flask import Flask, render_template, session as flasksession, redirect, url
 from flask_login import current_user, LoginManager
 from DaisPCTO.db import get_user_by_id, extestone, Session, User
 from flask_bootstrap import Bootstrap
-import secrets
 # from flask_admin import Admin, expose, BaseView, AdminIndexView
 # from flask_admin.contrib.sqla import ModelView
 

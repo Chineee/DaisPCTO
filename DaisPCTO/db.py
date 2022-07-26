@@ -84,7 +84,7 @@ def create_user(form):
     Phone = form.phone.data
     Address = form.address.data
 
-    new_user = User(Name=Name, Surname=Surname, Gender=Gender, Address = Address, email=Email, Password = generate_password_hash(Password), PhoneNumber=Phone)
+    new_user = User(Name=Name, Surname=Surname, Gender=Gender, Address = Address, email=Email, Password = generate_password_hash(Password).decode('utf-8'), PhoneNumber=Phone)
     
     return new_user
 
@@ -146,4 +146,4 @@ def change_course_attr(form):
 def count_student(course_id):
     session = Session()
 
-    return len(session.query(StudentCourse).filter(StudentCourse.CourseID == course_id).all())
+    return session.query(StudentCourse).filter(StudentCourse.CourseID == course_id).count()

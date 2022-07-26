@@ -6,16 +6,11 @@
         <center>
             {{course.Name}} - {{course.CourseID}} 
         </center>
-        
     </h1>
-
     <hr/>
-   
-
     <h5> 
         Docenti 
     </h5>
-    
     <ul class="list-group d-inline-block">
         {% for p in prof %}
             <li class="list-group-item">{{p.Name}} {{p.Surname}}</li>
@@ -28,7 +23,6 @@
     <h5> 
         Informazioni Corso 
     
-
         {% if is_professor %}
             {{form.hidden_tag()}}
 
@@ -43,7 +37,7 @@
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="exampleModalLabel">Modifica descrizione</h5>
+                            <h5 class="modal-title" id="exampleModalLabel">Modifica informazioni</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body" style="font-weight : normal">
@@ -61,11 +55,11 @@
                 </div>
             </div>
         </form>
-    </h5>
 
-        {% else %}
+    {% endif %}
+        
     </h5>
-        {% endif %}
+        
     
 
     <hr/>
@@ -81,7 +75,7 @@
         <strong>Descrizione Corso: </strong><br>
         {{course.Description}} <br><br>
         
-         Per ottenere l'attestato di partecipazione al corso, lo studente dovrà aver seguito almeno <strong >{{course.MinHourCertificate}} </strong> ore di lezione.
+         Per ottenere l'attestato di partecipazione al corso, lo studente dovrà seguire almeno <strong >{{course.MinHourCertificate}} </strong> ore di lezione.
     </div>
 
     <hr/>

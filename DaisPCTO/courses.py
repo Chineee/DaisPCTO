@@ -6,7 +6,6 @@ from DaisPCTO.db import add_course, get_course_by_id, can_professor_modify, get_
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, EmailField, SelectField, DateField, BooleanField, SubmitField, validators, SelectMultipleField, IntegerField, TextAreaField
 from wtforms.validators import DataRequired, EqualTo, ValidationError, Length, NumberRange
-from . import is_professor
 
 courses = Blueprint("courses_blueprint", __name__, template_folder="templates")
 
@@ -19,7 +18,7 @@ class AddCourse(FlaskForm):
     min_hours_certificate = IntegerField("Ore minime per ottenere il certificato", validators=[NumberRange(min=0, message="Non puoi inserire un numero di ore negative")], default=0)
 
 
-class ChangeDescription(FlaskForm):
+class ChangeInformationCourse(FlaskForm):
     name = StringField("Nome corso")
     description = TextAreaField("Descrizione")
     max_students = IntegerField("Numero massimo di studenti", validators=[NumberRange(min = 0, message="Non puoi inserire un numero di studenti negativo")], default=0)
@@ -62,7 +61,7 @@ def course(coursePage):
     #         abort(404)
 
 
-    form = ChangeDescription()
+    form = ChangeInformationCourse()
 
     if form.validate_on_submit():
         print("ok")
