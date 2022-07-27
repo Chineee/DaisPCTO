@@ -32,14 +32,6 @@ class ChangeInformationCourse(FlaskForm):
 
     subscribe = SubmitField()
 
-    def validate(self):
-        
-        if not current_user.is_authenticated:
-            return False
-        if not current_user.hasRole("Professor"):
-            return False
-        return True
-
 @courses.route('/', methods=['GET', 'POST'])
 def home_courses():
    pass
@@ -64,32 +56,22 @@ def add():
 @courses.route('/<coursePage>', methods=['GET', 'POST'])
 def course(coursePage):
 
-    # if request.method == "POST":
-    #     if not current_user.is_authenticated or not current_user.hasRole("Professor"):
-    #         abort(404)
 
     if get_course_by_id(coursePage.upper()) is None:
         abort(404)
 
     form = ChangeInformationCourse()
-    
-    if form.validate_on_submit():
-
+    can_modify = can_professor_modify(current_user.get_id(), coursePage.upper())
+    if form.validate_on_submit() and can_modify:
         if form.submit.data:
             change_feedback(coursePage.upper())
         elif form.changeSubmit.data:
             change_course_attr(form, coursePage.upper())
-    
-    elif form.subscribe.data:
-        print("registrato")
 
-
-    print(current_user.get_id())
-    print(is_subscribed(current_user.get_id(), coursePage.upper()))
     return render_template("coursePage.html", 
          is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"),
          course = get_course_by_id(coursePage.upper()), 
-         canModify = can_professor_modify(current_user.get_id(), coursePage.upper()), 
+         can_modify = can_modify, 
          user = current_user,
          prof = get_professor_by_course_id(coursePage.upper()),
          form = form,
@@ -100,7 +82,7 @@ def course(coursePage):
     #renderizza ad una pagina modifica corso accessibile solo ai prof che l'hanno modificata
 
 @courses.route('/action/<issubbed>/<course>')
-@login_required
+@role_required("Student")
 def subs(issubbed, course):
     course = course.upper()
 

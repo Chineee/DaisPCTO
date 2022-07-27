@@ -52,7 +52,7 @@ def extestone():
 def exists_role_user(user_id, role):
     try:
         session = Session()
-        return session.query(UserRole).filter(and_(UserRole.UserID == user_id, Role.Name == role, UserRole.RoleID == Role.RoleID)).first() is not None
+        return session.query(UserRole).join(Role).filter(and_(UserRole.UserID == user_id, Role.Name == role)).first() is not None
     except:
         return False
 
@@ -118,7 +118,7 @@ def add_user(User):
 def add_student(user):
     try:
         session = Session()
-        session.add(Student(UserID = user.UserID, SchoolID=None))
+        session.add_all(Student(UserID = user.UserID, SchoolID=None), UserRole(UserID = user.UserID, RoleID = 2))
         session.commit()
     except:
         session.rollback()
@@ -138,7 +138,7 @@ def add_course(form):
     
     try:
         session = Session()
-        session.add(Course(OpenFeedback=False, CourseID=course_id, Name=name, Description = description, MaxStudents=max_students, MinHourCertificate = min_hours))
+        session.add(Course(OpenFeedback=False, CourseID=course_id.upper(), Name=name, Description = description, MaxStudents=max_students, MinHourCertificate = min_hours))
         session.add(ProfessorCourse(CourseID=course_id, ProfessorID=current_user.get_id()))
         session.commit()
     except:

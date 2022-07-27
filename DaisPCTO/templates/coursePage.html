@@ -23,8 +23,8 @@
     <h5> 
         Informazioni Corso 
     
-        {% if is_professor %}
-            {{form.hidden_tag()}}
+        {% if is_professor and can_modify %}
+            
 
             <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#changeCourseInfo">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14px" height="14px" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16" style="height:15px;width:15px">
@@ -33,6 +33,7 @@
             </button>
         
         <form method="post", style="display:inline">
+            {{form.hidden_tag()}}
             <div class="modal fade" id="changeCourseInfo" tabindex="-1" aria-labelledby="changeCourseInfo" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
@@ -74,7 +75,7 @@
     <hr/>
 
     <div class="list-group-item">
-       <a {% if canModify %} href = "/subs" class="link-dark"{% endif %}>
+       <a {% if can_modify %} href = "/subs" class="link-dark"{% endif %}>
             <strong> Iscritti attuali: </strong> 
         </a>
         
@@ -117,9 +118,8 @@
 
     <hr/>
     
-    {% if is_professor %}
+    {% if is_professor and can_modify %}
         <form method="POST">
-            {{form.hidden_tag()}}
             <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#studentFeedback"> {% if course.OpenFeedback %} Vuoi chiudere i feedback? {% else %} Vuoi aprire i feedback? {% endif %} </button>
         
             <div class="modal fade" id="studentFeedback" tabindex="-1" aria-labelledby="studentFeedback" aria-hidden="true">

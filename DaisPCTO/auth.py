@@ -121,6 +121,10 @@ def register():
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        flash("Sei già loggato!")
+        return redirect(url_for("home"))
+
     form = LoginForm()
     if form.validate_on_submit():
         user = get_user_by_email(form.email.data)

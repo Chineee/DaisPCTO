@@ -37,7 +37,7 @@ def create_app():
 
 
     @app.route("/")
-    def home():              
+    def home():            
         return render_template("page.html", user=current_user, is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"))
 
     @login_manager.user_loader
