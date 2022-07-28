@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, url_for, redirect, flash, abort, request
 from flask_login import current_user, login_required
 from DaisPCTO.auth import role_required
-from DaisPCTO.models import *
+# from DaisPCTO.models import *
 from DaisPCTO.db import add_course, get_course_by_id, can_professor_modify, \
     get_user_by_id, get_professor_by_course_id, change_course_attr, \
     count_student, change_feedback, subscribe_course, \
@@ -28,7 +28,7 @@ class ChangeInformationCourse(FlaskForm):
     min_hour_certificate = IntegerField("Ore minime per ottenere il certificato", validators=[NumberRange(min=0, message="Non puoi inserire un numero di ore negative")], default=0)
 
     changeSubmit = SubmitField()
-    submit = SubmitField()
+    submit = SubmitField() #
 
     subscribe = SubmitField()
 
@@ -62,6 +62,7 @@ def course(coursePage):
 
     form = ChangeInformationCourse()
     can_modify = can_professor_modify(current_user.get_id(), coursePage.upper())
+
     if form.validate_on_submit() and can_modify:
         if form.submit.data:
             change_feedback(coursePage.upper())
@@ -88,6 +89,7 @@ def subs(issubbed, course):
 
     if issubbed == "notsubbed":
         subscribe_course(current_user.get_id(), course)
+        
     elif issubbed == "subbed":
         delete_subscription(current_user.get_id(), course)
 

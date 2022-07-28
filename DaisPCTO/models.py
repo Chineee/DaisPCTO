@@ -6,11 +6,15 @@
 # from sqlalchemy.orm import *
 # from flask import Flask
 
+from tkinter import CASCADE
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, String, Integer, Date, ForeignKey, CheckConstraint, Time, Boolean, or_, and_, UniqueConstraint, Text
 from sqlalchemy.orm import relationship
 from flask_login import UserMixin
-import DaisPCTO.db as db
+# import DaisPCTO.db as db
+
+
+# from DaisPCTO.db import exists_role_user
 # engine = create_engine("postgresql://postgres:123456@localhost/testone8", echo=True)
 
 Base = declarative_base()
@@ -39,24 +43,26 @@ class User(Base, UserMixin):
     def get_id(self):
         return self.UserID
 
-    
     def hasRole(self, role):
         
-        return db.exists_role_user(self.UserID, role)
-
-        # for r in self.Roles:
-        #     if r.Name == role or r.Name == 'Admin':
-        #         return True
-        # return False
-
-    @property
-    def is_active(self):
-        if self.hasRole("Professor"):
-            return True
-        return True
-
+        from DaisPCTO.db import exists_role_user #per evitare il circular import va messo dentro la funzione
+        return exists_role_user(self.UserID, role)
         
 
+    # @property
+    # def is_active(self):
+        # if self.hasRole("Professor"):
+        #     return True
+        # return True
+    
+    # @property
+    # def is_authenticated(self):
+    #     if super().is_authenticated:
+    #         if self.hasRole("Professor"):
+    #             pass 
+    #         else:
+    #             pass
+    #     return False
 
 
 class Student(Base):

@@ -1,6 +1,6 @@
 from flask import Flask, render_template, session as flasksession, redirect, url_for, request
 from flask_login import current_user, LoginManager
-from DaisPCTO.db import get_user_by_id, extestone, Session, User
+from DaisPCTO.db import get_user_by_id
 from flask_bootstrap import Bootstrap
 # from flask_admin import Admin, expose, BaseView, AdminIndexView
 # from flask_admin.contrib.sqla import ModelView
@@ -15,10 +15,10 @@ from flask_bootstrap import Bootstrap
 #         return False
 
 
-def is_professor(user):
-    if not current_user.is_authenticated:
-        return False
-    return current_user.hasRole("Professor")
+# def is_professor(user):
+#     if not current_user.is_authenticated:
+#         return False
+#     return current_user.hasRole("Professor")
 
 def create_app():
     app = Flask(__name__)
@@ -35,7 +35,6 @@ def create_app():
 
     # admin.add_view(MyView(User, Session()))
 
-
     @app.route("/")
     def home():            
         return render_template("page.html", user=current_user, is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"))
@@ -48,6 +47,12 @@ def create_app():
     # def testone():
     #     extestone()
     #     return "ok"
+
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return "err", 404
+
+    app.register_error_handler(404, page_not_found)
 
 
     from DaisPCTO.auth import auth as auth_blueprint

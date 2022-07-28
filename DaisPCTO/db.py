@@ -1,7 +1,6 @@
 from DaisPCTO.models import Feedback, ProfessorCourse, StudentCourse, User, Student, Professor, UserRole, Course, Lesson, Role
 from sqlalchemy import create_engine, and_, not_, or_, not_
 from sqlalchemy.orm import sessionmaker
-from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import current_user, user_accessed
 from flask_bcrypt import generate_password_hash, check_password_hash
 
@@ -15,7 +14,8 @@ engine = {
 # studente = create_engine("postgresql://Student:ewfdwefd@localhost/testone8",echo=False, pool_size=20, max_overflow=0)
 # engine2 = create_engine("postgresql://Student:studente01@localhost/testone8", echo=False, pool_size=20, max_overflow=0)
 
-Session = sessionmaker(bind=engine['Admin'], expire_on_commit = False)
+Session = sessionmaker(bind=engine['Admin'])
+
 
 def get_engine():
     if not current_user.is_authenticated:
@@ -131,14 +131,14 @@ def compare_password(db_password, inserted_password):
 def add_course(form):
     
     name = form.name.data
-    course_id = form.course_id.data
+    course_id = form.course_id.data.upper()
     description = form.description.data 
     max_students = form.max_students.data
     min_hours = form.min_hour_certificate.data
     
     try:
         session = Session()
-        session.add(Course(OpenFeedback=False, CourseID=course_id.upper(), Name=name, Description = description, MaxStudents=max_students, MinHourCertificate = min_hours))
+        session.add(Course(OpenFeedback=False, CourseID=course_id, Name=name, Description = description, MaxStudents=max_students, MinHourCertificate = min_hours))
         session.add(ProfessorCourse(CourseID=course_id, ProfessorID=current_user.get_id()))
         session.commit()
     except:

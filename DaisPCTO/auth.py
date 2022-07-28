@@ -4,9 +4,7 @@ from wtforms import StringField, PasswordField, EmailField, SelectField, DateFie
 from wtforms.validators import DataRequired, EqualTo, ValidationError, Length
 from flask import Blueprint, render_template, url_for, redirect, flash, abort, request
 from DaisPCTO.models import *
-from DaisPCTO.check import checkPasswordLength, checkPasswordCaps, checkPasswordSpecial, checkPasswordNumber
 from DaisPCTO.db import *
-from . import is_professor
 from functools import wraps
 
 
@@ -44,22 +42,22 @@ class RegisterForm(FlaskForm):
         if email.data != self.email.data:
             raise validators.ValidationError("Le email non corrispondono!")
 
-    def validate_password(form, password):
+    def validate_password(self, password):
         throw_error = False
 
-        (category, throw_error) = ("notpassed", True) if not checkPasswordLength(password.data) else ("passed", throw_error)
+        (category, throw_error) = ("notpassed", True) if not self.check_password_length(password.data) else ("passed", throw_error)
 
         flash("La password deve avere almeno 8 caratteri", category)
         
-        (category, throw_error) = ("notpassed", True) if not checkPasswordCaps(password.data) else ("passed", throw_error)
+        (category, throw_error) = ("notpassed", True) if not self.check_password_caps(password.data) else ("passed", throw_error)
 
         flash("La password deve contenere almeno un carattere maiuscolo", category)
         
-        (category, throw_error) = ("notpassed", True) if not checkPasswordSpecial(password.data) else ("passed", throw_error)
+        (category, throw_error) = ("notpassed", True) if not self.check_password_special(password.data) else ("passed", throw_error)
 
         flash("La password deve contenere almeno un carattere speciale", category)
         
-        (category, throw_error) = ("notpassed", True) if not checkPasswordNumber(password.data) else ("passed", throw_error)
+        (category, throw_error) = ("notpassed", True) if not self.check_password_number(password.data) else ("passed", throw_error)
         
         flash("La password deve contenere almeno un numero", category)
         
@@ -71,6 +69,33 @@ class RegisterForm(FlaskForm):
         for c in phone_number:
             if not c.isdigit():
                 raise ValidationError("Inserisci un numero valido")
+
+    def check_password_number(self, password):
+        isNumber = False
+        for number in password:
+            if number.isdigit():
+                isNumber = True
+        return isNumber 
+
+    def check_password_caps(self, password):
+        isCaps = False
+        for c in password:
+            if c.isupper() == True:
+                isCaps = True
+        return isCaps
+
+    def check_password_special(self, password):
+        isSpecial = False
+        for char in password:
+            if char in ['@','_','-','*','$','%','&','+','£']:
+                isSpecial = True
+        return isSpecial
+
+    def check_password_length(self, password):
+        return len(password) >= 8
+
+
+                
         
 
 class LoginForm(FlaskForm):

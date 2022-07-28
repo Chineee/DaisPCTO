@@ -45,11 +45,18 @@
                             
                             {{form.max_students.label}}
                             {{form.max_students(class="form-control", value=course.MaxStudents)}}
+                            <div class = "invalid-feedback" id="invalid-feedback-max-students" style="display : none">
+                                Numero minimo studenti 0 (per indicare nessun limite)
+                            </div>
                             
                             <br><br>
 
                             {{form.min_hour_certificate.label}}
                             {{form.min_hour_certificate(class="form-control", value=course.MinHourCertificate)}}
+
+                            <div class = "invalid-feedback" id="invalid-feedback-hour-certificate" style="display : none">
+                                Le ore devono essere di almeno 0!
+                            </div>
 
                             <br><br>
 
@@ -59,7 +66,9 @@
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
-                            {{form.changeSubmit(class="btn btn-primary", value="Salva modifiche")}}
+                            <input type="button" class="btn btn-primary" value="Salva Modifiche" name="changeSubmit" id="changeSubmit"> </input>
+                            
+                            
                         </div>
                     </div>
                 </div>
@@ -80,9 +89,9 @@
         </a>
         
 
-        {{subs}}/{{course.MaxStudents}} 
+        {{subs}}/{% if course.MaxStudents == 0 %}-{% else %}{{course.MaxStudents}}{% endif %}
 
-        {% if is_professor  == False %}
+        {% if is_professor  == False and current_user.is_authenticated %}
             <span style="display : inline-block; margin-left: 40px">
                 <button class="btn btn-{% if iscritto %}danger{% else %}success{% endif %}" data-bs-toggle="modal" data-bs-target="#subscription">
                     {% if iscritto %} Disiscriviti! {% else %} Iscriviti! {% endif %}
@@ -112,14 +121,19 @@
         
         <strong>Descrizione Corso: </strong><br>
         {{course.Description}} <br><br>
-        
-         Per ottenere l'attestato di partecipazione al corso, lo studente dovrà seguire almeno <strong >{{course.MinHourCertificate}} </strong> ore di lezione.
+            
+        {% if course.MinHourCertificate %}
+            Per ottenere l'attestato di partecipazione al corso, lo studente dovrà seguire almeno <strong >{{course.MinHourCertificate}} </strong> ore di lezione.
+        {% else %} 
+            Non sono neccessarie ore di frequenza obbligatorie per ottenere l'attestato di partecipazione!
+        {% endif %}
     </div>
 
     <hr/>
     
     {% if is_professor and can_modify %}
         <form method="POST">
+            {{form.hidden_tag()}}
             <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#studentFeedback"> {% if course.OpenFeedback %} Vuoi chiudere i feedback? {% else %} Vuoi aprire i feedback? {% endif %} </button>
         
             <div class="modal fade" id="studentFeedback" tabindex="-1" aria-labelledby="studentFeedback" aria-hidden="true">
@@ -141,6 +155,37 @@
         </form>
     {% endif %}
     <br><br>
+
+    <script>
+        $("#changeSubmit").click( () => {
+            let max_students = $("#max_students");
+            let min_hour =  $("#min_hour_certificate");
+
+            if (max_students.val() >= 0 && min_hour.val() >= 0) {
+                $("#changeSubmit").attr("type", "submit");
+                return;
+            } 
+
+            if (max_students.val() < 0) {
+                max_students.addClass("is-invalid");
+                $("#invalid-feedback-max-students").show();
+            } else {
+                max_students.removeClass("is-invalid");
+                $("#invalid-feedback-max-students").hide();
+            }
+
+            if (min_hour.val() < 0) {
+                min_hour.addClass("is-invalid");
+                $("#invalid-feedback-hour-certificate").show();
+            } else {
+                min_hour.removeClass("is-invalid");
+                $("#invalid-feedback-hour-certificate").hide();
+            }
+            
+        });
+            
+        
+    </script>
 
 
     
