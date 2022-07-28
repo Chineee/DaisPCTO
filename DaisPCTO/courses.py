@@ -94,3 +94,27 @@ def subs(issubbed, course):
         delete_subscription(current_user.get_id(), course)
 
     return redirect(url_for("courses_blueprint.course", coursePage=course))
+
+
+""""
+
+CREATE TRIGGER max_students_check
+BEFORE INSERT ON StudentsCourses
+FOR EACH ROW EXECUTE FUNCTION max_students_check_func()
+
+CREATE FUNCTION max_students_check_func() RETURNS TRIGGER
+BEGIN
+    IF ( (
+        SELECT COUNT(*)
+        FROM StudentCourses sc JOIN Courses c USING(CourseID)
+        WHERE NEW.CourseID = c.CourseID
+        ) >= (
+            SELECT c.MaxStudents
+            FROM Courses c
+            WHERE c.CourseID = NEW.CourseID
+        )) THEN RETURN NULL;
+    ENDIF
+    RETURN NEW;
+END
+
+"""

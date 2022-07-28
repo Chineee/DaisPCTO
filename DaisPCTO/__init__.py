@@ -60,5 +60,8 @@ def create_app():
 
     from DaisPCTO.courses import courses as courses_blueprint 
     app.register_blueprint(courses_blueprint, url_prefix="/courses")
+
+    from DaisPCTO.lessons import lessons as lessons_blueprint 
+    app.register_blueprint(lessons_blueprint, url_prefix="/courses")
     
     return app

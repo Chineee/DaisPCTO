@@ -1,8 +1,11 @@
-from DaisPCTO.models import Feedback, ProfessorCourse, StudentCourse, User, Student, Professor, UserRole, Course, Lesson, Role
+from DaisPCTO.models import Feedback,\
+     ProfessorCourse, StudentCourse, User, Student, Professor,\
+     UserRole, Course, Role, Lesson
 from sqlalchemy import create_engine, and_, not_, or_, not_
 from sqlalchemy.orm import sessionmaker
 from flask_login import current_user, user_accessed
 from flask_bcrypt import generate_password_hash, check_password_hash
+import random 
 
 engine = {
     "Admin" : create_engine("postgresql://postgres:123456@localhost/testone8", echo=False, pool_size=20, max_overflow=0),
@@ -116,9 +119,12 @@ def add_user(User):
     return True
 
 def add_student(user):
+
+    #MODIFICARE ADD STUDENT IN MODO CHE ADDI TUTTI GLI ALTRI CAMPI
+
     try:
         session = Session()
-        session.add_all(Student(UserID = user.UserID, SchoolID=None), UserRole(UserID = user.UserID, RoleID = 2))
+        session.add_all([Student(UserID = user.UserID, SchoolID=None), UserRole(UserID = user.UserID, RoleID = 2)])
         session.commit()
     except:
         session.rollback()
@@ -231,3 +237,40 @@ def delete_subscription(student_id, course_id):
         session.commit()
     except:
         session.rollback()
+
+def add_lesson(form, course_id):
+    date = form.date.data
+    start_time = form.start_time.data
+    end_time = form.end_time.data
+    topic = form.topic.data
+    is_dual = form.is_dual.data
+    classroom = form.classroom.data
+    token = generate_password_hash(f'{current_user.get_id()}{course_id}{date}{start_time}{end_time}{classroom}{random.randint(0, 101)}')
+    print(token)
+    
+    # try:
+    #     session = Session()
+    #     session.add(Lessons(Date = date, StartTime = start_time, EndTime = end_time, Topic = topic, IsDual = is_dual, Classroom = classroom))
+    #     session.commit()
+    # except Exception as e:
+    #     if e.orig.diag.message_primary == "Aula già occupata":
+    #         return "Clasherror"
+    #     else:
+    #         return None
+
+    return "Success"
+
+def delete_lesson(lesson_id):
+    try:
+        session = Session()
+        session.query(Lesson).filter(Lesson.LessonID == lesson_id).delete()
+    except:
+        print("err")
+        session.rollback()
+
+def get_lessons_by_course_id(course_id):
+    try:
+        session = Session()
+        return session.query(Lesson).filter(Lesson.CourseID == course_id).all()
+    except:
+        return None

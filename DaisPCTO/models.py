@@ -46,7 +46,7 @@ class User(Base, UserMixin):
     def hasRole(self, role):
         
         from DaisPCTO.db import exists_role_user #per evitare il circular import va messo dentro la funzione
-        return exists_role_user(self.UserID, role)
+        return exists_role_user(self.get_id(), role)
         
 
     # @property

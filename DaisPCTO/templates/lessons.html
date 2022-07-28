@@ -1,0 +1,56 @@
+{% extends "page.html" %} 
+
+{% block content %} 
+    
+    <h1> 
+        <center>
+            {{course.Name}} - {{course.CourseID}} 
+        </center>
+    </h1>
+
+
+    <nav class="nav nav-pills flex-column flex-sm-row">
+        <a href="/courses/{{course.CourseID}}" class="nav-link">
+            <!-- <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right-circle-fill" viewBox="0 0 16 16">
+                <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H4.5z"/>
+            </svg>  -->
+            
+            <i class="bi bi-arrow-right-circle"></i> Docenti e informazioni    
+        </a>
+            
+        <a href="/courses/{{course.CourseID}}/lessons" class="nav-link active">
+            <i class="bi bi-arrow-right-circle"></i>
+            Lezioni		
+        </a>
+                
+    </nav>
+
+    <div class="tab-content border border-primary border-2 border-start-0 border-end-0 border-bottom-0 mt-3"> TEST </div>
+
+    <form method="POST">
+        {{form.hidden_tag()}}
+        {{form.date}}
+        {{form.start_time}}
+        {{form.end_time}}
+        {{form.classroom}}
+        {{form.button_to_add(class="btn btn-primary")}}
+        <button id="1" name="button_to_delete" type="button" value = "1" class="btn btn-primary btn_to_delete_lesson"> L1 </button>
+        <button id="2" name="button_to_delete" type="button" value = "2" class="btn btn-primary btn_to_delete_lesson"> L2 </button>
+        <button id="3" name="button_to_delete" type="button" value = "3" class="btn btn-primary btn_to_delete_lesson"> L3 </button>
+    
+        <input type="number" class="form-control" id="button_pressed" value = "0" name="button_pressed" style="display : none">
+        <div>
+            CIAO
+        </div>
+
+        
+    </form>
+
+    <script>
+       $(".btn_to_delete_lesson").click( function() {
+            $("#button_pressed").val($(this).attr('id'))
+            $(this).attr("type", "submit")  
+       });
+    </script>
+
+{% endblock %}
