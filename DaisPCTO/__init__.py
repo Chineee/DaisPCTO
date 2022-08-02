@@ -2,6 +2,7 @@ from flask import Flask, render_template, session as flasksession, redirect, url
 from flask_login import current_user, LoginManager
 from DaisPCTO.db import get_user_by_id
 from flask_bootstrap import Bootstrap
+from flask_wtf.csrf import CSRFProtect, CSRFError
 # from flask_admin import Admin, expose, BaseView, AdminIndexView
 # from flask_admin.contrib.sqla import ModelView
 
@@ -23,7 +24,8 @@ from flask_bootstrap import Bootstrap
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = "mysecretkey"
-    
+    csrf = CSRFProtect()
+    csrf.init_app(app)
     Bootstrap(app)
        
     login_manager = LoginManager()
@@ -43,14 +45,13 @@ def create_app():
     def load_user(UserID):
         return get_user_by_id(UserID)
 
-    # @app.route("/testone")
-    # def testone():
-    #     extestone()
-    #     return "ok"
-
     @app.errorhandler(404)
     def page_not_found(e):
         return "err", 404
+
+    @app.before_request
+    def check_csrf():
+        csrf.protect()
 
     app.register_error_handler(404, page_not_found)
 
@@ -62,6 +63,6 @@ def create_app():
     app.register_blueprint(courses_blueprint, url_prefix="/courses")
 
     from DaisPCTO.lessons import lessons as lessons_blueprint 
-    app.register_blueprint(lessons_blueprint, url_prefix="/courses")
+    app.register_blueprint(lessons_blueprint)
     
     return app

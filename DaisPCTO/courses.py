@@ -51,7 +51,10 @@ def add():
         else:
             form.course_id.errors.append("Corso già esistente")
        
-    return render_template("courses.html", form=form, user=current_user, is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"))
+    return render_template("courses.html", 
+                            form=form,
+                            user=current_user, 
+                            is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"))
 
 @courses.route('/<coursePage>', methods=['GET', 'POST'])
 def course(coursePage):
@@ -64,6 +67,7 @@ def course(coursePage):
     can_modify = can_professor_modify(current_user.get_id(), coursePage.upper())
 
     if form.validate_on_submit() and can_modify:
+        print("hello")
         if form.submit.data:
             change_feedback(coursePage.upper())
         elif form.changeSubmit.data:
@@ -82,15 +86,16 @@ def course(coursePage):
     #se è un prof che ha creato il corso o che fa parte della relazione facciamo comparire un bottone "modifica corso"
     #renderizza ad una pagina modifica corso accessibile solo ai prof che l'hanno modificata
 
-@courses.route('/action/<issubbed>/<course>')
+@courses.route('/action/<course>')
 @role_required("Student")
-def subs(issubbed, course):
+def subs(course):
     course = course.upper()
+    issubbed = request.args.get("sub")
 
-    if issubbed == "notsubbed":
+    if issubbed == 'false':
         subscribe_course(current_user.get_id(), course)
         
-    elif issubbed == "subbed":
+    elif issubbed == 'true':
         delete_subscription(current_user.get_id(), course)
 
     return redirect(url_for("courses_blueprint.course", coursePage=course))
@@ -107,14 +112,14 @@ BEGIN
     IF ( (
         SELECT COUNT(*)
         FROM StudentCourses sc JOIN Courses c USING(CourseID)
-        WHERE NEW.CourseID = c.CourseID
-        ) >= (
-            SELECT c.MaxStudents
-            FROM Courses c
-            WHERE c.CourseID = NEW.CourseID
-        )) THEN RETURN NULL;
-    ENDIF
+        WHERE NEW.CourseID = c.CourseID) >= (SELECT c.MaxStudents
+                                            FROM Courses c
+                                            WHERE c.CourseID = NEW.CourseID) AND (SELECT c3."MaxStudents"
+                                                                                  FROM "public"."Courses" AS c3 
+                                                                                  WHERE c3."CourseID" = NEW."CourseID") > 0)) THEN RETURN NULL;
+    END IF
     RETURN NEW;
 END
+
 
 """

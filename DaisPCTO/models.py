@@ -6,7 +6,6 @@
 # from sqlalchemy.orm import *
 # from flask import Flask
 
-from tkinter import CASCADE
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, String, Integer, Date, ForeignKey, CheckConstraint, Time, Boolean, or_, and_, UniqueConstraint, Text
 from sqlalchemy.orm import relationship
@@ -190,7 +189,7 @@ class Lesson(Base):
     Date = Column(Date)
     StartTime = Column(Time)
     EndTime = Column(Time)
-    Topic = Column(String)
+    Topic = Column(Text)
     Token = Column(String, unique=True)
     IsDual = Column(Boolean)
 
@@ -213,7 +212,7 @@ class FrontalLesson(Base):
 
     __table_args__ = ()
 
-    LessonID = Column(Integer, ForeignKey("Lessons.LessonID"), primary_key=True)
+    LessonID = Column(Integer, ForeignKey("Lessons.LessonID", ondelete="CASCADE"), primary_key=True)
     ClassroomID = Column(Integer, ForeignKey("Classrooms.ClassroomID"))
 
     Classroom = relationship("Classroom", backref = "Lessons")
@@ -238,7 +237,7 @@ class Classroom(Base):
 class OnlineLesson(Base):
     __tablename__ = "OnlineLessons"
 
-    LessonID = Column(Integer, ForeignKey("Lessons.LessonID"), primary_key=True)
+    LessonID = Column(Integer, ForeignKey("Lessons.LessonID", ondelete="CASCADE"), primary_key=True)
     RoomLink = Column(String)
     RoomPassword = Column(String)
 
@@ -274,7 +273,7 @@ class Reservation(Base):
 
     StudentID = Column(Integer, ForeignKey("Student.StudentID"), primary_key=True)
     FrontalLessonID = Column(Integer, ForeignKey("FrontalLesson.LessonID"), primary_key=True)
-    ReservetionID = Column(String) 
+    ReservationID = Column(String) 
     HasValidation = Column(Boolean)
 
     __table_args__= ()

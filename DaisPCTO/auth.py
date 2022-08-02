@@ -29,7 +29,7 @@ class RegisterForm(FlaskForm):
     def validate_repeat_password(self, password):
         
         if password.data != self.password.data:
-            raise validators.ValidationError("Le password non corrispondono! Clicca qui per accedere!")
+            raise validators.ValidationError("Le password non corrispondono!")
             
     
     def validate_email(self, email):

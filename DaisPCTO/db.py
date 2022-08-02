@@ -1,6 +1,7 @@
 from DaisPCTO.models import Feedback,\
      ProfessorCourse, StudentCourse, User, Student, Professor,\
-     UserRole, Course, Role, Lesson
+     UserRole, Course, Role, Lesson, StudentLesson, Reservation, \
+     FrontalLesson, OnlineLesson, Classroom
 from sqlalchemy import create_engine, and_, not_, or_, not_
 from sqlalchemy.orm import sessionmaker
 from flask_login import current_user, user_accessed
@@ -200,8 +201,6 @@ def change_course_attr(form, course_id):
         session.close()
 
 def change_feedback(course_id):
-    
-
     try: 
         session = Session()       
         session.query(Course).filter(Course.CourseID == course_id).update({Course.OpenFeedback : not_(Course.OpenFeedback)})
@@ -216,7 +215,8 @@ def subscribe_course(student_id, course_id):
         session = Session()
         session.add(StudentCourse(StudentID=student_id, CourseID=course_id))
         session.commit()
-    except:
+    except Exception as e:
+        print(e)
         session.rollback()
 
 def is_subscribed(student_id, course_id):
@@ -238,25 +238,35 @@ def delete_subscription(student_id, course_id):
     except:
         session.rollback()
 
-def add_lesson(form, course_id):
+def add_lesson(form, course_id, professor):
     date = form.date.data
     start_time = form.start_time.data
     end_time = form.end_time.data
     topic = form.topic.data
-    is_dual = form.is_dual.data
+    type_lesson = form.type_lesson.data
+    is_dual = True if type_lesson == "Duale" else False
     classroom = form.classroom.data
-    token = generate_password_hash(f'{current_user.get_id()}{course_id}{date}{start_time}{end_time}{classroom}{random.randint(0, 101)}')
-    print(token)
-    
-    # try:
-    #     session = Session()
-    #     session.add(Lessons(Date = date, StartTime = start_time, EndTime = end_time, Topic = topic, IsDual = is_dual, Classroom = classroom))
-    #     session.commit()
-    # except Exception as e:
-    #     if e.orig.diag.message_primary == "Aula già occupata":
-    #         return "Clasherror"
-    #     else:
-    #         return None
+    token = generate_password_hash(f'{current_user.get_id()}{course_id}{date}{start_time}{end_time}{classroom}{random.randint(0, 501)}')
+     
+    try:
+        session = Session()
+        lesson_new = Lesson(Date = date, StartTime = start_time, EndTime = end_time, Topic = topic, IsDual = is_dual, CourseID = course_id, ProfessorID=professor, Token=token)
+        session.add(lesson_new)
+        session.flush()
+        if (type_lesson == "Frontale"):
+            session.add(FrontalLesson(LessonID = lesson_new.LessonID , ClassroomID = classroom))
+        elif (type_lesson == "Online"):
+            session.add(OnlineLesson(LessonID=lesson_new.LessonID))
+        elif (type_lesson == "Duale"):
+            session.add(FrontalLesson(LessonID = lesson_new.LessonID , ClassroomID = classroom))
+            session.add(OnlineLesson(LessonID=lesson_new.LessonID))
+
+        session.commit()
+    except Exception as e:
+        if e.orig.diag.message_primary == "Aula già occupata":
+            return "Clasherror"
+        else:
+            return "Errore Ignoto"
 
     return "Success"
 
@@ -264,13 +274,48 @@ def delete_lesson(lesson_id):
     try:
         session = Session()
         session.query(Lesson).filter(Lesson.LessonID == lesson_id).delete()
+        session.commit()
+        print("è tutto ok")
     except:
-        print("err")
+        print("NON È OK")
         session.rollback()
 
 def get_lessons_by_course_id(course_id):
     try:
         session = Session()
-        return session.query(Lesson).filter(Lesson.CourseID == course_id).all()
+        return session.query(Lesson).filter(Lesson.CourseID == course_id).order_by(Lesson.Date, Lesson.StartTime).all()
     except:
         return None
+
+def get_course_id_by_lesson_id(lesson_id):
+    try:
+        session = Session()
+        return session.query(Course).filter(and_(Lesson.LessonID == lesson_id, Course.CourseID == Lesson.CourseID)).first().CourseID
+    except Exception as e:
+        return None
+        
+def can_reserve(user_id, lesson_id):
+    try:
+        session = Session()
+        num_reserved = session.query(Reservation).filter(Reservation.FrontalLessonID == lesson_id).count()
+        classroom_seats = session.query(Classroom.Seats).filter(FrontalLesson.LessonID == lesson_id, Classroom.ClassroomID == FrontalLesson.ClassroomID)
+        # return session.query(Reservation).filter(and_(Reservation.StudentID == user_id, Reservation.FrontalLessonID == lesson_id, Lesson.LessonID == Reservation.FrontalLessonID, Lesson.Token == token)).first() is not None  
+        if classroom_seats > num_reserved:
+            token = None #unione di una serie di cose che ora non abbiamo voglia di fare hashate
+            session.add(Reservation(StudentID = user_id, FrontalLessonID = lesson_id, HasValidation = False, ReservationID = token))
+            return True
+        else:
+            return False
+    except:  
+        return False
+
+
+def confirm_attendance(user_id, lesson_id, lesson_token):
+    try:
+        session = Session()
+        if session.query(Reservation).filter(Reservation.FrontalLessonID == lesson_id, Reservation.ReservationID == lesson_token, Reservation.StudentID == user_id, Reservation.HasValidation == False).first() is not None:
+            session.query(Reservation).filter(and_(Reservation.FrontalLessonID == lesson_id, Reservation.StudentID == user_id)).update({Reservation.HasValidation : True})
+            return True
+    except:
+        session.rollback()
+    return False

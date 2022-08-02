@@ -1,0 +1,37 @@
+{% extends "page.html" %}
+
+{% block content %} 
+
+    <div id="reader">
+        <input type="file" id="qr-input-file" accept="image/*">
+        <!-- 
+        Or add captured if you only want to enable smartphone camera, PC browsers will ignore it.
+        -->
+        
+
+        <input type="file" id="qr-input-file" accept="image/*" capture>
+
+        
+    </div>
+    
+    <script type="text/javascript">
+        
+
+
+        function onScanSuccess(decodedText, decodedResult) {
+  // handle the scanned code as you like, for example:
+            console.log(`Code matched = ${decodedText}`, decodedResult);
+        }
+
+        function onScanFailure(error) {
+    // handle scan failure, usually better to ignore and keep scanning.
+    // for example:
+    //console.warn(`Code scan error = ${error}`);
+        }
+
+        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 0.5, qrbox: {width: 500, height: 500} }, /* verbose= */ false);
+
+        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    </script>    
+
+{% endblock content %} 

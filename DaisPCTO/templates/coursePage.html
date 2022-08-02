@@ -116,9 +116,13 @@
 
             {% if is_professor  == False and current_user.is_authenticated %}
                 <span style="display : inline-block; margin-left: 40px">
-                    <button class="btn btn-{% if iscritto %}danger{% else %}success{% endif %}" data-bs-toggle="modal" data-bs-target="#subscription" {% if subs == course.MaxStudents and not iscritto%} disabled {% endif %}</button>
-                        {% if iscritto %} Disiscriviti! {% else %} Iscriviti! {% endif %}
-                    </button>
+                    {% if subs == course.MaxStudents and coruse.MaxStudents > 0 %} 
+                        <button class="btn btn-danger disabled" disabled>Iscrizioni piene</button>
+                    {% else %}
+                        <button class="btn btn-{% if iscritto %}danger{% else %}success{% endif %}" data-bs-toggle="modal" data-bs-target="#subscription" {% if subs == course.MaxStudents and not iscritto%} disabled {% endif %}</button>
+                            {% if iscritto %} Disiscriviti! {% else %} Iscriviti! {% endif %}
+                        </button>
+                    {% endif %}
                 </span>
 
                 <div class="modal fade" id="subscription" tabindex="-1" aria-labelledby="subscription" aria-hidden="true">
@@ -130,7 +134,7 @@
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
-                                <a href="/courses/action/{% if iscritto %}subbed{% else %}notsubbed{% endif %}/{{course.CourseID}}">
+                                <a href="/courses/action/{{course.CourseID}}?{% if iscritto %}sub=true{% else %}sub=false{% endif %}">
                                     <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Si</button>
                                 </a>
                             </div>
