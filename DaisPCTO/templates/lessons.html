@@ -296,10 +296,25 @@
 
         });
 
-        $(".card-header").click( function() {
-            $(this).children().first().toggleClass("bi-chevron-up").toggleClass("bi-chevron-down");
-          
-                       
+        $(".collapse").on("hidden.bs.collapse", function() {
+            // $(this).toggleClass("bi-chevron-up").toggleClass("bi-chevron-down");  
+            if ($(this).attr('id') == 'collpase-form') {
+                $('#simbolo-freccia').toggleClass("bi-chevron-up").toggleClass("bi-chevron-down");
+            } else {
+                let index = $(this).attr('id').substring($(this).attr('id').indexOf('-')+1);
+                $('#simbolo-freccia-'+index).toggleClass("bi-chevron-up").toggleClass("bi-chevron-down");
+            }                    
+        });
+
+        $(".collapse").on("shown.bs.collapse", function() {
+            // $(this).toggleClass("bi-chevron-up").toggleClass("bi-chevron-down"); 
+           
+            if ($(this).attr('id') == 'collapse-form') {
+                $('#simbolo-freccia').toggleClass("bi-chevron-up").toggleClass("bi-chevron-down");
+            } else {
+                let index = $(this).attr('id').substring($(this).attr('id').indexOf('-')+1);
+                $('#simbolo-freccia-'+index).toggleClass("bi-chevron-up").toggleClass("bi-chevron-down");
+            }              
         });
   
     </script>
