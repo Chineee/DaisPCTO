@@ -38,7 +38,7 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                        <h5 class="modal-title" id="exampleModalLabel">Vuoi davvero eliminare la lezione? <br> Questa azione è irreversibile</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
         
@@ -52,29 +52,77 @@
 
         <ul class="list-group">
             {% for i in range(list_lessons | length) %} 
+
+
                 
                 <li class="list-group-item justify-content-between align-items-end">
                     {% if is_professor and can_modify %}
+
+                        <div class="modal fade" id="modalTopicLesson-{{i}}" tabindex="-1" aria-labelledby="modalTopicLessonLabel-{{i}}" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="modalTopicLesson-{{i}}">Modifica Argomento e Materiali</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+
+                                    <div class="modal-body info-{{i}}">
+                                        <textarea class="form-control" style="white-space: normal;" id="textarea-information-course-{{i}}" data-lessonid="{{list_lessons[i].LessonID}}">{{list_lessons[i].Topic}}</textarea>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                                        <button type="button" class="btn btn-primary changeTopicLesson" data-value="{{i}}" data-bs-dismiss="modal">Salva Modifiche</button>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                        </div>                   
+
                         <div class="float-end" data-lesson="{{list_lessons[i].LessonID}}">
                             <button name="button_to_delete" type="button" class="btn btn-danger btn-sm btn_to_delete_lesson" data-bs-toggle="modal" data-bs-target="#exampleModal">X</button>
                         </div>
                     {% endif %}
                     <div class="ms-2 me-auto card-header cursore" data-bs-toggle="collapse" data-bs-target="#collapse-{{i}}" aria-expanded="true" aria-controls="#collapse-{{i}}" data-parent="#card-scheda-2">
                         <i class="indicator bi float-start fs-6 me-2 bi-chevron-up" id="simbolo-freccia-{{i}}"></i>
-                        <h5 class="mb-0 card-title"> Lezione {{i+1}} </h5> 
+                        <h5 class="mb-0 card-title"> 
+                            Lezione {{i+1}}
+                        </h5> 
+                        <br>
+                        <strong>&emsp;&ensp;Data &ensp; :</strong> {{list_lessons[i].Date.strftime('%d-%m-%Y')}} <br>
+                        <strong>&emsp;&ensp;Orario :</strong>  {{list_lessons[i].StartTime.strftime('%H:%M')}} - {{list_lessons[i].EndTime.strftime('%H:%M')}} 
+                         
                     </div>
                     
                     
-                    <div id="collapse-{{i}}" class="collapse">
+                    <div id="collapse-{{i}}" class="collapse show" style="word-wrap : break-word;">
+                        &emsp;&emsp;
                         <div class="card-body">
-                            <br>
-                            {{list_lessons[i].Topic}}    
+                            <p style="margin-left : 32px">
+                                <br>
+                               
+                                <strong> Argomento e Materiali : </strong>
+                                &emsp;
+                                {% if is_professor and can_modify %}
+                                    <button type="button" class="btn btn-primary change-topic-lesson" style="font-size : 75%" data-bs-toggle="modal" data-bs-target="#modalTopicLesson-{{i}}">
+                                        <i class="bi bi-pencil" style="font-size : 95%"></i>
+                                    </button>
+                                {% endif %}
+                                <br>
+                            </p>
+
+                            <p style="margin-left : 32px" id="lesson-topic-{{i}}">                                
+                                {{list_lessons[i].Topic}}  
+                            </p>
                         </div>
                     </div>                    
-                </li>               
+                </li>      
+                
+                
             {% endfor %}           
         </ul>
     </div>
+
+    
 
     <br><br>
     
@@ -84,7 +132,7 @@
 
     <div class="card tit-no-border espansione" id="dopdown-button">
         <div class="card-header cursore" data-bs-toggle="collapse" data-bs-target="#collapse-form" aria-expanded="true" aria-controls="#collapse-form" data-parent="#card-scheda-2">
-            <i class="indicator bi float-start fs-6 me-2 bi-chevron-up" id="simbolo-freccia"></i>
+            <i class="indicator bi float-start fs-6 me-2 bi-chevron-down" id="simbolo-freccia"></i>
             <h5 class="mb-0 card-title"> Aggiungi Lezione </h5> 
         </div>
         <div id="collapse-form" class="collapse{% if form.errors.items() %} show{% endif %}">
@@ -177,11 +225,12 @@
         </div>
     </div>
     {% endif %}
+    <br><br>
 
 
     <script type="text/javascript">
         
-        "{% if is_professor %}"
+        "{% if is_professor and can_modify %}"
 
             var csrf_token = "{{ csrf_token() }}";
         "{% else %}"
@@ -189,13 +238,7 @@
             var csrf_token = null;
         "{% endif %}"
 
-        $('.btn_to_delete_lesson').on('click', function () {
-            let info = $(this).parent();
-    
-            $('.modal-button').on('click', function () {
-                let val = info.data("lesson");
-                
-                $.ajaxSetup({
+        $.ajaxSetup({
                     beforeSend: function(xhr, settings) {
                         if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
                             xhr.setRequestHeader("X-CSRFToken", csrf_token);
@@ -203,6 +246,31 @@
                         }
                     }
                 });
+
+        $('.changeTopicLesson').on('click', function() {
+            let lesson_index = $(this).data("value");
+            let text_area_object = $('#textarea-information-course-'+ lesson_index);
+            let lesson_topic = text_area_object.val();
+            let lesson_id = text_area_object.data("lessonid")
+
+            $.ajax({
+                type : "post",
+                url : '/action/lessons?action=modify_topic&lesson_id='+lesson_id+'&topic='+lesson_topic,
+                success : function(data) {
+                    if ( data['success'] == true ) $("#lesson-topic-"+lesson_index).text(lesson_topic)
+                     
+                },
+
+                
+            })
+        });
+
+        $('.btn_to_delete_lesson').on('click', function () {
+            let info = $(this).parent();
+    
+            $('.modal-button').on('click', function () {
+                let val = info.data("lesson");
+                
 
                 $.ajax({
                     type : 'POST',

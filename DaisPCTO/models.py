@@ -256,17 +256,6 @@ class QnA(Base):
 
     __table_args__ = ()
 
-class Material(Base):
-
-    __tablename__ = "Materials"
-
-    MaterialID = Column(Integer, primary_key=True)
-    LessonID = Column(Integer, ForeignKey("Lessons.LessonID"))
-    MarkDownFile = Column(String)
-    Lessons = relationship("Lesson", backref="Materials")
-
-    __table_args__ = ()
-
 
 class Reservation(Base):
     __tablename__ = "Reservation"

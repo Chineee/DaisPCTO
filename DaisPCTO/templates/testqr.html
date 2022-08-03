@@ -29,7 +29,7 @@
     //console.warn(`Code scan error = ${error}`);
         }
 
-        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 0.5, qrbox: {width: 500, height: 500} }, /* verbose= */ false);
+        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 0.4, qrbox: {width: 500, height: 500} }, /* verbose= */ false);
 
         html5QrcodeScanner.render(onScanSuccess, onScanFailure);
     </script>    

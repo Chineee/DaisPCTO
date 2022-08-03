@@ -2,7 +2,7 @@ from DaisPCTO.models import Feedback,\
      ProfessorCourse, StudentCourse, User, Student, Professor,\
      UserRole, Course, Role, Lesson, StudentLesson, Reservation, \
      FrontalLesson, OnlineLesson, Classroom
-from sqlalchemy import create_engine, and_, not_, or_, not_
+from sqlalchemy import create_engine, and_, not_, or_, not_, exc
 from sqlalchemy.orm import sessionmaker
 from flask_login import current_user, user_accessed
 from flask_bcrypt import generate_password_hash, check_password_hash
@@ -215,8 +215,7 @@ def subscribe_course(student_id, course_id):
         session = Session()
         session.add(StudentCourse(StudentID=student_id, CourseID=course_id))
         session.commit()
-    except Exception as e:
-        print(e)
+    except:
         session.rollback()
 
 def is_subscribed(student_id, course_id):
@@ -262,11 +261,29 @@ def add_lesson(form, course_id, professor):
             session.add(OnlineLesson(LessonID=lesson_new.LessonID))
 
         session.commit()
-    except Exception as e:
+    except exc.SQLAlchemyError as e:
+
+        # print(f'pgerror code : {e.orig.pgcode}')
+
+        # print(dir(e.orig))
+        '''
+        NB: 23514 È IL CODICE CHE INDICA UN "psycopg2.errors.CheckViolation" quindi se l'errore corrisponde a quel codice significa che stiamo
+        violando l'unico checkconstrain della tabella lesson, ovvero quello della data di inizio che deve essere strettamente minore della data di
+        fine
+        '''
+
+            
+        if int(e.orig.pgcode) == 23514: 
+            return "DateError"
+
+        '''
+        NB: Messaggio di un eccezione lanciamo noi
+        '''
+
         if e.orig.diag.message_primary == "Aula già occupata":
-            return "Clasherror"
-        else:
-            return "Errore Ignoto"
+            return "ClashError"
+        
+        return "UnknownError"
 
     return "Success"
 
@@ -275,10 +292,10 @@ def delete_lesson(lesson_id):
         session = Session()
         session.query(Lesson).filter(Lesson.LessonID == lesson_id).delete()
         session.commit()
-        print("è tutto ok")
     except:
-        print("NON È OK")
         session.rollback()
+        return False 
+    return True
 
 def get_lessons_by_course_id(course_id):
     try:
@@ -315,7 +332,18 @@ def confirm_attendance(user_id, lesson_id, lesson_token):
         session = Session()
         if session.query(Reservation).filter(Reservation.FrontalLessonID == lesson_id, Reservation.ReservationID == lesson_token, Reservation.StudentID == user_id, Reservation.HasValidation == False).first() is not None:
             session.query(Reservation).filter(and_(Reservation.FrontalLessonID == lesson_id, Reservation.StudentID == user_id)).update({Reservation.HasValidation : True})
-            return True
+            session.commit()
     except:
         session.rollback()
-    return False
+        return False
+    return True
+
+def change_lesson_information(lesson_id, data):
+    try:
+        session = Session() 
+        session.query(Lesson).filter(Lesson.LessonID == lesson_id).update({Lesson.Topic : data})
+        session.commit()
+    except:
+        session.rollback()
+        return False 
+    return True

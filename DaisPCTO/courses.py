@@ -51,7 +51,7 @@ def add():
         else:
             form.course_id.errors.append("Corso già esistente")
        
-    return render_template("courses.html", 
+    return render_template("addCourse.html", 
                             form=form,
                             user=current_user, 
                             is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"))

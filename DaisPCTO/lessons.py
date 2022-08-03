@@ -3,7 +3,7 @@ from flask_login import current_user, login_required
 from DaisPCTO.auth import role_required
 from DaisPCTO.db import can_professor_modify, get_course_by_id, get_user_by_id, get_professor_by_course_id, \
     change_course_attr, add_lesson, get_lessons_by_course_id, delete_lesson, get_course_id_by_lesson_id,\
-    can_reserve, confirm_attendance
+    can_reserve, confirm_attendance, change_lesson_information
 from flask_wtf import FlaskForm, CSRFProtect
 from wtforms import StringField, DateField, SelectField, BooleanField, SubmitField, validators, SelectMultipleField, IntegerField, TextAreaField, TimeField
 from wtforms.validators import DataRequired, ValidationError
@@ -16,7 +16,7 @@ class AddLesson(FlaskForm):
     date = DateField("Data", validators=[DataRequired(message="Campo richiesto")], render_kw={"placeholder":"Data"})
     start_time = TimeField("Orario di Inizio", validators=[DataRequired(message="Campo richiesto")], render_kw={"placeholder":"Orario di Inizio"})
     end_time = TimeField("Orario di Fine", validators=[DataRequired(message="Campo richiesto")], render_kw={"placeholder":"Orario di Fine"})
-    topic = TextAreaField("Argomento", render_kw={"placeholder":"Argomento"})
+    topic = TextAreaField("Argomento e Materiali", render_kw={"placeholder":"..."})
     type_lesson = SelectField('Modalità erogazione', choices=[("", "--Seleziona un tipo--"),("Frontale", "Frontale"),("Online", "Online"), ("Duale", "Duale")], validators=[DataRequired(message="Campo richiesto")])
     classroom = StringField("Aula", render_kw={"placeholder" : "Aula"})
 
@@ -24,6 +24,10 @@ class AddLesson(FlaskForm):
         if self.type_lesson.data == 'Frontale' or self.type_lesson.data == "Duale":
             if classroom.data == "" or classroom is None or classroom.data is None:
                 raise ValidationError("Aula obbligatoria in caso di lezione Frontale o Duale")
+        elif self.type_lesson.data == 'Online':
+            if classroom.data != "" and classroom is not None and classroom.data is not None:
+                raise ValidationError("Non è richiesta l'aula per le lezione online")
+    
 
 
 @lessons.route('/')
@@ -39,10 +43,17 @@ def lessons_course_home(coursePage):
 
     if form.validate_on_submit() and can_modify:
         answer = add_lesson(form, coursePage.upper(), current_user.get_id())
-        if answer != 'Success': #se l'inserimento non va a buon fine, avvertiamo il chiamante
+        if answer == 'ClashError': #se l'inserimento non va a buon fine, avvertiamo il chiamante
             form.classroom.errors.append("Aula già prenotata per quell'ora")
+
+        elif answer == 'DateError':
+            form.start_time.errors.append("L'ora di inizio deve essere minore di quella di fine!")
+            form.end_time.errors.append("L'ora di fine deve essere maggiore di quella di inzio")
+
+        elif answer == "UnknownError":
+            flash("Something goes wrong...")
         else:
-            return redirect(url_for("lessons_course_home"))
+            return redirect(url_for("lessons_blueprint.lessons_course_home", coursePage = coursePage))
 
     list_lessons = get_lessons_by_course_id(coursePage.upper())
     
@@ -81,10 +92,17 @@ def action_lesson():
 
     if action == 'delete':
         if can_professor_modify(current_user.get_id(), get_course_id_by_lesson_id(lesson_id)):
-            delete_lesson(lesson_id)
-            return jsonify({'success' : True})
+            if delete_lesson(lesson_id):
+                return jsonify({'success' : True})
         return jsonify({'success' : False})
-            
+    
+    elif action == 'modify_topic':
+        topic = request.args.get('topic')
+        if can_professor_modify(current_user.get_id(), get_course_id_by_lesson_id(lesson_id)):
+            if change_lesson_information(lesson_id, topic):
+                return jsonify({'success' : True})
+        return jsonify({'success' : False})
+
     elif action == 'reservation':
         token_id = request.args.get('token')
         pass
