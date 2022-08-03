@@ -50,6 +50,9 @@
             </div>
         </div>
 
+        {% if (list_lessons | length) == 0 %}
+        Non ci sono lezioni disponibili 
+        {% endif %}
         <ul class="list-group">
             {% for i in range(list_lessons | length) %} 
 

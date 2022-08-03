@@ -347,3 +347,17 @@ def change_lesson_information(lesson_id, data):
         session.rollback()
         return False 
     return True
+
+def get_courses_list():
+    try:
+        session = Session()
+        return session.query(Course).all()
+    except:
+        return None
+
+def get_course_list_by_user_id(user_id):
+    try:
+        session = Session()
+        return session.query(StudentCourse).all()
+    except:
+        return None

@@ -5,7 +5,7 @@ from DaisPCTO.auth import role_required
 from DaisPCTO.db import add_course, get_course_by_id, can_professor_modify, \
     get_user_by_id, get_professor_by_course_id, change_course_attr, \
     count_student, change_feedback, subscribe_course, \
-    delete_subscription, is_subscribed
+    delete_subscription, is_subscribed, get_courses_list
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, EmailField, SelectField, DateField, BooleanField, SubmitField, validators, SelectMultipleField, IntegerField, TextAreaField
 from wtforms.validators import DataRequired, EqualTo, ValidationError, Length, NumberRange
@@ -32,11 +32,17 @@ class ChangeInformationCourse(FlaskForm):
 
     subscribe = SubmitField()
 
-@courses.route('/', methods=['GET', 'POST'])
+@courses.route('/')
 def home_courses():
-   pass
+   course_list = get_courses_list()
 
-@courses.route('/private', methods=['GET', 'POST'])
+   return render_template("courses.html",
+                          course_list = course_list,
+                          is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"),
+                          user = current_user
+                         )
+              
+@courses.route('/mycourses', methods=['GET', 'POST'])
 def private():
     pass
 

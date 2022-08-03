@@ -1,0 +1,48 @@
+{% extends "page.html" %} 
+
+
+{% block content %} 
+
+    
+    <h1> 
+        <center>
+            CORSI
+        </center>
+    </h1>
+    <hr/>
+    <br>
+
+        {% set closed_div = {"closed" : False} %}
+        {% for i in range(course_list | length) %}  
+            {% if i % 3 == 0 %}  
+            <div class="row">
+                {% if closed_div.update({"closed" : False}) %} {% endif %}
+            {% endif %}
+            <div class="col-md-4 mb-3">  
+                <div class="card">
+                    <h4 class="card-header bg-secondary text-white">{{course_list[i].Name}}</h4>
+                    <div class="card-body" style="height: 150px; overflow-y: auto">
+                        <h5 class="card-title">Descrizione Corso:</h5>
+                        <p class="card-text">{% if course_list[i].Description  %} {{course_list[i].Description}} {% endif %}</p>
+
+            
+                    </div> 
+                    <div class="card-footer bg-secondary">
+                        <div class="float-end">
+                            <a href="/courses/{{course_list[i].CourseID}}" class="btn btn-warning">Visualizza pagina del corso</a>
+                        </div>  
+                    </div>
+                    
+                </div>   
+            </div>
+            {% set next_val = i+1 %}
+            {% if next_val % 3 == 0 %}
+            {% if closed_div.update({"closed" : True}) %} {% endif %}
+            </div>
+            {% endif %}
+        {% endfor %}
+        {% if closed_div.closed == False %} 
+        </div> 
+        {% endif %}
+    
+{% endblock content %}
