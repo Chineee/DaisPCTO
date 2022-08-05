@@ -2,7 +2,7 @@ from DaisPCTO.models import Feedback,\
      ProfessorCourse, StudentCourse, User, Student, Professor,\
      UserRole, Course, Role, Lesson, StudentLesson, Reservation, \
      FrontalLesson, OnlineLesson, Classroom
-from sqlalchemy import create_engine, and_, not_, or_, not_, exc
+from sqlalchemy import create_engine, and_, not_, or_, not_, exc, func, case
 from sqlalchemy.orm import sessionmaker
 from flask_login import current_user, user_accessed
 from flask_bcrypt import generate_password_hash, check_password_hash
@@ -263,9 +263,7 @@ def add_lesson(form, course_id, professor):
         session.commit()
     except exc.SQLAlchemyError as e:
 
-        # print(f'pgerror code : {e.orig.pgcode}')
-
-        # print(dir(e.orig))
+       
         '''
         NB: 23514 È IL CODICE CHE INDICA UN "psycopg2.errors.CheckViolation" quindi se l'errore corrisponde a quel codice significa che stiamo
         violando l'unico checkconstrain della tabella lesson, ovvero quello della data di inizio che deve essere strettamente minore della data di
@@ -280,7 +278,7 @@ def add_lesson(form, course_id, professor):
         NB: Messaggio di un eccezione lanciamo noi
         '''
 
-        if e.orig.diag.message_primary == "Aula già occupata":
+        if e.orig.diag.message_primary == "Classroom is already taken":
             return "ClashError"
         
         return "UnknownError"
@@ -292,7 +290,8 @@ def delete_lesson(lesson_id):
         session = Session()
         session.query(Lesson).filter(Lesson.LessonID == lesson_id).delete()
         session.commit()
-    except:
+    except Exception as e:
+        print(e)
         session.rollback()
         return False 
     return True
@@ -308,7 +307,7 @@ def get_course_id_by_lesson_id(lesson_id):
     try:
         session = Session()
         return session.query(Course).filter(and_(Lesson.LessonID == lesson_id, Course.CourseID == Lesson.CourseID)).first().CourseID
-    except Exception as e:
+    except:
         return None
         
 def can_reserve(user_id, lesson_id):
@@ -351,13 +350,71 @@ def change_lesson_information(lesson_id, data):
 def get_courses_list():
     try:
         session = Session()
-        return session.query(Course).all()
+        return session.query(Course).order_by(Course.Name).all()
     except:
         return None
 
-def get_course_list_by_user_id(user_id):
+def get_professor_courses(user_id):
     try:
         session = Session()
-        return session.query(StudentCourse).all()
+        # if not is_professor:
+        #     return session.query(Course)\
+        #         .join(StudentCourse)\
+        #         .filter(StudentCourse.StudentID == user_id)\
+        #         .order_by(Course.Name)\
+        #         .all()
+        # else:
+        return session.query(Course)\
+            .join(ProfessorCourse)\
+            .filter(ProfessorCourse.ProfessorID == user_id)\
+            .order_by(Course.Name)\
+            .all()
     except:
         return None
+
+
+def get_student_courses(user_id):
+    try:
+        print("INIT QUERY")
+        session = Session()
+        # return session.query(Course.CourseID, Course.Name, func.sum(Lesson.EndTime - Lesson.StartTime).label("Hours"))\
+        #         .join(StudentCourse)\
+        #         .join(StudentLesson)\
+        #         .join(Lesson)\
+        #         .filter(StudentCourse.StudentID == user_id)\
+        #         .order_by(Course.Name)\
+        #         .group_by(Course.CourseID, Course.Name).all()
+        query = session.query(Course.CourseID, Course.Name, Course.Description, Course.MaxStudents, Course.MinHourCertificate, func.sum(case((and_(Lesson.StartTime.isnot(None), Lesson.EndTime.isnot(None)), Lesson.EndTime-Lesson.StartTime), else_="00:00:00")).label("Hours")) \
+                    .join(StudentCourse, StudentCourse.CourseID == Course.CourseID)\
+                    .join(StudentLesson, StudentLesson.StudentID == StudentCourse.StudentID, isouter=True)\
+                    .join(Lesson, and_(Lesson.LessonID == StudentLesson.LessonID, Lesson.CourseID == Course.CourseID), isouter=True)\
+                    .filter(StudentCourse.StudentID == user_id)\
+                    .order_by(Course.Name)\
+                    .group_by(Course.CourseID, Course.Name, Course.Description, Course.MaxStudents, Course.MinHourCertificate).all()
+
+
+
+        print("END QUERY")
+        return query
+
+    except Exception as e:
+        print(e)
+
+        return []
+
+"""
+
+SELECT "Courses"."CourseID", SUM(CASE WHEN ("Lessons"."StartTime" IS NOT NULL AND "Lessons"."EndTime" IS NOT NULL) THEN "Lessons"."EndTime" - "Lessons"."StartTime" ELSE '00:00:00' END)
+FROM "StudentsCourses" NATURAL JOIN "Courses" NATURAL LEFT JOIN ("Lessons" NATURAL LEFT JOIN "StudentsLessons")
+WHERE "StudentsCourses"."StudentID" = 1
+GROUP BY "Courses"."CourseID"
+
+
+FROM "Courses" NATURAL JOIN "StudentsCourses" NATURAL LEFT JOIN "StudentsLessons" NATURAL LEFT JOIN "Lessons"
+
+FROM "Courses" LEFT OUTER JOIN "Lessons" ON "Courses"."CourseID" = "Lessons"."CourseID" LEFT OUTER JOIN "StudentsLessons" ON "Lessons"."LessonID" = "StudentsLessons"."LessonID" JOIN "StudentsCourses" ON "Courses"."CourseID" = "Stude
+ntsCourses"."CourseID"
+
+
+
+"""

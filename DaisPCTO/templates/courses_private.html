@@ -1,0 +1,52 @@
+{% extends "courses.html" %}
+
+
+
+{% block headerPage %}
+
+    <div class="float-end">
+        {% if is_professor %}
+
+            <a href="/courses/{{ course_list[i].CourseID }}/demographics">
+        {% endif %}
+        <button class="btn btn-{% if is_professor %}info demog{% else %}danger unsubs{% endif %}" data-bs-toggle="modal"
+                data-bs-target="{% if is_professor %}#viewDemographics{% else %}#unsubscribe{% endif %}">
+            {% if is_professor %}Visualizza Demografica{% else %}Disiscriviti {% endif %}</button>
+        {% if is_professor %}
+            </a>
+        {% endif %}
+    </div>
+
+{% endblock headerPage%}
+
+{% block footerPage %}
+
+
+{% endblock footerPage%}
+
+{% block contentCourse %}
+
+    <div class="modal fade" id="{% if is_professor %} viewDemographics {% else %} unsubscribe{% endif %}" tabindex="-1"
+         aria-labelledby="modal" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="subscription"> {% if iscritto %} Vuoi davvero disiscriverti dal
+                        corso? {% else %} Sei sicuro di iscriverti? {% endif %} </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                    <a href="/courses/action/?{% if iscritto %}sub=true{% else %}sub=false{% endif %}">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Si</button>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock contentCourse %}
+
+
+{# per studente vede la barra di progresso verso le ore per il certificato #}

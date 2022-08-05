@@ -5,7 +5,7 @@ from DaisPCTO.auth import role_required
 from DaisPCTO.db import add_course, get_course_by_id, can_professor_modify, \
     get_user_by_id, get_professor_by_course_id, change_course_attr, \
     count_student, change_feedback, subscribe_course, \
-    delete_subscription, is_subscribed, get_courses_list
+    delete_subscription, is_subscribed, get_courses_list, get_professor_courses, get_student_courses
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, EmailField, SelectField, DateField, BooleanField, SubmitField, validators, SelectMultipleField, IntegerField, TextAreaField
 from wtforms.validators import DataRequired, EqualTo, ValidationError, Length, NumberRange
@@ -28,7 +28,7 @@ class ChangeInformationCourse(FlaskForm):
     min_hour_certificate = IntegerField("Ore minime per ottenere il certificato", validators=[NumberRange(min=0, message="Non puoi inserire un numero di ore negative")], default=0)
 
     changeSubmit = SubmitField()
-    submit = SubmitField() #
+    submit = SubmitField()
 
     subscribe = SubmitField()
 
@@ -42,9 +42,29 @@ def home_courses():
                           user = current_user
                          )
               
-@courses.route('/mycourses', methods=['GET', 'POST'])
+@courses.route('/subscriptions', methods=['GET', 'POST'])
+@login_required
 def private():
-    pass
+    """
+    AGGIUNGI CAMPO CATEGORIA PER I CORSI E NELLA PAGINA DEI CORSI SUDDIVIDERLI PER CATEGORIA
+
+    TRIGGER PRENOTAZIONE LEZIONE
+
+    TRIGGER CREAZIONE LEZIONE
+    """
+    is_professor = current_user.hasRole("Professor")
+
+    courses_list = []
+    if is_professor:
+        courses_list = get_professor_courses(current_user.get_id())
+    else:
+        courses_list = get_student_courses(current_user.get_id())
+
+    return render_template("courses_private.html",
+                           is_professor = is_professor,
+                           user = current_user,
+                           course_list = courses_list
+                           )
 
 @courses.route('/add', methods=['GET', 'POST'])
 @role_required("Professor")
@@ -73,7 +93,6 @@ def course(coursePage):
     can_modify = can_professor_modify(current_user.get_id(), coursePage.upper())
 
     if form.validate_on_submit() and can_modify:
-        print("hello")
         if form.submit.data:
             change_feedback(coursePage.upper())
         elif form.changeSubmit.data:

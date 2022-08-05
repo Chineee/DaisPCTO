@@ -1,36 +1,33 @@
-{% extends "page.html" %} 
+{% extends "page.html" %}
 
-{% block content %} 
+{% block content %}
     <style>
         .card-header {
             cursor : pointer;
         }
     </style>
-    <h1> 
+    <h1>
         <center>
-            {{course.Name}} - {{course.CourseID}} 
+            {{course.Name}} - {{course.CourseID}}
         </center>
     </h1>
 
     <nav class="nav nav-pills flex-column flex-sm-row">
         <a href="/courses/{{course.CourseID}}" class="nav-link">
-            <!-- <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right-circle-fill" viewBox="0 0 16 16">
-                <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H4.5z"/>
-            </svg>  -->
-            
-            <i class="bi bi-arrow-right-circle"></i> Docenti e informazioni    
+
+            <i class="bi bi-arrow-right-circle"></i> Docenti e informazioni
         </a>
-            
+
         <a href="/courses/{{course.CourseID}}/lessons" class="nav-link active">
             <i class="bi bi-arrow-right-circle"></i>
-            Lezioni		
+            Lezioni
         </a>
-                
+
     </nav>
 
-    <div class="tab-content border border-primary border-2 border-start-0 border-end-0 border-bottom-0 mt-3"> 
+    <div class="tab-content border border-primary border-2 border-start-0 border-end-0 border-bottom-0 mt-3">
         <br><br>
-        
+
         <br><br>
 
 
@@ -41,24 +38,24 @@
                         <h5 class="modal-title" id="exampleModalLabel">Vuoi davvero eliminare la lezione? <br> Questa azione è irreversibile</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-        
+
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-danger modal-button" data-bs-dismiss="modal">Elimina</button>
+                        <button type="button" class="btn btn-danger modal-button-delete" data-bs-dismiss="modal">Elimina</button>
                     </div>
                 </div>
             </div>
         </div>
 
         {% if (list_lessons | length) == 0 %}
-        Non ci sono lezioni disponibili 
+        Non ci sono lezioni disponibili
         {% endif %}
         <ul class="list-group">
-            {% for i in range(list_lessons | length) %} 
+            {% for i in range(list_lessons | length) %}
 
 
-                
-                <li class="list-group-item justify-content-between align-items-end">
+
+                <li class="list-group-item justify-content-between align-items-end" id="lesson-number-{{ list_lessons[i].LessonID }}">
                     {% if is_professor and can_modify %}
 
                         <div class="modal fade" id="modalTopicLesson-{{i}}" tabindex="-1" aria-labelledby="modalTopicLessonLabel-{{i}}" aria-hidden="true">
@@ -70,16 +67,16 @@
                                     </div>
 
                                     <div class="modal-body info-{{i}}">
-                                        <textarea class="form-control" style="white-space: normal;" id="textarea-information-course-{{i}}" data-lessonid="{{list_lessons[i].LessonID}}">{{list_lessons[i].Topic}}</textarea>
+                                        <textarea class="form-control" style="white-space: normal; height: 200px" id="textarea-information-course-{{i}}" data-lessonid="{{list_lessons[i].LessonID}}">{{list_lessons[i].Topic}}</textarea>
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
                                         <button type="button" class="btn btn-primary changeTopicLesson" data-value="{{i}}" data-bs-dismiss="modal">Salva Modifiche</button>
                                     </div>
-                                    
+
                                 </div>
                             </div>
-                        </div>                   
+                        </div>
 
                         <div class="float-end" data-lesson="{{list_lessons[i].LessonID}}">
                             <button name="button_to_delete" type="button" class="btn btn-danger btn-sm btn_to_delete_lesson" data-bs-toggle="modal" data-bs-target="#exampleModal">X</button>
@@ -87,22 +84,22 @@
                     {% endif %}
                     <div class="ms-2 me-auto card-header cursore" data-bs-toggle="collapse" data-bs-target="#collapse-{{i}}" aria-expanded="true" aria-controls="#collapse-{{i}}" data-parent="#card-scheda-2">
                         <i class="indicator bi float-start fs-6 me-2 bi-chevron-up" id="simbolo-freccia-{{i}}"></i>
-                        <h5 class="mb-0 card-title"> 
+                        <h5 class="mb-0 card-title">
                             Lezione {{i+1}}
-                        </h5> 
+                        </h5>
                         <br>
                         <strong>&emsp;&ensp;Data &ensp; :</strong> {{list_lessons[i].Date.strftime('%d-%m-%Y')}} <br>
-                        <strong>&emsp;&ensp;Orario :</strong>  {{list_lessons[i].StartTime.strftime('%H:%M')}} - {{list_lessons[i].EndTime.strftime('%H:%M')}} 
-                         
+                        <strong>&emsp;&ensp;Orario :</strong>  {{list_lessons[i].StartTime.strftime('%H:%M')}} - {{list_lessons[i].EndTime.strftime('%H:%M')}}
+
                     </div>
-                    
-                    
+
+
                     <div id="collapse-{{i}}" class="collapse show" style="word-wrap : break-word;">
                         &emsp;&emsp;
                         <div class="card-body">
                             <p style="margin-left : 32px">
                                 <br>
-                               
+
                                 <strong> Argomento e Materiali : </strong>
                                 &emsp;
                                 {% if is_professor and can_modify %}
@@ -113,30 +110,30 @@
                                 <br>
                             </p>
 
-                            <p style="margin-left : 32px" id="lesson-topic-{{i}}">                                
-                                {{list_lessons[i].Topic}}  
+                            <p style="margin-left : 32px" id="lesson-topic-{{i}}" class="p-topic-card-body">
+                                {{list_lessons[i].Topic}}
                             </p>
                         </div>
-                    </div>                    
-                </li>      
-                
-                
-            {% endfor %}           
+                    </div>
+                </li>
+
+
+            {% endfor %}
         </ul>
     </div>
 
-    
+
 
     <br><br>
-    
-    
+
+
     {% if is_professor and can_modify %}
-    
+
 
     <div class="card tit-no-border espansione" id="dopdown-button">
         <div class="card-header cursore" data-bs-toggle="collapse" data-bs-target="#collapse-form" aria-expanded="true" aria-controls="#collapse-form" data-parent="#card-scheda-2">
             <i class="indicator bi float-start fs-6 me-2 bi-chevron-down" id="simbolo-freccia"></i>
-            <h5 class="mb-0 card-title"> Aggiungi Lezione </h5> 
+            <h5 class="mb-0 card-title"> Aggiungi Lezione </h5>
         </div>
         <div id="collapse-form" class="collapse{% if form.errors.items() %} show{% endif %}">
             <div class="card-body">
@@ -146,25 +143,25 @@
                         <div class="col-md-6 mb-3">
                             {{form.date.label}}
                             {% if form.date.errors %}
-                                {{form.date(class="form-control is-invalid")}} 
-                                <div class="invalid-feedback">  
+                                {{form.date(class="form-control is-invalid")}}
+                                <div class="invalid-feedback">
                                     {{form.date.errors[0]}}
-                                </div>   
+                                </div>
                             {% else %}
-                                {{form.date(class="form-control")}}   
-                            {% endif %}             
+                                {{form.date(class="form-control")}}
+                            {% endif %}
                         </div>
 
                         <div class="col-md-6 mb-3">
                             {{form.classroom.label}}
                             {% if form.classroom.errors %}
-                                {{form.classroom(class="form-control is-invalid")}} 
-                                <div class="invalid-feedback">  
+                                {{form.classroom(class="form-control is-invalid")}}
+                                <div class="invalid-feedback">
                                     {{form.classroom.errors[0]}}
-                                </div>   
+                                </div>
                             {% else %}
-                                {{form.classroom(class="form-control")}}   
-                            {% endif %}          
+                                {{form.classroom(class="form-control")}}
+                            {% endif %}
                         </div>
                     </div>
 
@@ -172,24 +169,24 @@
                         <div class="col-md-6 mb-3">
                             {{form.start_time.label}}
                             {% if form.start_time.errors %}
-                                {{form.start_time(class="form-control is-invalid")}} 
-                                <div class="invalid-feedback">  
+                                {{form.start_time(class="form-control is-invalid")}}
+                                <div class="invalid-feedback">
                                     {{form.start_time.errors[0]}}
-                                </div>   
+                                </div>
                             {% else %}
-                                {{form.start_time(class="form-control")}}   
-                            {% endif %}    
+                                {{form.start_time(class="form-control")}}
+                            {% endif %}
                         </div>
 
                         <div class="col-md-6 mb-3">
                             {{form.end_time.label}}
                             {% if form.end_time.errors %}
-                                {{form.end_time(class="form-control is-invalid")}} 
-                                <div class="invalid-feedback">  
+                                {{form.end_time(class="form-control is-invalid")}}
+                                <div class="invalid-feedback">
                                     {{form.end_time.errors[0]}}
-                                </div>   
+                                </div>
                             {% else %}
-                                {{form.end_time(class="form-control")}} 
+                                {{form.end_time(class="form-control")}}
                             {% endif %}
                         </div>
                     </div>
@@ -198,13 +195,13 @@
                         <div class="col-md-12 mb-3">
                             {{form.topic.label}}
                             {% if form.topic.errors %}
-                                {{form.topic(class="form-control is-invalid")}} 
-                                <div class="invalid-feedback">  
+                                {{form.topic(class="form-control is-invalid")}}
+                                <div class="invalid-feedback">
                                     {{form.classroom.errors[0]}}
-                                </div>   
+                                </div>
                             {% else %}
-                                {{form.topic(class="form-control")}}   
-                            {% endif %}    
+                                {{form.topic(class="form-control")}}
+                            {% endif %}
                         </div>
                     </div>
 
@@ -212,13 +209,13 @@
                         <div class="col-md-12 mb-3">
                             {{form.type_lesson.label}}
                             {% if form.type_lesson.errors %}
-                                {{form.type_lesson(class="form-control is-invalid")}} 
-                                <div class="invalid-feedback">  
+                                {{form.type_lesson(class="form-control is-invalid")}}
+                                <div class="invalid-feedback">
                                     {{form.type_lesson.errors[0]}}
-                                </div>   
+                                </div>
                             {% else %}
-                                {{form.type_lesson(class="form-control")}}   
-                            {% endif %}    
+                                {{form.type_lesson(class="form-control")}}
+                            {% endif %}
                         </div>
                     </div>
 
@@ -232,7 +229,22 @@
 
 
     <script type="text/javascript">
-        
+
+        function decodeEntity(inputStr) {
+            var textarea = document.createElement("textarea");
+            textarea.innerHTML = inputStr;
+            return textarea.value;
+        }
+
+        window.onload = function() {
+            "{% for i in range(list_lessons | length) %}"
+
+            $("#lesson-topic-" + "{{i}}").html(decodeEntity("{{ list_lessons[i].Topic }}"));
+
+            "{% endfor %}"
+
+        }
+
         "{% if is_professor and can_modify %}"
 
             var csrf_token = "{{ csrf_token() }}";
@@ -245,7 +257,7 @@
                     beforeSend: function(xhr, settings) {
                         if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
                             xhr.setRequestHeader("X-CSRFToken", csrf_token);
-                            
+
                         }
                     }
                 });
@@ -258,32 +270,36 @@
 
             $.ajax({
                 type : "post",
-                url : '/action/lessons?action=modify_topic&lesson_id='+lesson_id+'&topic='+lesson_topic,
-                success : function(data) {
-                    if ( data['success'] == true ) $("#lesson-topic-"+lesson_index).text(lesson_topic)
-                     
-                },
+                url : '/action/lessons?action=modify_topic&lesson_id='+lesson_id,
+                headers : { 'topic':lesson_topic },
 
-                
+                success : function(data) {
+                    if ( data['success'] == true ) $("#lesson-topic-"+lesson_index).html(decodeEntity(lesson_topic))
+
+                },
             })
         });
 
         $('.btn_to_delete_lesson').on('click', function () {
-            let info = $(this).parent();
-    
-            $('.modal-button').on('click', function () {
-                let val = info.data("lesson");
-                
+            let info = $(this).parent().data("lesson");
+            $("#exampleModal").data("lesson", info);
+        });
 
+         $('.modal-button-delete').on('click', function() {
+
+             let info = $('#exampleModal').data("lesson");
                 $.ajax({
                     type : 'POST',
-                    url : '/action/lessons?action=delete&lesson_id=' + val,
+                    url : '/action/lessons?action=delete&lesson_id=' + info,
                      //il current user viene preso direttamente da flask usando la variabile globale
                     //current_user, il corso a cui fa riferimento è facilmente ottenibile con la variabile info (che rappresenta l'id del corso)
-                    
+
                     success : function(data) {
-                        if (data['success'] == true) info.parent().remove();
-                        
+                        if (data['success'] == true) {
+                            $('#lesson-number-'+info).remove();
+                        }
+                        else console.log("ERRROE")
+
                     },
 
                     error : function(data) {
@@ -292,9 +308,7 @@
                     }
 
                 });
-            });
-
-        });
+         });
 
         $(".collapse").on("hidden.bs.collapse", function() {
             // $(this).toggleClass("bi-chevron-up").toggleClass("bi-chevron-down");  
@@ -303,20 +317,20 @@
             } else {
                 let index = $(this).attr('id').substring($(this).attr('id').indexOf('-')+1);
                 $('#simbolo-freccia-'+index).toggleClass("bi-chevron-up").toggleClass("bi-chevron-down");
-            }                    
+            }
         });
 
         $(".collapse").on("shown.bs.collapse", function() {
             // $(this).toggleClass("bi-chevron-up").toggleClass("bi-chevron-down"); 
-           
+
             if ($(this).attr('id') == 'collapse-form') {
                 $('#simbolo-freccia').toggleClass("bi-chevron-up").toggleClass("bi-chevron-down");
             } else {
                 let index = $(this).attr('id').substring($(this).attr('id').indexOf('-')+1);
                 $('#simbolo-freccia-'+index).toggleClass("bi-chevron-up").toggleClass("bi-chevron-down");
-            }              
+            }
         });
-  
+
     </script>
-    
+
 {% endblock %}

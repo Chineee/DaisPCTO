@@ -32,8 +32,8 @@ class AddLesson(FlaskForm):
 
 @lessons.route('/')
 def lessons_home():
-    #mettiamo tutte le lezioni disponibili dell'utente
     pass
+
 
 @lessons.route('/courses/<coursePage>/lessons', methods=['GET', 'POST'])
 def lessons_course_home(coursePage):
@@ -94,10 +94,10 @@ def action_lesson():
         if can_professor_modify(current_user.get_id(), get_course_id_by_lesson_id(lesson_id)):
             if delete_lesson(lesson_id):
                 return jsonify({'success' : True})
-        return jsonify({'success' : False})
+        return jsonify({'success': False})
     
     elif action == 'modify_topic':
-        topic = request.args.get('topic')
+        topic = request.headers.get('topic')
         if can_professor_modify(current_user.get_id(), get_course_id_by_lesson_id(lesson_id)):
             if change_lesson_information(lesson_id, topic):
                 return jsonify({'success' : True})

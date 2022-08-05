@@ -203,7 +203,7 @@ class StudentLesson(Base):
     __tablename__ = "StudentsLessons"
 
     StudentID = Column(Integer, ForeignKey("Students.UserID"), primary_key=True)
-    LessonID = Column(Integer, ForeignKey("Lessons.LessonID"), primary_key=True)
+    LessonID = Column(Integer, ForeignKey("Lessons.LessonID", ondelete='CASCADE'), primary_key=True)
 
     __table_args__ = ()
 

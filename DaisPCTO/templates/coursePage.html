@@ -119,7 +119,7 @@
                     {% if subs == course.MaxStudents and coruse.MaxStudents > 0 %} 
                         <button class="btn btn-danger disabled" disabled>Iscrizioni piene</button>
                     {% else %}
-                        <button class="btn btn-{% if iscritto %}danger{% else %}success{% endif %}" data-bs-toggle="modal" data-bs-target="#subscription" {% if subs == course.MaxStudents and not iscritto%} disabled {% endif %}</button>
+                        <button class="btn btn-{% if iscritto %}danger{% else %}success{% endif %}" data-bs-toggle="modal" data-bs-target="#subscription" {% if subs == course.MaxStudents and not iscritto %} disabled>{% endif %}
                             {% if iscritto %} Disiscriviti! {% else %} Iscriviti! {% endif %}
                         </button>
                     {% endif %}
