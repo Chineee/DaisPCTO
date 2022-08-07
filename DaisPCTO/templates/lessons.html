@@ -62,7 +62,7 @@
                             <div class="modal-dialog">
                                 <div class="modal-content">
                                     <div class="modal-header">
-                                        <h5 class="modal-title" id="modalTopicLesson-{{i}}">Modifica Argomento e Materiali</h5>
+                                        <h5 class="modal-title" id="modalTopicLesson-{{i}}">Modifica Argomento e Materiali (HTML TAG DISPONIBILI)</h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
 
@@ -89,7 +89,8 @@
                         </h5>
                         <br>
                         <strong>&emsp;&ensp;Data &ensp; :</strong> {{list_lessons[i].Date.strftime('%d-%m-%Y')}} <br>
-                        <strong>&emsp;&ensp;Orario :</strong>  {{list_lessons[i].StartTime.strftime('%H:%M')}} - {{list_lessons[i].EndTime.strftime('%H:%M')}}
+                        <strong>&emsp;&ensp;Orario :</strong>  {{list_lessons[i].StartTime.strftime('%H:%M')}} - {{list_lessons[i].EndTime.strftime('%H:%M')}} <br>
+                        <strong>&emsp;&ensp;Aula &ensp; :</strong> QUA METTI LA CLASSROOM --> Nel buco del culo di tua madre
 
                     </div>
 
@@ -110,9 +111,7 @@
                                 <br>
                             </p>
 
-                            <p style="margin-left : 32px" id="lesson-topic-{{i}}" class="p-topic-card-body">
-                                {{list_lessons[i].Topic}}
-                            </p>
+                            <p style="margin-left : 32px; white-space:pre" id="lesson-topic-{{i}}" class="p-topic-card-body">{{ list_lessons[i].Topic }}</p>
                         </div>
                     </div>
                 </li>
@@ -177,18 +176,6 @@
                                 {{form.start_time(class="form-control")}}
                             {% endif %}
                         </div>
-
-                        <div class="col-md-6 mb-3">
-                            {{form.end_time.label}}
-                            {% if form.end_time.errors %}
-                                {{form.end_time(class="form-control is-invalid")}}
-                                <div class="invalid-feedback">
-                                    {{form.end_time.errors[0]}}
-                                </div>
-                            {% else %}
-                                {{form.end_time(class="form-control")}}
-                            {% endif %}
-                        </div>
                     </div>
 
                     <div class="row">
@@ -227,24 +214,11 @@
     {% endif %}
     <br><br>
 
-
+    
     <script type="text/javascript">
 
-        function decodeEntity(inputStr) {
-            var textarea = document.createElement("textarea");
-            textarea.innerHTML = inputStr;
-            return textarea.value;
-        }
-
-        window.onload = function() {
-            "{% for i in range(list_lessons | length) %}"
-
-            $("#lesson-topic-" + "{{i}}").html(decodeEntity("{{ list_lessons[i].Topic }}"));
-
-            "{% endfor %}"
-
-        }
-
+            
+        
         "{% if is_professor and can_modify %}"
 
             var csrf_token = "{{ csrf_token() }}";
@@ -267,22 +241,32 @@
             let text_area_object = $('#textarea-information-course-'+ lesson_index);
             let lesson_topic = text_area_object.val();
             let lesson_id = text_area_object.data("lessonid")
+        
 
             $.ajax({
                 type : "post",
                 url : '/action/lessons?action=modify_topic&lesson_id='+lesson_id,
-                headers : { 'topic':lesson_topic },
+                // headers : { 'topic':lesson_topic },
+                data : {"topic" : lesson_topic},
 
                 success : function(data) {
-                    if ( data['success'] == true ) $("#lesson-topic-"+lesson_index).html(decodeEntity(lesson_topic))
+                    if ( data['success'] == true ) $("#lesson-topic-"+lesson_index).html(lesson_topic)
+                    else console.log("errore errorino")
 
                 },
+                error : function(data) {
+                    console.log(data)
+                }
             })
         });
+
+        
 
         $('.btn_to_delete_lesson').on('click', function () {
             let info = $(this).parent().data("lesson");
             $("#exampleModal").data("lesson", info);
+            let doc = document.getElementById("lesson-topic-0").innerHTML
+            //console.log(doc.replaceAll("&lt;", "<").replaceAll('&gt;', '>'))
         });
 
          $('.modal-button-delete').on('click', function() {
@@ -332,5 +316,5 @@
         });
 
     </script>
-
+    <script src="/static/lessons.js"></script>
 {% endblock %}

@@ -1,7 +1,7 @@
 from DaisPCTO.models import Feedback,\
      ProfessorCourse, StudentCourse, User, Student, Professor,\
      UserRole, Course, Role, Lesson, StudentLesson, Reservation, \
-     FrontalLesson, OnlineLesson, Classroom
+     FrontalLesson, OnlineLesson, Classroom, QnA
 from sqlalchemy import create_engine, and_, not_, or_, not_, exc, func, case
 from sqlalchemy.orm import sessionmaker
 from flask_login import current_user, user_accessed
@@ -20,6 +20,9 @@ engine = {
 
 Session = sessionmaker(bind=engine['Admin'])
 
+def get():
+    session = Session()
+    return session.query(QnA).all()
 
 def get_engine():
     if not current_user.is_authenticated:
@@ -300,7 +303,9 @@ def get_lessons_by_course_id(course_id):
     try:
         session = Session()
         return session.query(Lesson).filter(Lesson.CourseID == course_id).order_by(Lesson.Date, Lesson.StartTime).all()
-    except:
+    except Exception as e:
+        print(e)
+
         return None
 
 def get_course_id_by_lesson_id(lesson_id):
@@ -375,38 +380,31 @@ def get_professor_courses(user_id):
 
 def get_student_courses(user_id):
     try:
-        print("INIT QUERY")
+
         session = Session()
-        # return session.query(Course.CourseID, Course.Name, func.sum(Lesson.EndTime - Lesson.StartTime).label("Hours"))\
-        #         .join(StudentCourse)\
-        #         .join(StudentLesson)\
-        #         .join(Lesson)\
-        #         .filter(StudentCourse.StudentID == user_id)\
-        #         .order_by(Course.Name)\
-        #         .group_by(Course.CourseID, Course.Name).all()
-        query = session.query(Course.CourseID, Course.Name, Course.Description, Course.MaxStudents, Course.MinHourCertificate, func.sum(case((and_(Lesson.StartTime.isnot(None), Lesson.EndTime.isnot(None)), Lesson.EndTime-Lesson.StartTime), else_="00:00:00")).label("Hours")) \
+
+        query = session.query(Course.CourseID, Course.Name, Course.Description, Course.MinHourCertificate, func.sum(case((and_(Lesson.StartTime.isnot(None), Lesson.EndTime.isnot(None)), Lesson.EndTime-Lesson.StartTime), else_="00:00:00")).label("Hours")) \
                     .join(StudentCourse, StudentCourse.CourseID == Course.CourseID)\
                     .join(StudentLesson, StudentLesson.StudentID == StudentCourse.StudentID, isouter=True)\
                     .join(Lesson, and_(Lesson.LessonID == StudentLesson.LessonID, Lesson.CourseID == Course.CourseID), isouter=True)\
                     .filter(StudentCourse.StudentID == user_id)\
                     .order_by(Course.Name)\
-                    .group_by(Course.CourseID, Course.Name, Course.Description, Course.MaxStudents, Course.MinHourCertificate).all()
+                    .group_by(Course.CourseID, Course.Name, Course.Description, Course.MinHourCertificate).all()
 
+        for i in query:
+            print(f'Corso ID == {i.CourseID} --- Ore seguite == {i.Hours}')
 
-
-        print("END QUERY")
         return query
-
     except Exception as e:
         print(e)
-
-        return []
+        return None
 
 """
 
 SELECT "Courses"."CourseID", SUM(CASE WHEN ("Lessons"."StartTime" IS NOT NULL AND "Lessons"."EndTime" IS NOT NULL) THEN "Lessons"."EndTime" - "Lessons"."StartTime" ELSE '00:00:00' END)
-FROM "StudentsCourses" NATURAL JOIN "Courses" NATURAL LEFT JOIN ("Lessons" NATURAL LEFT JOIN "StudentsLessons")
+FROM "StudentsCourses" NATURAL JOIN "Courses" NATURAL LEFT JOIN "Lessons" NATURAL LEFT JOIN "StudentsLessons"
 WHERE "StudentsCourses"."StudentID" = 1
+ORDER BY "Courses"."Name"
 GROUP BY "Courses"."CourseID"
 
 
@@ -414,7 +412,5 @@ FROM "Courses" NATURAL JOIN "StudentsCourses" NATURAL LEFT JOIN "StudentsLessons
 
 FROM "Courses" LEFT OUTER JOIN "Lessons" ON "Courses"."CourseID" = "Lessons"."CourseID" LEFT OUTER JOIN "StudentsLessons" ON "Lessons"."LessonID" = "StudentsLessons"."LessonID" JOIN "StudentsCourses" ON "Courses"."CourseID" = "Stude
 ntsCourses"."CourseID"
-
-
 
 """

@@ -56,6 +56,7 @@ def lessons_course_home(coursePage):
             return redirect(url_for("lessons_blueprint.lessons_course_home", coursePage = coursePage))
 
     list_lessons = get_lessons_by_course_id(coursePage.upper())
+
     
     return render_template("lessons.html",
                             is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"),
@@ -86,7 +87,9 @@ def action_lesson():
     URL Inoltre cambia in base al tipo di richiesta che viene fatta sfruttando gli url arguments.
     Prima di eseguire la post, flask controllerà il csrf token, se è corretto procederà tutto nella norma, altrimenti verrà ritornato un errore 400)
     """
-    
+
+
+
     action = request.args.get('action')
     lesson_id = int(request.args.get('lesson_id'))
 
@@ -97,7 +100,8 @@ def action_lesson():
         return jsonify({'success': False})
     
     elif action == 'modify_topic':
-        topic = request.headers.get('topic')
+        # topic = request.headers.get('topic')
+        topic = request.form['topic']
         if can_professor_modify(current_user.get_id(), get_course_id_by_lesson_id(lesson_id)):
             if change_lesson_information(lesson_id, topic):
                 return jsonify({'success' : True})

@@ -60,6 +60,7 @@ def private():
     else:
         courses_list = get_student_courses(current_user.get_id())
 
+
     return render_template("courses_private.html",
                            is_professor = is_professor,
                            user = current_user,
@@ -92,11 +93,15 @@ def course(coursePage):
     form = ChangeInformationCourse()
     can_modify = can_professor_modify(current_user.get_id(), coursePage.upper())
 
+
     if form.validate_on_submit() and can_modify:
         if form.submit.data:
             change_feedback(coursePage.upper())
         elif form.changeSubmit.data:
             change_course_attr(form, coursePage.upper())
+
+
+
 
     return render_template("coursePage.html", 
          is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"),
@@ -122,11 +127,15 @@ def subs(course):
         
     elif issubbed == 'true':
         delete_subscription(current_user.get_id(), course)
+        last_page = request.args.get("lastpage")
+        if last_page == 'coursespage':
+            return redirect(url_for("courses_blueprint.private"))
 
     return redirect(url_for("courses_blueprint.course", coursePage=course))
 
 
-""""
+
+"""
 
 CREATE TRIGGER max_students_check
 BEFORE INSERT ON StudentsCourses
@@ -139,12 +148,9 @@ BEGIN
         FROM StudentCourses sc JOIN Courses c USING(CourseID)
         WHERE NEW.CourseID = c.CourseID) >= (SELECT c.MaxStudents
                                             FROM Courses c
-                                            WHERE c.CourseID = NEW.CourseID) AND (SELECT c3."MaxStudents"
-                                                                                  FROM "public"."Courses" AS c3 
+                                            WHERE c.CourseID = NEW.CourseID) AND (SELECT c3."MaxStudents"                                                                                FROM "public"."Courses" AS c3 
                                                                                   WHERE c3."CourseID" = NEW."CourseID") > 0)) THEN RETURN NULL;
     END IF
     RETURN NEW;
 END
-
-
 """

@@ -6,21 +6,30 @@
 
     <div class="float-end">
         {% if is_professor %}
+            <a href="/courses/{{ course_list[i].CourseID }}/demographics"> </a>
+        {% else %}
 
-            <a href="/courses/{{ course_list[i].CourseID }}/demographics">
+        <a href="/courses/action/{{ course_list[i].CourseID }}?sub=true&lastpage=coursespage" class="btn btn-danger"> Disiscriviti </a>
+
         {% endif %}
-        <button class="btn btn-{% if is_professor %}info demog{% else %}danger unsubs{% endif %}" data-bs-toggle="modal"
-                data-bs-target="{% if is_professor %}#viewDemographics{% else %}#unsubscribe{% endif %}">
-            {% if is_professor %}Visualizza Demografica{% else %}Disiscriviti {% endif %}</button>
-        {% if is_professor %}
-            </a>
-        {% endif %}
+
     </div>
 
-{% endblock headerPage%}
+{% endblock headerPage %}
 
 {% block footerPage %}
+    {% if not is_professor %}
+    {% set percentage = (course_list[i].Hours | to_minutes) %}
+    {% set percentage2 = percentage | get_completed_percentage(course_list[i].MinHourCertificate)%}
 
+    <div class="card-footer bg-secondary">
+        <div class="progress">
+            <div class="text-dark progress-bar progress-bar-striped progress-bar-animated bg-{% if percentage2 < 25 %}danger {% elif percentage2 < 50 %}warning {% elif percentage2 < 100 %}success{% else %}info{% endif %}" role="progressbar" style="width: {{ percentage2 }}%;" aria-valuenow= "{{ percentage | get_completed_percentage(course_list[i].MinHourCertificate) }}" aria-valuemin="0" aria-valuemax={{ course_list[i].MinHourCertificate }}>
+                {{ percentage2 | convert_to_integer }}%
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
 {% endblock footerPage%}
 
@@ -46,7 +55,13 @@
     </div>
 
 
+    <script type="text/javascript">
+
+
+    </script>
 {% endblock contentCourse %}
+
+
 
 
 {# per studente vede la barra di progresso verso le ore per il certificato #}

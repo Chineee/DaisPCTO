@@ -1,140 +1,150 @@
 {% extends "page.html" %}
 
 {% block content %}
-    <h1> 
+    <h1>
         <center>
-            {{course.Name}} - {{course.CourseID}} 
+            {{ course.Name }} - {{ course.CourseID }}
         </center>
     </h1>
 
 
     <nav class="nav nav-pills flex-column flex-sm-row">
-        <a href="/courses/{{course.CourseID}}" class="nav-link active">
-            <!-- <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right-circle-fill" viewBox="0 0 16 16">
-                <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H4.5z"/>
-            </svg>  -->
-            
-            <i class="bi bi-arrow-right-circle"></i> Docenti e informazioni    
+        <a href="/courses/{{ course.CourseID }}" class="nav-link active">
+            <i class="bi bi-arrow-right-circle"></i> Docenti e informazioni
         </a>
-            
-        <a href="/courses/{{course.CourseID}}/lessons" class="nav-link">
+
+        <a href="/courses/{{ course.CourseID }}/lessons" class="nav-link">
             <i class="bi bi-arrow-right-circle"></i>
-            Lezioni		
+            Lezioni
         </a>
-                
+
     </nav>
 
     <div class="tab-content border border-primary border-2 border-start-0 border-end-0 border-bottom-0 mt-3">
- 
+
 
         <br><br>
 
 
-        <h5> 
-            Docenti 
+        <h5>
+            Docenti
         </h5>
         <hr/>
         <ul class="list-group d-inline-block">
             {% for p in prof %}
-                <li class="list-group-item">{{p.Name}} {{p.Surname}}</li>
+                <li class="list-group-item">{{ p.Name }} {{ p.Surname }}</li>
             {% endfor %}
         </ul>
         <hr/>
-        
-        <br><br>
-        
-        <h5> 
-            Informazioni Corso 
-        
-            {% if is_professor and can_modify %}
-                
 
-                <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#changeCourseInfo">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14px" height="14px" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16" style="height:15px;width:15px">
+        <br><br>
+
+        <h5>
+            Informazioni Corso
+
+            {% if is_professor and can_modify %}
+
+
+                <button type="button" class="btn btn-secondary" data-bs-toggle="modal"
+                        data-bs-target="#changeCourseInfo">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14px" height="14px" fill="currentColor"
+                         class="bi bi-pencil" viewBox="0 0 16 16" style="height:15px;width:15px">
                         <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"></path>
                     </svg>
                 </button>
-            
-            <form method="post", style="display:inline">
-                {{form.hidden_tag()}}
-                <div class="modal fade" id="changeCourseInfo" tabindex="-1" aria-labelledby="changeCourseInfo" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="changeCourseInfo">Modifica informazioni</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body" style="font-weight : normal">
-                                
-                                {{form.max_students.label}}
-                                {{form.max_students(class="form-control", value=course.MaxStudents)}}
-                                <div class = "invalid-feedback" id="invalid-feedback-max-students" style="display : none">
-                                    Numero minimo studenti 0 (per indicare nessun limite)
+
+                <form method="post" style="display:inline">
+                    {{ form.hidden_tag() }}
+                    <div class="modal fade" id="changeCourseInfo" tabindex="-1" aria-labelledby="changeCourseInfo"
+                         aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="changeCourseInfo">Modifica informazioni</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
                                 </div>
-                                
-                                <br><br>
+                                <div class="modal-body" style="font-weight : normal">
 
-                                {{form.min_hour_certificate.label}}
-                                {{form.min_hour_certificate(class="form-control", value=course.MinHourCertificate)}}
+                                    {{ form.max_students.label }}
+                                    {{ form.max_students(class="form-control", value=course.MaxStudents) }}
+                                    <div class="invalid-feedback" id="invalid-feedback-max-students"
+                                         style="display : none">
+                                        Numero minimo studenti 0 (per indicare nessun limite)
+                                    </div>
 
-                                <div class = "invalid-feedback" id="invalid-feedback-hour-certificate" style="display : none">
-                                    Le ore devono essere di almeno 0!
+                                    <br><br>
+
+                                    {{ form.min_hour_certificate.label }}
+                                    {{ form.min_hour_certificate(class="form-control", value=course.MinHourCertificate) }}
+
+                                    <div class="invalid-feedback" id="invalid-feedback-hour-certificate"
+                                         style="display : none">
+                                        Le ore devono essere di almeno 0!
+                                    </div>
+
+                                    <br><br>
+
+                                    {{ form.description.label }}
+                                    <textarea id="description" name="description"
+                                              class="form-control"> {{ course.Description }} </textarea>
+
                                 </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi
+                                    </button>
+                                    <input type="button" class="btn btn-primary" value="Salva Modifiche"
+                                           name="changeSubmit" id="changeSubmit"> </input>
 
-                                <br><br>
 
-                                {{ form.description.label }}
-                                <textarea id="description" name="description" class="form-control"> {{course.Description}} </textarea>
-                                
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
-                                <input type="button" class="btn btn-primary" value="Salva Modifiche" name="changeSubmit" id="changeSubmit"> </input>
-                                
-                                
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </form>
+                </form>
 
-        {% endif %}
-            
+            {% endif %}
+
         </h5>
-            
-        
+
 
         <hr/>
 
         <div class="list-group-item">
-        <a {% if can_modify %} href = "/subs" class="link-dark"{% endif %}>
-                <strong> Iscritti attuali: </strong> 
+            <a {% if can_modify %} href="/subs" class="link-dark"{% endif %}>
+                <strong> Iscritti attuali: </strong>
             </a>
-            
 
-            {{subs}}/{% if course.MaxStudents == 0 %}-{% else %}{{course.MaxStudents}}{% endif %}
 
-            {% if is_professor  == False and current_user.is_authenticated %}
+            {{ subs }}/{% if course.MaxStudents == 0 %}-{% else %}{{ course.MaxStudents }}{% endif %}
+
+            {% if is_professor == False and current_user.is_authenticated %}
                 <span style="display : inline-block; margin-left: 40px">
-                    {% if subs == course.MaxStudents and coruse.MaxStudents > 0 %} 
+                    {% if subs == course.MaxStudents and course.MaxStudents > 0 and iscritto == False%}
                         <button class="btn btn-danger disabled" disabled>Iscrizioni piene</button>
                     {% else %}
-                        <button class="btn btn-{% if iscritto %}danger{% else %}success{% endif %}" data-bs-toggle="modal" data-bs-target="#subscription" {% if subs == course.MaxStudents and not iscritto %} disabled>{% endif %}
-                            {% if iscritto %} Disiscriviti! {% else %} Iscriviti! {% endif %}
+                        <button class="btn btn-{% if iscritto %}danger{% else %}success{% endif %}"
+                                data-bs-toggle="modal" data-bs-target="#subscription"
+                                {% if subs == course.MaxStudents and not iscritto %} disabled {% endif %}>
+                        {% if iscritto %} Disiscriviti! {% else %} Iscriviti! {% endif %}
                         </button>
                     {% endif %}
                 </span>
 
-                <div class="modal fade" id="subscription" tabindex="-1" aria-labelledby="subscription" aria-hidden="true">
+                <div class="modal fade" id="subscription" tabindex="-1" aria-labelledby="subscription"
+                     aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="subscription"> {% if iscritto %} Vuoi davvero disiscriverti dal corso? {% else %} Sei sicuro di iscriverti? {% endif %} </h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                <h5 class="modal-title" id="subscription"> {% if iscritto %} Vuoi davvero disiscriverti
+                                    dal corso? {% else %} Sei sicuro di iscriverti? {% endif %} </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
                             </div>
+
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
-                                <a href="/courses/action/{{course.CourseID}}?{% if iscritto %}sub=true{% else %}sub=false{% endif %}">
+                                <a href="/courses/action/{{ course.CourseID }}?{% if iscritto %}sub=true{% else %}sub=false{% endif %}">
                                     <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Si</button>
                                 </a>
                             </div>
@@ -144,37 +154,43 @@
             {% endif %}
 
 
+
             <br><br>
-            
+
             <strong>Descrizione Corso: </strong><br>
-            {{course.Description}} <br><br>
-                
+            {{ course.Description }} <br><br>
+
             {% if course.MinHourCertificate %}
-                Per ottenere l'attestato di partecipazione al corso, lo studente dovrà seguire almeno <strong >{{course.MinHourCertificate}} </strong> ore di lezione.
-            {% else %} 
+                Per ottenere l'attestato di partecipazione al corso, lo studente dovrà seguire almeno
+                <strong>{{ course.MinHourCertificate }} </strong> ore di lezione.
+            {% else %}
                 Non sono neccessarie ore di frequenza obbligatorie per ottenere l'attestato di partecipazione!
             {% endif %}
         </div>
 
         <hr/>
-        
+
         {% if is_professor and can_modify %}
             <form method="POST">
-                {{form.hidden_tag()}}
-                <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#studentFeedback"> {% if course.OpenFeedback %} Vuoi chiudere i feedback? {% else %} Vuoi aprire i feedback? {% endif %} </button>
-            
-                <div class="modal fade" id="studentFeedback" tabindex="-1" aria-labelledby="studentFeedback" aria-hidden="true">
+                {{ form.hidden_tag() }}
+                <button type="button" class="btn btn-secondary" data-bs-toggle="modal"
+                        data-bs-target="#studentFeedback"> {% if course.OpenFeedback %} Vuoi chiudere i
+                    feedback? {% else %} Vuoi aprire i feedback? {% endif %} </button>
+
+                <div class="modal fade" id="studentFeedback" tabindex="-1" aria-labelledby="studentFeedback"
+                     aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="studentFeedback"> {% if course.OpenFeedback %} Vuoi chiudere i feedback? {% else %} Vuoi aprire i feedback? {% endif %}</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                <h5 class="modal-title" id="studentFeedback"> {% if course.OpenFeedback %} Vuoi chiudere
+                                    i feedback? {% else %} Vuoi aprire i feedback? {% endif %}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
                             </div>
 
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
-
-                                {{form.submit(class="btn btn-primary", value = "Chiudi" if course.OpenFeedback else "Apri")}}
+                                {{ form.submit(class="btn btn-primary", value = "Chiudi" if course.OpenFeedback else "Apri") }}
                             </div>
                         </div>
                     </div>
@@ -182,17 +198,18 @@
             </form>
         {% endif %}
         <br><br>
+
     </div>
 
     <script>
-        $("#changeSubmit").click( () => {
+        $("#changeSubmit").click(() => {
             let max_students = $("#max_students");
-            let min_hour =  $("#min_hour_certificate");
+            let min_hour = $("#min_hour_certificate");
 
             if (max_students.val() >= 0 && min_hour.val() >= 0) {
                 $("#changeSubmit").attr("type", "submit");
                 return;
-            } 
+            }
 
             if (max_students.val() < 0) {
                 max_students.addClass("is-invalid");
@@ -209,12 +226,10 @@
                 min_hour.removeClass("is-invalid");
                 $("#invalid-feedback-hour-certificate").hide();
             }
-            
+
         });
-            
-        
+
+
     </script>
 
-
-    
 {% endblock content %}

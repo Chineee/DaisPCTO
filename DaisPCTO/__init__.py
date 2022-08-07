@@ -1,8 +1,9 @@
 from flask import Flask, render_template, session as flasksession, redirect, url_for, request
 from flask_login import current_user, LoginManager
-from DaisPCTO.db import get_user_by_id
+from DaisPCTO.db import get_user_by_id, get
 from flask_bootstrap import Bootstrap
 from flask_wtf.csrf import CSRFProtect, CSRFError
+
 # from flask_admin import Admin, expose, BaseView, AdminIndexView
 # from flask_admin.contrib.sqla import ModelView
 
@@ -20,6 +21,7 @@ from flask_wtf.csrf import CSRFProtect, CSRFError
 #     if not current_user.is_authenticated:
 #         return False
 #     return current_user.hasRole("Professor")
+
 
 def create_app():
     app = Flask(__name__)
@@ -41,6 +43,10 @@ def create_app():
     def home():            
         return render_template("page.html", user=current_user, is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"))
 
+    @app.route('/test')
+    def test():
+        return get().__dict__
+        
     @login_manager.user_loader
     def load_user(UserID):
         return get_user_by_id(UserID)
@@ -52,6 +58,21 @@ def create_app():
     @app.before_request
     def check_csrf():
         csrf.protect()
+
+    @app.template_filter("to_minutes")
+    def to_minutes(time):
+        return time.total_seconds()/60
+
+    @app.template_filter("get_completed_percentage")
+    def get_completed_percentage(user_minutes, needed_hour):
+        if needed_hour == 0:
+            return 100
+        perc = ( user_minutes/(needed_hour*60) ) * 100
+        return perc if perc <= 100 else 100
+
+    @app.template_filter("convert_to_integer")
+    def convert_to_integer(number):
+        return int(number)
 
     app.register_error_handler(404, page_not_found)
 

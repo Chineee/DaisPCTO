@@ -249,7 +249,7 @@ class QnA(Base):
     TextID = Column(Integer, primary_key=True)
     RefTo = Column(Integer, ForeignKey("QnA.TextID"))
     LessonID = Column(Integer, ForeignKey("Lessons.LessonID"))
-    Text = Column(String)
+    Text = Column(Text)
 
     Lessons = relationship("Lesson", backref="Questions")
     Answers = relationship("QnA")
