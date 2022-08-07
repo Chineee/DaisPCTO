@@ -1,12 +1,13 @@
 from flask import Blueprint, jsonify, render_template, url_for, redirect, flash, abort, request, logging
 from flask_login import current_user, login_required
 from DaisPCTO.auth import role_required
-from DaisPCTO.db import can_professor_modify, get_course_by_id, get_user_by_id, get_professor_by_course_id, \
+from DaisPCTO.db import can_professor_modify, get_course_by_id, get_lesson_by_id, get_user_by_id, get_professor_by_course_id, \
     change_course_attr, add_lesson, get_lessons_by_course_id, delete_lesson, get_course_id_by_lesson_id,\
-    can_reserve, confirm_attendance, change_lesson_information
+    confirm_attendance, change_lesson_information, get_lessons_bookable, get_full_lessons
 from flask_wtf import FlaskForm, CSRFProtect
 from wtforms import StringField, DateField, SelectField, BooleanField, SubmitField, validators, SelectMultipleField, IntegerField, TextAreaField, TimeField
 from wtforms.validators import DataRequired, ValidationError
+import datetime
 
 lessons = Blueprint("lessons_blueprint", __name__, template_folder = "templates")
 
@@ -68,6 +69,23 @@ def lessons_course_home(coursePage):
                         )
 
 
+@lessons.route('/lessons/reservations')
+def reservations():
+
+    lessons_bookable = get_lessons_bookable()
+  
+
+    number_of_reservations = get_full_lessons()
+
+    
+    
+    return render_template("reservations.html",
+                            is_professor = False,
+                            user=current_user,
+                            subs_list = lessons_bookable,
+                            lessons_seats_reserved = number_of_reservations
+                            )
+
 @lessons.route('/qr')
 def qr():
     return render_template("testqr.html", user=current_user, is_professor=False if not current_user.is_authenticated else current_user.hasRole("Professor"))
@@ -75,7 +93,7 @@ def qr():
 #crea  la relazione studente-lezioni per certificare che lo studente ha seguito la lezione x
 #oppure se si tratta di una prenotazione di una frontallesson, esegue la prenotazione (a meno che i posti in aula non siano finiti)
 
-@lessons.route("/action/lessons", methods=['POST'])
+@lessons.route("/action/lessons", methods=['GET'])
 @login_required
 def action_lesson():
 
@@ -108,13 +126,13 @@ def action_lesson():
         return jsonify({'success' : False})
 
     elif action == 'reservation':
-        token_id = request.args.get('token')
-        pass
+        lesson = get_lesson_by_id(lesson_id)
+        if (lesson.Date - datetime.date.today()).days <= 7 and (lesson.Date - datetime.date.today()).days >= 0:
+             return jsonify({"success" : True})
         """
         Per la prenotazioni i principali controlli (pienezza dell'aula ad esempio) viene fatto attraverso trigger.
         """
-        if not (type_error := can_reserve(current_user.get_id(), lesson_id)):
-            return jsonify({'success' : False, "type_error" : type_error})
+        
             #prenota
         return jsonify({'success' : True})
 
@@ -139,3 +157,24 @@ def action_lesson():
     return  jsonify({"success" : False})
 
 
+
+"""
+
+TRIGGER PER IMPEDIRE CHE UNO STUDENTE PRENOTI IN PIÙ AULE
+
+CREATE TRIGGER check_reservation_classroom_seats
+BEFORE INSERT ON Reservation
+FRO EACH ROW EXECUTE FUNCTION func_check_reservation_classroom_seats()
+
+CREATE FUNCTION func_check_reservation_classroom_seats() RETURN TRIGGER
+BEGIN
+    IF ( (SELECT COUNT(*)
+        FROM Reservation r 
+        WHERE NEW.FrontalLessonID = r.FrontalLessonID) >= (SELECT c.Seats
+                                                           FROM Classroom c JOIN FrontalLesson fl USING(ClassroomID)
+                                                           WHERE fl.LessonID = NEW.FrontalLessonID) ) THEN RETURN NULL;
+    ENDIF;
+    RETURN NEW                                                                                          
+END
+
+"""

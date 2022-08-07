@@ -20,7 +20,7 @@
 {% block footerPage %}
     {% if not is_professor %}
     {% set percentage = (course_list[i].Hours | to_minutes) %}
-    {% set percentage2 = percentage | get_completed_percentage(course_list[i].MinHourCertificate)%}
+    {% set percentage2 = percentage | get_completed_percentage(course_list[i].MinHourCertificate) %}
 
     <div class="card-footer bg-secondary">
         <div class="progress">

@@ -1,0 +1,53 @@
+{% extends "page.html" %}
+
+{% block content %}
+
+    <nav class="nav nav-pills flex-column flex-sm-row">
+        <a href="/lessons/reservations" class="nav-link{% if request.path == '/lessons/reservations' %} active" style="background-color: purple {% endif %}">
+            <i class="bi bi-arrow-right-circle"></i> Prenotazione Future
+        </a>
+
+        <a href="/lessons/reservations/mine"
+        class="nav-link{% if request.path == '/lessons/reservations/mine' %} active {% endif %}">
+            <i class="bi bi-arrow-right-circle"></i>
+            Le mie Prenotazioni
+        </a>
+
+    </nav>
+
+    <div class="tab-content border border-primary border-2 border-start-0 border-end-0 border-bottom-0 mt-3"><br><br>
+
+        <div class="container-fluid">
+            <div class="row">
+                
+                {% for s in subs_list %}
+                    {% set is_bookable = s | can_be_booked(lessons_seats_reserved) %}
+                    <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6 mb-3" style="max-width: 634px;">
+                        <div class="card border-dark">
+                            <div class="card-header text-white text-center border-dark" style="background-color: #ae8bc9;">
+                                <h4 class="card-title">{{ s.CourseName }}</h4>
+                            </div>
+                            <div class="card-body border-dark">
+                                <p class="card-text" stytle="white-space:pre;"><strong> Aula       :</strong> {{s.Name}} - Edificio {{s.Building}} </p>
+                                <p class="card-text" stytle="white-space:pre;"><strong> Data       :</strong> {{s.Date.strftime('%A del %d-%m-%Y')}} </p>
+                                <p class="card-text" stytle="white-space:pre;"><strong> Orario     :</strong> {{s.StartTime.strftime('%H:%M')}} - {{s.EndTime.strftime('%H:%M')}} </p>  
+                            </div>
+                            <div class="card-footer">
+                                {% if is_bookable[0] %} 
+                                    <button class="btn text-white" style="background-color: #491570">Prenota Posto in Aula</button>
+                                {% else %}
+                                <button class="btn text-white" style="background-color: #230837c6 !important; cursor : not-allowed !important"> Posti pieni </button>
+                                {% endif %}
+                                <p class="float-end"><strong>Posti disponibili :</strong> {{s.Seats - is_bookable[1]}} / {{s.Seats}}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

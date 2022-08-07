@@ -1,12 +1,14 @@
+from fractions import Fraction
 from DaisPCTO.models import Feedback,\
      ProfessorCourse, StudentCourse, User, Student, Professor,\
      UserRole, Course, Role, Lesson, StudentLesson, Reservation, \
      FrontalLesson, OnlineLesson, Classroom, QnA
-from sqlalchemy import create_engine, and_, not_, or_, not_, exc, func, case
+from sqlalchemy import create_engine, and_, not_, or_, not_, exc, func, case, text
 from sqlalchemy.orm import sessionmaker
 from flask_login import current_user, user_accessed
 from flask_bcrypt import generate_password_hash, check_password_hash
 import random 
+import datetime 
 
 engine = {
     "Admin" : create_engine("postgresql://postgres:123456@localhost/testone8", echo=False, pool_size=20, max_overflow=0),
@@ -20,9 +22,6 @@ engine = {
 
 Session = sessionmaker(bind=engine['Admin'])
 
-def get():
-    session = Session()
-    return session.query(QnA).all()
 
 def get_engine():
     if not current_user.is_authenticated:
@@ -61,7 +60,10 @@ def exists_role_user(user_id, role):
         session = Session()
         return session.query(UserRole).join(Role).filter(and_(UserRole.UserID == user_id, Role.Name == role)).first() is not None
     except:
-        return False
+        pass 
+    finally:
+        session.close()
+    return False
 
 def get_course_by_id(course_id):
     try:
@@ -315,20 +317,20 @@ def get_course_id_by_lesson_id(lesson_id):
     except:
         return None
         
-def can_reserve(user_id, lesson_id):
-    try:
-        session = Session()
-        num_reserved = session.query(Reservation).filter(Reservation.FrontalLessonID == lesson_id).count()
-        classroom_seats = session.query(Classroom.Seats).filter(FrontalLesson.LessonID == lesson_id, Classroom.ClassroomID == FrontalLesson.ClassroomID)
-        # return session.query(Reservation).filter(and_(Reservation.StudentID == user_id, Reservation.FrontalLessonID == lesson_id, Lesson.LessonID == Reservation.FrontalLessonID, Lesson.Token == token)).first() is not None  
-        if classroom_seats > num_reserved:
-            token = None #unione di una serie di cose che ora non abbiamo voglia di fare hashate
-            session.add(Reservation(StudentID = user_id, FrontalLessonID = lesson_id, HasValidation = False, ReservationID = token))
-            return True
-        else:
-            return False
-    except:  
-        return False
+# def can_reserve(user_id, lesson_id):
+#     try:
+#         session = Session()
+#         num_reserved = session.query(Reservation).filter(Reservation.FrontalLessonID == lesson_id).count()
+#         classroom_seats = session.query(Classroom.Seats).filter(FrontalLesson.LessonID == lesson_id, Classroom.ClassroomID == FrontalLesson.ClassroomID)
+#         # return session.query(Reservation).filter(and_(Reservation.StudentID == user_id, Reservation.FrontalLessonID == lesson_id, Lesson.LessonID == Reservation.FrontalLessonID, Lesson.Token == token)).first() is not None  
+#         if classroom_seats > num_reserved:
+#             token = None #unione di una serie di cose che ora non abbiamo voglia di fare hashate
+#             session.add(Reservation(StudentID = user_id, FrontalLessonID = lesson_id, HasValidation = False, ReservationID = token))
+#             return True
+#         else:
+#             return False
+#     except:  
+#         return False
 
 
 def confirm_attendance(user_id, lesson_id, lesson_token):
@@ -382,7 +384,7 @@ def get_student_courses(user_id):
     try:
 
         session = Session()
-
+        
         query = session.query(Course.CourseID, Course.Name, Course.Description, Course.MinHourCertificate, func.sum(case((and_(Lesson.StartTime.isnot(None), Lesson.EndTime.isnot(None)), Lesson.EndTime-Lesson.StartTime), else_="00:00:00")).label("Hours")) \
                     .join(StudentCourse, StudentCourse.CourseID == Course.CourseID)\
                     .join(StudentLesson, StudentLesson.StudentID == StudentCourse.StudentID, isouter=True)\
@@ -396,10 +398,51 @@ def get_student_courses(user_id):
 
         return query
     except Exception as e:
+        return None
+
+def get_lesson_by_id(lesson_id):
+    try:
+        session = Session()
+        return session.query(Lesson).filter(Lesson.LessonID == lesson_id).first()
+    except:
+        return None
+        
+def get_lessons_bookable():
+    try:
+        
+        session = Session()
+
+        
+        return session.query(Course.Name.label("CourseName"), Lesson.Date, Lesson.StartTime, Lesson.EndTime, Classroom.Name, Classroom.Building, Classroom.Seats, Lesson.LessonID)\
+            .join(Course, Course.CourseID == Lesson.CourseID)\
+            .join(FrontalLesson, FrontalLesson.LessonID == Lesson.LessonID)\
+            .join(Classroom, Classroom.ClassroomID == FrontalLesson.ClassroomID)\
+            .filter(or_(
+                    and_(Lesson.Date - func.current_date() <= '7', Lesson.Date - func.current_date() > '0'),
+                and_(Lesson.StartTime > func.current_time(), Lesson.Date - func.current_date() == '0')))\
+            .order_by(Lesson.Date, Lesson.StartTime, Course.Name)\
+            .all()
+            #.filter(and_(Lesson.Date - func.date(datetime.datetime.today()) <= 7, Lesson.Date - func.date(datetime.datetime.today()) > 0))\
+            
+
+    except Exception as e:
+        
         print(e)
         return None
 
+def get_full_lessons():
+    try:
+        session = Session()
+        return session.query(FrontalLesson.LessonID, func.count(Reservation.StudentID).label("Reserv"), Classroom.Seats).join(Classroom, Classroom.ClassroomID == FrontalLesson.ClassroomID)\
+            .join(Reservation, Reservation.FrontalLessonID == FrontalLesson.LessonID, isouter=True)\
+            .group_by(FrontalLesson.LessonID, Classroom.Seats)\
+            .all()
+
+    except Exception as e:
+        print(e)
+        return []
 """
+(Lesson.Date - date.today).days <= 7
 
 SELECT "Courses"."CourseID", SUM(CASE WHEN ("Lessons"."StartTime" IS NOT NULL AND "Lessons"."EndTime" IS NOT NULL) THEN "Lessons"."EndTime" - "Lessons"."StartTime" ELSE '00:00:00' END)
 FROM "StudentsCourses" NATURAL JOIN "Courses" NATURAL LEFT JOIN "Lessons" NATURAL LEFT JOIN "StudentsLessons"
