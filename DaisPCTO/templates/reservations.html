@@ -1,13 +1,13 @@
 {% extends "page.html" %}
 
 {% block content %}
-
+    
     <div class="alert alert-success" role="alert" style="display : none">
         Prenotazione avvenuta con successo
         <button type="button" class="btn-close float-end" id="btn-close-succ"></button>
     </div>
 
-    <div class="alert alert-danger" role="alert" style="display : none">
+    <div class="alert alert-danger" id="success-remove" role="alert" style="display : none">
         Prenotazione cancellata con successo
         <button type="button" class="btn-close float-end" id="btn-close-dan-classroom"></button>
     </div>
@@ -30,6 +30,27 @@
 
     </nav>
 
+    <div class="modal" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class = "modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    QRCode
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body float-end" id="qrcode">
+                    <p></p>
+                    <canvas id="qrcode-2">
+
+                    </canvas>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger modal-button-success" data-bs-dismiss="modal">Salva QRcode</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="tab-content border border-primary border-2 border-start-0 border-end-0 border-bottom-0 mt-3"><br><br>
 
         <div class="container-fluid">
@@ -38,8 +59,9 @@
                 {% for s in subs_list %}
                     
                     {% set is_bookable = s | can_be_booked(lessons_seats_reserved) %}
-                
+                    
                     {% if s.StudentID == -1 and request.path == '/lessons/reservations' %}
+                        
                         
                         <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6 mb-3" id = "lesson-{{s.LessonID}}" style="max-width: 634px;">
                             <div class="card border-dark">
@@ -61,11 +83,12 @@
                                 </div>
                             </div>
                         </div>
+                       
                     {% elif s.StudentID >= 0 and request.path == '/lessons/reservations/private' %} 
                         <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6 mb-3" id="lesson-{{s.LessonID}}" style="max-width: 634px;">
                             <div class="card border-dark">
                                 <div class="card-header text-white text-center border-dark" style="background-color: #ae8bc9;">
-                                    <h4 class="card-title">{{ s.CourseName }}</h4>
+                                    <h4 class="card-title">{{ s.CourseName }}<button class="btn text-white float-end" data-bs-toggle="modal" data-bs-target="#exampleModal" style="background-color: #734b92" onclick="set_modal({{s.LessonID}}, '{{s.ReservationID}}')"><i class="bi bi-qr-code"></i></button> </h4> 
                                 </div>
                                 <div class="card-body border-dark">
                                     <p class="card-text" stytle="white-space:pre;"><strong> Aula       :</strong> {{s.Name}} - Edificio {{s.Building}} </p>
@@ -105,29 +128,45 @@
             success : function(data) {
                 if (data['success'] == true) {
                     $('#lesson-'+lesson_id).remove()
-                    $('.alert-danger').slideDown();
+                    $('#success-remove').slideDown();
                    
                 } 
             },
         });
     }
 
+    function set_modal(lesson_id, token) {
+        new QRious({
+            element: document.getElementById("qrcode-2"),
+            background: '#ffffff',
+            backgroundAlpha: 1,
+            foreground: 'black',
+            foregroundAlpha: 1,
+            level: 'H',
+            padding: 30,
+            size: 480,
+            value: token
+        });
+
+        $('#qrcode').attr("title", "")
+    }
+
     $('#btn-close-succ').on('click', function() {
         $('.alert-success').slideUp();
     })
 
-    $('#btn-close-dan').on('click', function() {
+    $('#btn-close').on('click', function() {
         $('.alert-danger').slideUp();
         $('.classroom-error').slideUp();
     })
+
     
     $('#btn-close-dan-classroom').on('click', function() {
-        $('.classroom-error').slideUp();
+        $('#success-remove').slideUp();
     })
     
 
     function add_reservation(lesson_id) {
-        console.log(lesson_id)
         $.ajax({
             type : 'POST',
             url : '/action/lessons?action=reservation&lesson_id='+lesson_id,

@@ -273,8 +273,7 @@
 
              let info = $('#exampleModal').data("lesson");
                 $.ajax({
-                    type : 'POST',
-                    url : '/action/lessons?action=delete&lesson_id=' + info,
+                    
                      //il current user viene preso direttamente da flask usando la variabile globale
                     //current_user, il corso a cui fa riferimento è facilmente ottenibile con la variabile info (che rappresenta l'id del corso)
 

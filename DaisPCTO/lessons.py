@@ -3,7 +3,7 @@ from flask_login import current_user, login_required
 from DaisPCTO.auth import role_required
 from DaisPCTO.db import can_professor_modify, get_course_by_id, get_lesson_by_id, get_user_by_id, get_professor_by_course_id, \
     change_course_attr, add_lesson, get_lessons_by_course_id, delete_lesson, get_course_by_lesson_id,\
-    confirm_attendance, change_lesson_information, get_lessons_bookable, get_full_lessons, book_lesson, delete_reservation
+    confirm_attendance, change_lesson_information, get_lessons_bookable, get_full_lessons, book_lesson, delete_reservation, get_reservation_from_token
 from flask_wtf import FlaskForm, CSRFProtect
 from wtforms import StringField, DateField, SelectField, BooleanField, SubmitField, validators, SelectMultipleField, IntegerField, TextAreaField, TimeField
 from wtforms.validators import DataRequired, ValidationError
@@ -75,11 +75,6 @@ def lessons_course_home(coursePage):
 def reservations():
 
     lessons_bookable = get_lessons_bookable(current_user.get_id())
-
-    
-
-    for i in lessons_bookable:
-        print(f'{i.StartTime} ma ora attuale == {datetime.datetime.today()}')
   
     number_of_reservations = get_full_lessons()
 
@@ -174,23 +169,29 @@ def action_lesson():
         return jsonify({"success" : False})
 
     elif action == 'formalize':
-        pass
-        lesson_token = request.args.get('lesson_token')
-        if not (type_error := confirm_attendance(current_user.get_id(), lesson_id, lesson_token)):
-            #lesson_can_be_formalized serve a formalizzare la presenza di uno studente attraverso un token
-            """
-                in caso di lezione online lo studente dovrà inserire manualmente il token, che verrà mostrato dal prof.
-                In caso di lezione frontale invece, lo studente dovrà presentare il qr code all'ingresso (al tablet) che verificherà se la prenotazione è valida
-                Tipi di errore possibili:
-                    Se l'errore inizia con qr allora lo studente ha prenotato una lezione frontale e l'errore verrà mostrato dal tablet all'ingresso degli edifici
-                    Altrimenti se l'utente attuale è uno studente e sta inserendo manualmente il token per una lezione online, il possibile errore verrà mostrato 
-                    direttamente all'urente
-            """
-            return jsonify({'success' : False, "type_error" : type_error})
-            #crea associazione studentlesson per certificare che lo studente ha seguito la lezione
-        return jsonify({'success' : True})
-    
-    
+        tok = request.args.get("token")
+        reservation = get_reservation_from_token(tok)
+        if reservations is not None:
+            if reservation.HasValidation == False:
+                bookable_lesson = get_lessons_bookable(reservation.StudentID)
+                for lesson in bookable_lesson:
+                    if lesson.LessonID == reservation.FrontalLessonID and lesson.StudentID >= 0:
+                        confirm_attendance(reservation)
+                        print("SUCCESSO")
+                        return jsonify({"success" : True})
+        
+        print("NO SUCCESSO")
+        return jsonify({"success" : False})
+            
+        """
+            in caso di lezione online lo studente dovrà inserire manualmente il token, che verrà mostrato dal prof.
+            In caso di lezione frontale invece, lo studente dovrà presentare il qr code all'ingresso (al tablet) che verificherà se la prenotazione è valida
+            Tipi di errore possibili:
+                Se l'errore inizia con qr allora lo studente ha prenotato una lezione frontale e l'errore verrà mostrato dal tablet all'ingresso degli edifici
+                Altrimenti se l'utente attuale è uno studente e sta inserendo manualmente il token per una lezione online, il possibile errore verrà mostrato 
+                direttamente all'urente
+        """
+            
     return  jsonify({"success" : False})
 
 """

@@ -22,7 +22,6 @@ engine = {
 
 Session = sessionmaker(bind=engine['Admin'])
 
-
 def get_engine():
     if not current_user.is_authenticated:
         return engine["Anonymous"]
@@ -350,16 +349,6 @@ def get_course_by_lesson_id(lesson_id):
 #         return False
 
 
-def confirm_attendance(user_id, lesson_id, lesson_token):
-    try:
-        session = Session()
-        if session.query(Reservation).filter(Reservation.FrontalLessonID == lesson_id, Reservation.ReservationID == lesson_token, Reservation.StudentID == user_id, Reservation.HasValidation == False).first() is not None:
-            session.query(Reservation).filter(and_(Reservation.FrontalLessonID == lesson_id, Reservation.StudentID == user_id)).update({Reservation.HasValidation : True})
-            session.commit()
-    except:
-        session.rollback()
-        return False
-    return True
 
 def change_lesson_information(lesson_id, data):
     try:
@@ -429,7 +418,7 @@ def get_lessons_bookable(user_id):
         
         session = Session()
 
-        return session.query(Course.Name.label("CourseName"), Lesson.Date, Lesson.StartTime, Lesson.EndTime, Classroom.Name, Classroom.Building, Classroom.Seats, Lesson.LessonID, func.coalesce(Reservation.StudentID, -1).label("StudentID"))\
+        return session.query(Course.Name.label("CourseName"), Lesson.Date, Lesson.StartTime, Lesson.EndTime, Classroom.Name, Classroom.Building, Classroom.Seats, Lesson.LessonID, func.coalesce(Reservation.StudentID, -1).label("StudentID"), Reservation.ReservationID)\
             .join(Course, Course.CourseID == Lesson.CourseID)\
             .join(FrontalLesson, FrontalLesson.LessonID == Lesson.LessonID)\
             .join(Classroom, Classroom.ClassroomID == FrontalLesson.ClassroomID)\
@@ -459,9 +448,13 @@ def get_full_lessons():
 def book_lesson(frontalLesson_id, course_id):
     try:
         session = Session()
-        token = generate_password_hash(f'{current_user.get_id()}{frontalLesson_id}{course_id}{datetime.datetime.today()}')
+        token = generate_password_hash(f'{current_user.get_id()}{frontalLesson_id}{course_id}{datetime.datetime.today()}').decode('utf-8')
+        
         session.add(Reservation(StudentID = current_user.get_id(), FrontalLessonID = frontalLesson_id, HasValidation = False, ReservationID = token))
         session.commit()
+        # img = qrcode.make(token)
+        # img.save("some_file.png")
+    
     except exc.SQLAlchemyError as e:
         session.rollback()
         if e.orig.diag.message_primary == 'SeatsNoMore':
@@ -479,7 +472,23 @@ def delete_reservation(frontalLesson_id):
         session.rollback()
         return False
     return True
-    
+
+def get_reservation_from_token(token):
+    try:
+        session = Session()
+        return session.query(Reservation).filter(Reservation.ReservationID == token).first()
+    except:
+        return None
+
+
+def confirm_attendance(reservation):
+    try:
+        session = Session()
+        session.query(Reservation).filter(and_(Reservation.StudentID == reservation.StudentID, Reservation.FrontalLessonID == reservation.FrontalLessonID)).update({Reservation.HasValidation : True})
+        session.commit()
+    except:
+        session.rollback()
+
 """
 (Lesson.Date - date.today).days <= 7
 

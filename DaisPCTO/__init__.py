@@ -3,6 +3,9 @@ from flask_login import current_user, LoginManager
 from DaisPCTO.db import get_user_by_id, extestone 
 from flask_bootstrap import Bootstrap
 from flask_wtf.csrf import CSRFProtect, CSRFError
+import base64 
+import io
+import qrcode
 
 # from flask_admin import Admin, expose, BaseView, AdminIndexView
 # from flask_admin.contrib.sqla import ModelView
@@ -88,6 +91,21 @@ def create_app():
                 if booked.Reserv >= booked.Seats:
                     return (False, booked.Reserv)
                 return (True, booked.Reserv)
+
+    @app.template_filter("convert_token_to_qrcode")
+    def convert_token_to_qrcode(token):
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(token)
+        qr.make(fit=True)
+
+        img = qr.make_image(fill_color="black", back_color="white")
+        
+        return img
 
     app.register_error_handler(404, page_not_found)
 
