@@ -2,12 +2,13 @@ from flask import Blueprint, jsonify, render_template, url_for, redirect, flash,
 from flask_login import current_user, login_required
 from DaisPCTO.auth import role_required
 from DaisPCTO.db import can_professor_modify, get_course_by_id, get_lesson_by_id, get_user_by_id, get_professor_by_course_id, \
-    change_course_attr, add_lesson, get_lessons_by_course_id, delete_lesson, get_course_id_by_lesson_id,\
-    confirm_attendance, change_lesson_information, get_lessons_bookable, get_full_lessons
+    change_course_attr, add_lesson, get_lessons_by_course_id, delete_lesson, get_course_by_lesson_id,\
+    confirm_attendance, change_lesson_information, get_lessons_bookable, get_full_lessons, book_lesson, delete_reservation
 from flask_wtf import FlaskForm, CSRFProtect
 from wtforms import StringField, DateField, SelectField, BooleanField, SubmitField, validators, SelectMultipleField, IntegerField, TextAreaField, TimeField
 from wtforms.validators import DataRequired, ValidationError
 import datetime
+import qrcode
 
 lessons = Blueprint("lessons_blueprint", __name__, template_folder = "templates")
 
@@ -25,6 +26,7 @@ class AddLesson(FlaskForm):
         if self.type_lesson.data == 'Frontale' or self.type_lesson.data == "Duale":
             if classroom.data == "" or classroom is None or classroom.data is None:
                 raise ValidationError("Aula obbligatoria in caso di lezione Frontale o Duale")
+
         elif self.type_lesson.data == 'Online':
             if classroom.data != "" and classroom is not None and classroom.data is not None:
                 raise ValidationError("Non è richiesta l'aula per le lezione online")
@@ -72,7 +74,27 @@ def lessons_course_home(coursePage):
 @lessons.route('/lessons/reservations')
 def reservations():
 
-    lessons_bookable = get_lessons_bookable()
+    lessons_bookable = get_lessons_bookable(current_user.get_id())
+
+    
+
+    for i in lessons_bookable:
+        print(f'{i.StartTime} ma ora attuale == {datetime.datetime.today()}')
+  
+    number_of_reservations = get_full_lessons()
+
+    return render_template("reservations.html",
+                            is_professor = False,
+                            user=current_user,
+                            subs_list = lessons_bookable,
+                            lessons_seats_reserved = number_of_reservations
+                            )
+
+
+
+@lessons.route('/lessons/reservations/private')
+def private():
+    lessons_bookable = get_lessons_bookable(current_user.get_id())
   
 
     number_of_reservations = get_full_lessons()
@@ -84,7 +106,9 @@ def reservations():
                             user=current_user,
                             subs_list = lessons_bookable,
                             lessons_seats_reserved = number_of_reservations
+
                             )
+
 
 @lessons.route('/qr')
 def qr():
@@ -93,7 +117,7 @@ def qr():
 #crea  la relazione studente-lezioni per certificare che lo studente ha seguito la lezione x
 #oppure se si tratta di una prenotazione di una frontallesson, esegue la prenotazione (a meno che i posti in aula non siano finiti)
 
-@lessons.route("/action/lessons", methods=['GET'])
+@lessons.route("/action/lessons", methods=['POST'])
 @login_required
 def action_lesson():
 
@@ -112,7 +136,7 @@ def action_lesson():
     lesson_id = int(request.args.get('lesson_id'))
 
     if action == 'delete':
-        if can_professor_modify(current_user.get_id(), get_course_id_by_lesson_id(lesson_id)):
+        if can_professor_modify(current_user.get_id(), get_course_by_lesson_id(lesson_id).CourseID):
             if delete_lesson(lesson_id):
                 return jsonify({'success' : True})
         return jsonify({'success': False})
@@ -120,21 +144,34 @@ def action_lesson():
     elif action == 'modify_topic':
         # topic = request.headers.get('topic')
         topic = request.form['topic']
-        if can_professor_modify(current_user.get_id(), get_course_id_by_lesson_id(lesson_id)):
+        if can_professor_modify(current_user.get_id(), get_course_by_lesson_id(lesson_id).CourseID):
             if change_lesson_information(lesson_id, topic):
                 return jsonify({'success' : True})
         return jsonify({'success' : False})
 
     elif action == 'reservation':
         lesson = get_lesson_by_id(lesson_id)
-        if (lesson.Date - datetime.date.today()).days <= 7 and (lesson.Date - datetime.date.today()).days >= 0:
-             return jsonify({"success" : True})
-        """
-        Per la prenotazioni i principali controlli (pienezza dell'aula ad esempio) viene fatto attraverso trigger.
-        """
-        
-            #prenota
-        return jsonify({'success' : True})
+        if lesson is None:
+            return jsonify({"success" : False})
+
+        list_lessons_bookable = get_lessons_bookable(current_user.get_id())
+
+        for l in list_lessons_bookable:
+            if lesson.LessonID == l.LessonID and l.StudentID == -1:
+                if book_lesson(lesson_id, lesson.CourseID):
+                    return jsonify({"success" : True})
+            
+        return jsonify({"success" : False})
+
+    elif action == 'delete_reservation':
+        lesson = get_lesson_by_id(lesson_id)
+        if lesson is None:
+            return jsonify({"success" : False})
+
+        if delete_reservation(lesson_id):
+            return jsonify({"success" : True})
+
+        return jsonify({"success" : False})
 
     elif action == 'formalize':
         pass
@@ -155,8 +192,6 @@ def action_lesson():
     
     
     return  jsonify({"success" : False})
-
-
 
 """
 

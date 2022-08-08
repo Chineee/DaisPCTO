@@ -260,8 +260,8 @@ class QnA(Base):
 class Reservation(Base):
     __tablename__ = "Reservation"
 
-    StudentID = Column(Integer, ForeignKey("Student.StudentID"), primary_key=True)
-    FrontalLessonID = Column(Integer, ForeignKey("FrontalLesson.LessonID"), primary_key=True)
+    StudentID = Column(Integer, ForeignKey("Students.UserID"), primary_key=True)
+    FrontalLessonID = Column(Integer, ForeignKey("FrontalLessons.LessonID"), primary_key=True)
     ReservationID = Column(String) 
     HasValidation = Column(Boolean)
 

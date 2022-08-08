@@ -1,6 +1,6 @@
 from flask import Flask, render_template, session as flasksession, redirect, url_for, request
 from flask_login import current_user, LoginManager
-from DaisPCTO.db import exists_role_user, get_user_by_id
+from DaisPCTO.db import get_user_by_id, extestone 
 from flask_bootstrap import Bootstrap
 from flask_wtf.csrf import CSRFProtect, CSRFError
 
@@ -39,30 +39,17 @@ def create_app():
 
     # admin.add_view(MyView(User, Session()))
 
+    @app.route('/test')
+    def test():
+        extestone()
+        return ""
+
     @app.route("/")
     def home():            
         return render_template("page.html", user=current_user, is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"))
         
     @login_manager.user_loader
-    def load_user(UserID):
-        # if not 'roles' in flasksession.keys():
-        #     flasksession['roles'] = []
-   
-        # else:
-            
-        #     if exists_role_user(UserID, "Professor"):
-        #         flasksession['roles'].append("Professor")
-
-        #     if exists_role_user(UserID, "Student"):
-        #         flasksession['roles'].append("Student")
-
-        #     if exists_role_user(UserID, "QrcodeReader"):
-        #         flasksession['roles'].append("QrcodeReader")
-
-        #     if exists_role_user(UserID, "Admin"):
-        #         flasksession['roles'].append("Admin")
-        
-        
+    def load_user(UserID):   
         return get_user_by_id(UserID)
 
     @app.errorhandler(404)
@@ -100,7 +87,7 @@ def create_app():
                 # print(f'Prenotazioni == {booked.Reserv} ==> Posti disponibili == {booked.Seats} ===> ID LEZIONE == {booked.LessonID}')
                 if booked.Reserv >= booked.Seats:
                     return (False, booked.Reserv)
-        return (True, booked.Reserv)
+                return (True, booked.Reserv)
 
     app.register_error_handler(404, page_not_found)
 

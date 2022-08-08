@@ -45,15 +45,26 @@ def extestone():
     #     session.rollback()
     
     
-    try:
-        session = Session()
-        utenteGender = session.query(User).filter(User.Gender == 'M').first()
-        session.query(User).filter(User.email=='skele@gmail.com').update({User.Gender : 'Female'})
-        session.query(User).filter(User.email=='skele@gmail.com').update({User.Name : 'Marca'})
-        session.commit()
-    except:
-        session.rollback()
+    # try:
+    #     session = Session()
+    #     utenteGender = session.query(User).filter(User.Gender == 'M').first()
+    #     session.query(User).filter(User.email=='skele@gmail.com').update({User.Gender : 'Female'})
+    #     session.query(User).filter(User.email=='skele@gmail.com').update({User.Name : 'Marca'})
+    #     session.commit()
+    # except:
+    #     session.rollback()
         #roleList = session.query(Role).all()
+
+        for _ in range(10):
+            try:
+                session = Session()
+                session.add(Role(Name='Giorgio', RoleID=11))
+                session.commit()
+            except Exception as e:
+                session.rollback()
+            finally:
+                session.close()
+            
 
 def exists_role_user(user_id, role):
     try:
@@ -290,6 +301,12 @@ def add_lesson(form, course_id, professor):
 
     return "Success"
 
+def add_multiple_lesson(lessons_list):
+    """
+    VOGLIAMO FARE IN MODO CHE AGGIUNGA TUTTE LE LEZIONI CHE SI POSSONO AGGIUNGERE, IGNORANDO QUELLE CHE NON SI POSSONO AGGIUNGERE
+    """
+    pass
+
 def delete_lesson(lesson_id):
     try:
         session = Session()
@@ -310,10 +327,10 @@ def get_lessons_by_course_id(course_id):
 
         return None
 
-def get_course_id_by_lesson_id(lesson_id):
+def get_course_by_lesson_id(lesson_id):
     try:
         session = Session()
-        return session.query(Course).filter(and_(Lesson.LessonID == lesson_id, Course.CourseID == Lesson.CourseID)).first().CourseID
+        return session.query(Course).filter(and_(Lesson.LessonID == lesson_id, Course.CourseID == Lesson.CourseID)).first()
     except:
         return None
         
@@ -406,41 +423,63 @@ def get_lesson_by_id(lesson_id):
         return session.query(Lesson).filter(Lesson.LessonID == lesson_id).first()
     except:
         return None
-        
-def get_lessons_bookable():
+
+def get_lessons_bookable(user_id):
     try:
         
         session = Session()
 
-        
-        return session.query(Course.Name.label("CourseName"), Lesson.Date, Lesson.StartTime, Lesson.EndTime, Classroom.Name, Classroom.Building, Classroom.Seats, Lesson.LessonID)\
+        return session.query(Course.Name.label("CourseName"), Lesson.Date, Lesson.StartTime, Lesson.EndTime, Classroom.Name, Classroom.Building, Classroom.Seats, Lesson.LessonID, func.coalesce(Reservation.StudentID, -1).label("StudentID"))\
             .join(Course, Course.CourseID == Lesson.CourseID)\
             .join(FrontalLesson, FrontalLesson.LessonID == Lesson.LessonID)\
             .join(Classroom, Classroom.ClassroomID == FrontalLesson.ClassroomID)\
+            .join(Reservation, and_(Reservation.FrontalLessonID == FrontalLesson.LessonID, Reservation.StudentID == user_id), isouter=True)\
             .filter(or_(
-                    and_(Lesson.Date - func.current_date() <= '7', Lesson.Date - func.current_date() > '0'),
-                and_(Lesson.StartTime > func.current_time(), Lesson.Date - func.current_date() == '0')))\
+                    and_(Lesson.Date - func.current_date() <='7', Lesson.Date - func.current_date() > '0'),
+                    and_(Lesson.StartTime > func.current_time(), Lesson.Date - func.current_date() == '0')
+                    ))\
             .order_by(Lesson.Date, Lesson.StartTime, Course.Name)\
-            .all()
-            #.filter(and_(Lesson.Date - func.date(datetime.datetime.today()) <= 7, Lesson.Date - func.date(datetime.datetime.today()) > 0))\
-            
+            .all()            
 
     except Exception as e:
-        
-        print(e)
         return None
 
 def get_full_lessons():
     try:
         session = Session()
-        return session.query(FrontalLesson.LessonID, func.count(Reservation.StudentID).label("Reserv"), Classroom.Seats).join(Classroom, Classroom.ClassroomID == FrontalLesson.ClassroomID)\
+        return session.query(FrontalLesson.LessonID, func.count(Reservation.StudentID).label("Reserv"), Classroom.Seats)\
+            .join(Classroom, Classroom.ClassroomID == FrontalLesson.ClassroomID)\
             .join(Reservation, Reservation.FrontalLessonID == FrontalLesson.LessonID, isouter=True)\
             .group_by(FrontalLesson.LessonID, Classroom.Seats)\
             .all()
 
     except Exception as e:
-        print(e)
         return []
+
+def book_lesson(frontalLesson_id, course_id):
+    try:
+        session = Session()
+        token = generate_password_hash(f'{current_user.get_id()}{frontalLesson_id}{course_id}{datetime.datetime.today()}')
+        session.add(Reservation(StudentID = current_user.get_id(), FrontalLessonID = frontalLesson_id, HasValidation = False, ReservationID = token))
+        session.commit()
+    except exc.SQLAlchemyError as e:
+        session.rollback()
+        if e.orig.diag.message_primary == 'SeatsNoMore':
+            return False
+
+    return True
+        
+
+def delete_reservation(frontalLesson_id):
+    try:
+        session = Session()
+        session.query(Reservation).filter(and_(Reservation.FrontalLessonID == frontalLesson_id, Reservation.StudentID == current_user.get_id())).delete()
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        return False
+    return True
+    
 """
 (Lesson.Date - date.today).days <= 7
 
