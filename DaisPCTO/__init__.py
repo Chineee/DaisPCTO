@@ -63,6 +63,7 @@ def create_app():
             school_add["School_name"] = school.SchoolName
             school_add["School_city"] = school.City
             school_add["School_region"] = school.Region
+            school_add["School_address"] = school.Address
 
             if (school.SchoolID == 28397):
                 print(school.Address)
