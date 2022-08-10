@@ -7,6 +7,14 @@ from DaisPCTO.models import *
 from DaisPCTO.db import *
 from functools import wraps
 
+def get_schools_tuple():
+    l = get_schools()
+    res = []
+    
+    for i in l:
+        t = (i.SchoolID, f'{i.SchoolName} {i.City}')
+        res.append(t)
+    return res
 
 class RegisterForm(FlaskForm):
     name = StringField('Nome', validators=[DataRequired(message="Campo richiesto")], render_kw={"placeholder":"Nome"}, id='name')
@@ -19,10 +27,10 @@ class RegisterForm(FlaskForm):
     phone = StringField('Numero di Telefono', validators=[DataRequired(message="Campo richiesto")], render_kw={"placeholder":"Numero di Telefono"})
     address = StringField('Indirizzo', validators=[DataRequired(message="Campo richiesto")], render_kw={"placeholder":"Indirizzo"})
     birth_date = DateField('Data di Nascita', validators=[DataRequired(message="Campo richiesto")], render_kw={"placeholder":"Data di Nascita"})
-    #cap = StringField("CAP", validators=[DataRequired(message="Inserire il CAP")])
+    student_city = StringField("Provincia di provenienza", validators=[DataRequired(message="Inserire provincia")], render_kw={"placeholder":"Provincia"})
 
-    school_name = StringField('Nome scuola di provenienza', render_kw={"placeholder":"Nome scuola di provenienza"})
-    school_city = StringField(u'Provincia scuola di provenienza', render_kw={"placeholder":"Città scuola di provenienza"}, )
+    school_name = StringField('Nome scuola di provenienza', render_kw={"placeholder" : "Nome scuola"})
+    school_id = StringField()
 
     school_year = StringField('Anno scolastico', render_kw={"placeholder":"Anno scolastico"})
 

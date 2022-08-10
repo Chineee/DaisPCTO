@@ -61,7 +61,7 @@
 
 
     <div class="row">
-        <div class="col-md-4 mb-3">
+        <div class="col-md-6 mb-3">
             {{ form.email.label }}
             <div class="input-group mb-3">
                 <label class="input-group-text" for="email">@</label>
@@ -76,7 +76,7 @@
             </div>
         </div>
 
-        <div class="col-md-4 mb-3">
+        <div class="col-md-6 mb-3">
             {{ form.repeat_email.label }}
             <div class="input-group mb-3">
                 <label class="input-group-text" for="repeat_email">@</label>
@@ -90,8 +90,10 @@
                 {% endif %}
             </div>
         </div>
+    </div>
 
-        <div class="col-md-4 mb-3">
+    <div class="row">
+        <div class="col-md-6 mb-3">
             {{ form.address.label }}
             {% if form.address.errors %} 
                 {{ form.address(class="form-control is-invalid")}}
@@ -100,6 +102,18 @@
                 </div>
             {% else %}
                 {{form.address(class="form-control")}}
+            {% endif %}
+        </div>
+
+        <div class="col-md-6 mb-3">
+            {{ form.student_city.label }}
+            {% if form.student_city.errors %} 
+                {{ form.student_city(class="form-control is-invalid")}}
+                <div class="invalid-feedback">
+                    {{ form.student_city.errors[0] }}
+                </div>
+            {% else %}
+                {{form.student_city(class="form-control")}}
             {% endif %}
         </div>
     </div>
@@ -163,23 +177,80 @@
     </div>
 
     <div class="row">
-        <div class="col-md-4 mb-3">
+        <div class="col-md-6 mb-3">
             {{ form.school_name.label }}
-            {{form.school_name(class="form-control")}}
+            {{form.school_name(class="form-control selectpicker")}}
+            
+            <ul class="list-group" id="list-group-schools" style="max-height : 300px; overflow-y: scroll;">
+                
+            </ul>
+            
         </div>
-        <div class="col-md-4 mb-3">
-            {{form.school_city.label}}
-            {{form.school_city(class="form-control")}}
-        </div>
-        <div class="col-md-4 mb-3">
+    
+        <div class="col-md-6 mb-3">
             {{form.school_year.label}}
             {{form.school_year(class="form-control")}}
         </div>
     </div>
+    
+      <input type="text" name="school_id" id="school_id" value = "" style="display : none;" /> 
 
       <button class="btn btn-success" type="submit">Registrati</button>
     
 </form>
+
+<script>
+    
+    var typingTimer;                //timer identifier
+    var doneTypingInterval = 1200;  //time in ms, 5 seconds for example
+    var $input = $('#school_name');
+
+    $input.on('keyup', function () {
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(doneTyping, doneTypingInterval);
+    });
+
+    //on keydown, clear the countdown 
+    $input.on('keydown', function () {
+        clearTimeout(typingTimer);
+    });
+
+    //user is "finished typing," do something
+    function doneTyping () {
+        $('#list-group-schools').empty()
+    //do something
+        let nome = $('#school_name').val()
+       
+
+            $.ajax({
+                type : 'get',
+                url : '/action/get/schools?name='+nome,
+                success : function (data){
+                    if (data["success"]) {
+                       
+                        for (let i = 0; i < data["result"].length; i++) {
+                            $('#list-group-schools').append("<li class='list-group-item list-group-item-action'\
+                            onclick='set_data_student_school(" + 
+                            data["result"][i]["School_id"] +")' id='" + data["result"][i]["School_id"] + "'" + "style='cursor : pointer;'>" + 
+                            data["result"][i]["School_name"] + " (" + data["result"][i]["School_city"]+")" + "</li>")   
+                        } 
+                        
+                    }                 
+                },             
+            });
+    }
+
+    function set_data_student_school(id) {
+        $('#school_name').val($('#'+id).text())
+        $('#list-group-schools').empty()
+        let a = $('#school_id').val(id)
+        console.log($('#school_id').val())
+
+        
+        // $('#school_id').val(id)
+        // console.log($('#school_id').val())
+    }
+</script>
 
 {% endblock content %}
     

@@ -72,6 +72,7 @@ class Student(Base):
     birthDate = Column(Date)
     SchoolYear = Column(Integer)
     HasSentFeedback = Column(Boolean)
+    
 
     __table_args__ = ()
 
@@ -91,7 +92,7 @@ class School(Base):
     SchoolName = Column(String)
     Address = Column(String)
     City = Column(String)
-    OfficesContacts = Column(String, unique=True)
+    Region = Column(String)
 
     Students = relationship("Student", backref = "School")
 
@@ -264,6 +265,8 @@ class Reservation(Base):
     FrontalLessonID = Column(Integer, ForeignKey("FrontalLessons.LessonID"), primary_key=True)
     ReservationID = Column(String) 
     HasValidation = Column(Boolean)
+    Address = Column(String) 
+    City = Column(String)
 
     __table_args__= ()
 

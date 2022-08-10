@@ -1,8 +1,9 @@
 from flask import Flask, render_template, session as flasksession, redirect, url_for, request
 from flask_login import current_user, LoginManager
-from DaisPCTO.db import get_user_by_id, extestone 
+from DaisPCTO.db import get_user_by_id, extestone, get_schools_with_name
 from flask_bootstrap import Bootstrap
 from flask_wtf.csrf import CSRFProtect, CSRFError
+from flask.json import jsonify
 import base64 
 import io
 import qrcode
@@ -41,6 +42,38 @@ def create_app():
     # admin = Admin(app, index_view=UserModelView())
 
     # admin.add_view(MyView(User, Session()))
+
+    @app.route('/action/get/schools')
+    def give_school_attribute():
+        '''
+        FUNZIONE CHE VIENE CHIAMATA DAL SERVER PER OTTENERE INFORMAZIONI SULLE SCUOLE DATO IL LORO NOME
+        '''
+        name = request.args.get("name")
+        if name == "":
+            return jsonify({"success" : False})
+        l = get_schools_with_name(name.upper())
+
+        
+
+        res = []
+
+        for school in l:
+            school_add = {}
+            school_add["School_id"] = school.SchoolID
+            school_add["School_name"] = school.SchoolName
+            school_add["School_city"] = school.City
+            school_add["School_region"] = school.Region
+
+            if (school.SchoolID == 28397):
+                print(school.Address)
+            
+            if (school.SchoolID == 26253):
+                print(school.Address)
+            
+            res.append(school_add)
+    
+   
+        return jsonify({"success" : True, "result" : res})
 
     @app.route('/test')
     def test():
@@ -106,6 +139,7 @@ def create_app():
         img = qr.make_image(fill_color="black", back_color="white")
         
         return img
+    
 
     app.register_error_handler(404, page_not_found)
 

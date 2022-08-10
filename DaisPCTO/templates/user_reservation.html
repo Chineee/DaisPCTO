@@ -1,6 +1,0 @@
-{% extends "reservations.html" %}
-
-{% block my_reservation %} 
-    <button class="btn text-white" style="background-color: #491570">Annulla Prenotazione</button>  
-    <p class="float-end"><strong>Posti disponibili :</strong> {{s.Seats - is_bookable[1]}} / {{s.Seats}}</p> 
-{% endblock %}

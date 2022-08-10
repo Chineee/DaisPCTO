@@ -1,14 +1,15 @@
-from fractions import Fraction
 from DaisPCTO.models import Feedback,\
      ProfessorCourse, StudentCourse, User, Student, Professor,\
      UserRole, Course, Role, Lesson, StudentLesson, Reservation, \
-     FrontalLesson, OnlineLesson, Classroom, QnA
+     FrontalLesson, OnlineLesson, Classroom, School
 from sqlalchemy import create_engine, and_, not_, or_, not_, exc, func, case, text
 from sqlalchemy.orm import sessionmaker
 from flask_login import current_user, user_accessed
+from flask import flash
 from flask_bcrypt import generate_password_hash, check_password_hash
 import random 
 import datetime 
+import json
 
 engine = {
     "Admin" : create_engine("postgresql://postgres:123456@localhost/testone8", echo=False, pool_size=20, max_overflow=0),
@@ -54,15 +55,38 @@ def extestone():
     #     session.rollback()
         #roleList = session.query(Role).all()
 
-        for _ in range(10):
+        # for _ in range(10):
+        #     try:
+        #         session = Session()
+        #         session.add(Role(Name='Giorgio', RoleID=11))
+        #         session.commit()
+        #     except Exception as e:
+        #         session.rollback()
+        #     finally:
+        #         session.close()
+
+    with open("Scuole.json") as f:
+        data = json.load(f)["@graph"]
+        index = 0
+        for scuola in data:
             try:
                 session = Session()
-                session.add(Role(Name='Giorgio', RoleID=11))
+                session.add(School(Address=scuola["miur:INDIRIZZOSCUOLA"], SchoolName = scuola["miur:DENOMINAZIONESCUOLA"], City = scuola["miur:PROVINCIA"], Region = scuola["miur:REGIONE"]))
                 session.commit()
-            except Exception as e:
+            except:
+                print("fallito")
+                index += 1
                 session.rollback()
-            finally:
-                session.close()
+        print(index)
+
+    try:
+        session = Session()
+        a = session.query(School).all()
+        print(len(a))
+
+        session.commit()
+    except:
+        pass
             
 
 def exists_role_user(user_id, role):
@@ -260,51 +284,73 @@ def add_lesson(form, course_id, professor):
     type_lesson = form.type_lesson.data
     is_dual = True if type_lesson == "Duale" else False
     classroom = form.classroom.data
+    link = form.link.data
+    password = form.password.data
     token = generate_password_hash(f'{current_user.get_id()}{course_id}{date}{start_time}{end_time}{classroom}{random.randint(0, 501)}')
-     
-    try:
+    lesson_new = Lesson(Date = date, StartTime = start_time, EndTime = end_time, Topic = topic, IsDual = is_dual, CourseID = course_id, ProfessorID=professor, Token=token)
+
+    return _add_lesson(lesson_new, type_lesson, classroom, link, password)
+
+
+def _add_lesson(lesson_new, type_less, classroom, link=None, password=None):
+    try: 
         session = Session()
-        lesson_new = Lesson(Date = date, StartTime = start_time, EndTime = end_time, Topic = topic, IsDual = is_dual, CourseID = course_id, ProfessorID=professor, Token=token)
         session.add(lesson_new)
         session.flush()
-        if (type_lesson == "Frontale"):
-            session.add(FrontalLesson(LessonID = lesson_new.LessonID , ClassroomID = classroom))
-        elif (type_lesson == "Online"):
-            session.add(OnlineLesson(LessonID=lesson_new.LessonID))
-        elif (type_lesson == "Duale"):
-            session.add(FrontalLesson(LessonID = lesson_new.LessonID , ClassroomID = classroom))
-            session.add(OnlineLesson(LessonID=lesson_new.LessonID))
 
+        if (type_less == "Frontale"):
+            session.add(FrontalLesson(LessonID = lesson_new.LessonID , ClassroomID = classroom))
+
+        elif (type_less == "Online"):
+            session.add(OnlineLesson(LessonID=lesson_new.LessonID, RoomLink = link, RoomPassword = password))
+
+        elif (type_less == "Duale"):
+            session.add(FrontalLesson(LessonID = lesson_new.LessonID , ClassroomID = classroom))
+            session.add(OnlineLesson(LessonID=lesson_new.LessonID, RoomLink = link, RoomPassword = password))
         session.commit()
     except exc.SQLAlchemyError as e:
-
-       
-        '''
-        NB: 23514 È IL CODICE CHE INDICA UN "psycopg2.errors.CheckViolation" quindi se l'errore corrisponde a quel codice significa che stiamo
-        violando l'unico checkconstrain della tabella lesson, ovvero quello della data di inizio che deve essere strettamente minore della data di
-        fine
-        '''
-
-            
-        if int(e.orig.pgcode) == 23514: 
-            return "DateError"
-
-        '''
-        NB: Messaggio di un eccezione lanciamo noi
-        '''
-
-        if e.orig.diag.message_primary == "Classroom is already taken":
+        session.rollback()
+        
+        if e.orig.diag.message_primary == "LessonOverlapping":
+            delete_lesson(lesson_new.LessonID)
             return "ClashError"
+
+        if e.orig.diag.message_primary == "SameCourseOverlapping":
+            return "SameCourseClashError"
+
+        if int(e.orig.pgcode) == 23514:
+            return "DataError"
         
         return "UnknownError"
-
+    finally:
+        session.close()
     return "Success"
 
-def add_multiple_lesson(lessons_list):
+def add_multiple_lesson(form, course_id, professor):
     """
     VOGLIAMO FARE IN MODO CHE AGGIUNGA TUTTE LE LEZIONI CHE SI POSSONO AGGIUNGERE, IGNORANDO QUELLE CHE NON SI POSSONO AGGIUNGERE
     """
-    pass
+
+    start_date = form.start_date_2.data
+    end_date = form.end_date_2.data
+    diff_date = start_date
+    
+    is_dual = True if form.lesson_type_2.data == "Duale" else False
+
+
+    while diff_date < end_date:
+        token = generate_password_hash(f'{current_user.get_id()}{course_id}{diff_date}{form.start_time_2.data}{form.end_time_2.data}{form.classroom_2.data}{random.randint(0, 1000)}')
+        lesson_new = Lesson(Date = diff_date, StartTime = form.start_time_2.data, EndTime = form.end_time_2.data, CourseID = course_id, IsDual = is_dual, ProfessorID=professor, Token=token)
+
+        result_query = _add_lesson(lesson_new, form.lesson_type_2.data, form.classroom_2.data)
+       
+        if result_query == 'ClashError' or result_query == "SameCourseClashError":
+            flash(f'Lezione del {diff_date} non aggiunta per sovrapposizione')
+    
+        diff_date = diff_date + datetime.timedelta(days=7)
+
+        
+    
 
 def delete_lesson(lesson_id):
     try:
@@ -320,9 +366,13 @@ def delete_lesson(lesson_id):
 def get_lessons_by_course_id(course_id):
     try:
         session = Session()
-        return session.query(Lesson).filter(Lesson.CourseID == course_id).order_by(Lesson.Date, Lesson.StartTime).all()
+        return session.query(Lesson.LessonID, Lesson.CourseID, Lesson.Date, Lesson.StartTime, Lesson.EndTime, Lesson.Topic, Classroom.Name, Classroom.Building, Lesson.IsDual, OnlineLesson.RoomLink, OnlineLesson.RoomPassword)\
+            .join(FrontalLesson, Lesson.LessonID == FrontalLesson.LessonID, isouter = True)\
+            .join(Classroom, Classroom.ClassroomID == FrontalLesson.ClassroomID, isouter=True)\
+            .join(OnlineLesson, OnlineLesson.LessonID == Lesson.LessonID, isouter = True)\
+            .filter(Lesson.CourseID == course_id)\
+            .order_by(Lesson.Date, Lesson.StartTime).all()
     except Exception as e:
-        print(e)
 
         return None
 
@@ -448,17 +498,15 @@ def get_full_lessons():
 def book_lesson(frontalLesson_id, course_id):
     try:
         session = Session()
-        token = generate_password_hash(f'{current_user.get_id()}{frontalLesson_id}{course_id}{datetime.datetime.today()}').decode('utf-8')
-        
+        token = generate_password_hash(f'{current_user.get_id()}{frontalLesson_id}{course_id}{datetime.datetime.now()}', 10).decode('utf-8')
         session.add(Reservation(StudentID = current_user.get_id(), FrontalLessonID = frontalLesson_id, HasValidation = False, ReservationID = token))
         session.commit()
-        # img = qrcode.make(token)
-        # img.save("some_file.png")
-    
+        
     except exc.SQLAlchemyError as e:
         session.rollback()
         if e.orig.diag.message_primary == 'SeatsNoMore':
             return False
+        return False
 
     return True
         
@@ -488,6 +536,30 @@ def confirm_attendance(reservation):
         session.commit()
     except:
         session.rollback()
+
+
+def get_classrooms():
+    try:
+        session = Session()
+        return session.query(Classroom).order_by(Classroom.Name).all()
+    except:
+        session.rollback()
+        session.close()
+        return None
+
+def get_schools():
+    try:
+        session = Session()
+        return session.query(School).all()
+    except:
+        return []
+
+def get_schools_with_name(name):
+    try:
+        session = Session()
+        return session.query(School).filter(School.SchoolName.contains(name)).order_by(School.City).all()
+    except:
+        return []
 
 """
 (Lesson.Date - date.today).days <= 7

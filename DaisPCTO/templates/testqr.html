@@ -18,7 +18,7 @@
         
         
         var csrf_token = "{{ csrf_token() }}";
-       
+        let fps_now = 20
 
         $.ajaxSetup({
                     beforeSend: function(xhr, settings) {
@@ -27,27 +27,31 @@
 
                         }
                     }
-                });
+        });
 
         function onScanSuccess(decodedText, decodedResult) {
+            
   // handle the scanned code as you like, for example:
+            fps_now = 0;
             $.ajax({
                 type : "POST",
                 url : '/action/lessons?action=formalize&lesson_id=1&token='+decodedText,
             })
 
-            console.log(decodedText)
-            console.log(decodedResult)
-          
+            setTimeout(set_fps, 300);
+                  
+        }
+
+        function set_fps() {
+            fps_now = 30;
         }
 
         function onScanFailure(error) {
-    // handle scan failure, usually better to ignore and keep scanning.
-    // for example:
-    //console.warn(`Code scan error = ${error}`);
+            console.log(error)
+            
         }
 
-        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 0.4, qrbox: {width: 500, height: 500} }, /* verbose= */ false);
+        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: fps_now, qrbox: {width: 500, height: 500} }, /* verbose= */ false);
 
         html5QrcodeScanner.render(onScanSuccess, onScanFailure);
     </script>    

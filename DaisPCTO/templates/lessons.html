@@ -12,6 +12,21 @@
         </center>
     </h1>
 
+    {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            <div class="alert alert-secondary alert-dismissible fade show" role="alert">
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <div class="alert-{{category}}">
+                        <li> {{ message }} </li>
+                        </div>
+                    {% endfor %}
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endif %}
+    {% endwith %}
+
     <nav class="nav nav-pills flex-column flex-sm-row">
         <a href="/courses/{{course.CourseID}}" class="nav-link">
 
@@ -85,21 +100,24 @@
                     <div class="ms-2 me-auto card-header cursore" data-bs-toggle="collapse" data-bs-target="#collapse-{{i}}" aria-expanded="true" aria-controls="#collapse-{{i}}" data-parent="#card-scheda-2">
                         <i class="indicator bi float-start fs-6 me-2 bi-chevron-up" id="simbolo-freccia-{{i}}"></i>
                         <h5 class="mb-0 card-title">
-                            Lezione {{i+1}}
+                            Lezione {{i+1}} {% if list_lessons[i].Name == None %} - (Online) {% endif %}
                         </h5>
                         <br>
                         <strong>&emsp;&ensp;Data &ensp; :</strong> {{list_lessons[i].Date.strftime('%d-%m-%Y')}} <br>
                         <strong>&emsp;&ensp;Orario :</strong>  {{list_lessons[i].StartTime.strftime('%H:%M')}} - {{list_lessons[i].EndTime.strftime('%H:%M')}} <br>
-                        <strong>&emsp;&ensp;Aula &ensp; :</strong> QUA METTI LA CLASSROOM --> Nel buco del culo di tua madre
+                        {% if list_lessons[i].Name != None %} <strong>&emsp;&ensp;Aula &ensp; :</strong>  {{list_lessons[i].Name}} - Edificio {{list_lessons[i].Building}}<br> {% endif %}
+                        {% if list_lessons[i].IsDual == True or list_lessons[i].Name == None %} 
+                        <strong> &emsp;&ensp;Link&ensp; :</strong> {{list_lessons[i].RoomLink}} <br> 
+                        <strong> &emsp;&ensp;Password&ensp; :</strong> {{list_lessons[i].RoomPassword}}
+                        {% endif %}
 
                     </div>
-
 
                     <div id="collapse-{{i}}" class="collapse show" style="word-wrap : break-word;">
                         &emsp;&emsp;
                         <div class="card-body">
                             <p style="margin-left : 32px">
-                                <br>
+                               
 
                                 <strong> Argomento e Materiali : </strong>
                                 &emsp;
@@ -132,9 +150,9 @@
     <div class="card tit-no-border espansione" id="dopdown-button">
         <div class="card-header cursore" data-bs-toggle="collapse" data-bs-target="#collapse-form" aria-expanded="true" aria-controls="#collapse-form" data-parent="#card-scheda-2">
             <i class="indicator bi float-start fs-6 me-2 bi-chevron-down" id="simbolo-freccia"></i>
-            <h5 class="mb-0 card-title"> Aggiungi Lezione </h5>
+            <h5 class="mb-0 card-title"> Aggiungi Lezioni </h5>
         </div>
-        <div id="collapse-form" class="collapse{% if form.errors.items() %} show{% endif %}">
+        <div id="collapse-form" class="collapse{% if form.errors.items() or form2.errors.items() %} show{% endif %}">
             <div class="card-body">
                 <form method="POST" id="form-lesson-add" novalidate>
                     {{form.hidden_tag()}}
@@ -176,6 +194,18 @@
                                 {{form.start_time(class="form-control")}}
                             {% endif %}
                         </div>
+
+                        <div class="col-md-6 mb-3">
+                            {{form.end_time.label}}
+                            {% if form.end_time.errors %} 
+                                {{form.end_time(class="form-control is-invalid")}}
+                                <div class="invalid-feedback">
+                                    {{form.end_time.errors[0]}}
+                                </div>
+                            {% else %} 
+                                {{form.end_time(class="form-control")}}
+                            {% endif %}
+                        </div>
                     </div>
 
                     <div class="row">
@@ -206,11 +236,126 @@
                         </div>
                     </div>
 
-                    <input type="submit" class="btn btn-primary" value="Conferma" />
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{form.link.label}}
+                            {% if form.link.errors %}
+                                {{form.link(class="form-control is-invalid")}}
+                                <div class="invalid-feedback">
+                                    {{form.link.errors[0]}}
+                                </div>
+                            {% else %}
+                                {{form.link(class="form-control")}}
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            {{form.password.label}}
+                            {% if form.password.errors %}
+                                {{form.password(class="form-control is-invalid")}}
+                                <div class="invalid-feedback">
+                                    {{form.password.errors[0]}}
+                                </div>
+                            {% else %}
+                                {{form.password(class="form-control")}}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <input type="submit" class="btn btn-primary" value="Conferma" name="submit_button"/>
+               
+                </form>
+
+                <hr/>
+                <form method="POST" novalidate>
+                    <h4> Aggiungi più lezioni insieme </h4><br><br> 
+
+                    {{form2.hidden_tag()}}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{form2.start_date_2.label}}
+                            {% if form2.start_date_2.errors %}
+                                {{form2.start_date_2(class="form-control is-invalid")}}
+                                <div class="invalid-feedback">
+                                    {{form2.start_date_2.errors[0]}}
+                                </div>
+                            {% else %}
+                                {{form2.start_date_2(class="form-control")}}
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            {{form2.end_date_2.label}}
+                            {% if form2.end_date_2.errors %}
+                                {{form2.end_date_2(class="form-control is-invalid")}}
+                                <div class="invalid-feedback">
+                                    {{form2.end_date_2.errors[0]}}
+                                </div>
+                            {% else %}
+                                {{form2.end_date_2(class="form-control")}}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{form2.start_time_2.label}}
+                            {% if form2.start_time_2.errors %}
+                                {{form2.start_time_2(class="form-control is-invalid")}}
+                                <div class="invalid-feedback">
+                                    {{form2.start_time_2.errors[0]}}
+                                </div>
+                            {% else %}
+                                {{form2.start_time_2(class="form-control")}}
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            {{form2.end_time_2.label}}
+                            {% if form2.end_time_2.errors %}
+                                {{form2.end_time_2(class="form-control is-invalid")}}
+                                <div class="invalid-feedback">
+                                    {{form2.end_time_2.errors[0]}}
+                                </div>
+                            {% else %}
+                                {{form2.end_time_2(class="form-control")}}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{form2.classroom_2.label}}
+                            {% if form2.classroom_2.errors %}
+                                {{form2.classroom_2(class="form-control is-invalid")}}
+                                <div class="invalid-feedback">
+                                    {{form2.classroom_2.errors[0]}}
+                                </div>
+                            {% else %}
+                                {{form2.classroom_2(class="form-control")}}
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            {{form2.lesson_type_2.label}}
+                            {% if form2.lesson_type_2.errors %}
+                                {{form2.lesson_type_2(class="form-control is-invalid")}}
+                                <div class="invalid-feedback">
+                                    {{form2.lesson_type_2.errors[0]}}
+                                </div>
+                            {% else %}
+                                {{form2.lesson_type_2(class="form-control")}}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <input type="submit" class="btn btn-primary" value="Conferma" name="submit_lessons"/>
+
                 </form>
             </div>
         </div>
     </div>
+    
     {% endif %}
     <br><br>
 
