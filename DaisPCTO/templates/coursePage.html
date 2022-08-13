@@ -173,7 +173,7 @@
         {% if is_professor and can_modify %}
             <form method="POST">
                 {{ form.hidden_tag() }}
-                <button type="button" class="btn btn-secondary" data-bs-toggle="modal"
+                <button type="button" class="btn btn-{% if course.OpenFeedback %}danger{% else %}success{% endif %}" data-bs-toggle="modal"
                         data-bs-target="#studentFeedback"> {% if course.OpenFeedback %} Vuoi chiudere i
                     feedback? {% else %} Vuoi aprire i feedback? {% endif %} </button>
 
@@ -183,7 +183,7 @@
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h5 class="modal-title" id="studentFeedback"> {% if course.OpenFeedback %} Vuoi chiudere
-                                    i feedback? {% else %} Vuoi aprire i feedback? {% endif %}</h5>
+                                    i feedback? {% else %} Vuoi aprire i feedback? <br><br> <p style="font-size: medium;"> I certificati verrano mandati agli studenti che rispettano le condizioni automaticamente </p>{% endif %}</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"
                                         aria-label="Close"></button>
                             </div>

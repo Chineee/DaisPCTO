@@ -5,7 +5,7 @@ from DaisPCTO.auth import role_required
 from DaisPCTO.db import add_course, get_course_by_id, can_professor_modify, \
     get_user_by_id, get_professor_by_course_id, change_course_attr, \
     count_student, change_feedback, subscribe_course, \
-    delete_subscription, is_subscribed, get_courses_list, get_professor_courses, get_student_courses
+    delete_subscription, is_subscribed, get_courses_list, get_professor_courses, get_student_courses, send_certificate_to_students, get_student_certificates
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, EmailField, SelectField, DateField, BooleanField, SubmitField, validators, SelectMultipleField, IntegerField, TextAreaField
 from wtforms.validators import DataRequired, EqualTo, ValidationError, Length, NumberRange
@@ -31,6 +31,16 @@ class ChangeInformationCourse(FlaskForm):
     submit = SubmitField()
 
     subscribe = SubmitField()
+
+@courses.route('/certificates')
+def certificate():
+    certificates = get_student_certificates(current_user.get_id())
+
+    return render_template("certificates.html",
+                            is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"),
+                            user = current_user,
+                            certificates = certificates)
+    pass 
 
 @courses.route('/')
 def home_courses():
@@ -96,7 +106,9 @@ def course(coursePage):
 
     if form.validate_on_submit() and can_modify:
         if form.submit.data:
-            change_feedback(coursePage.upper())
+            res = change_feedback(coursePage.upper())
+            if res:
+                send_certificate_to_students(coursePage.upper())
         elif form.changeSubmit.data:
             change_course_attr(form, coursePage.upper())
 

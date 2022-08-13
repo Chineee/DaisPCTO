@@ -28,7 +28,6 @@ class User(Base, UserMixin):
     Name = Column(String)
     Surname = Column(String)
     Gender = Column(String)
-    Address = Column(String)
     email = Column(String, unique=True)
     Password = Column(String)
     PhoneNumber = Column(String)
@@ -71,7 +70,8 @@ class Student(Base):
     SchoolID = Column(Integer, ForeignKey("Schools.SchoolID"))
     birthDate = Column(Date)
     SchoolYear = Column(Integer)
-    HasSentFeedback = Column(Boolean)
+    City = Column(String)
+    Address = Column(String)
     
 
     __table_args__ = ()
@@ -141,8 +141,8 @@ class Certificate(Base):
     __tablename__ = "Certificates"
 
     CertificateID = Column(Integer, primary_key=True)
-    StudentID = Column(Integer, ForeignKey("Students.UserID"))
-    CourseID = Column(String, ForeignKey("Courses.CourseID"))
+    StudentID = Column(Integer, ForeignKey("Students.UserID"), unique = True)
+    CourseID = Column(String, ForeignKey("Courses.CourseID"), unique = True)
     Hours = Column(Integer)
 
     Students = relationship("Student", backref="Certificates")
@@ -155,6 +155,7 @@ class StudentCourse(Base):
 
     CourseID = Column(String, ForeignKey("Courses.CourseID"), primary_key=True)
     StudentID = Column(Integer, ForeignKey("Students.UserID"), primary_key=True)
+    HasSentFeedback = Column(Boolean)
 
     __table_args__ = ()
 
@@ -173,6 +174,7 @@ class Feedback(Base):
     CourseID = Column(String, ForeignKey("Courses.CourseID"))
     CourseGrade = Column(Integer)
     TeacherGrade = Column(Integer)
+    Comments = Column(Text)
 
     Courses = relationship("Course", backref="Feedbacks")
 
@@ -265,8 +267,6 @@ class Reservation(Base):
     FrontalLessonID = Column(Integer, ForeignKey("FrontalLessons.LessonID"), primary_key=True)
     ReservationID = Column(String) 
     HasValidation = Column(Boolean)
-    Address = Column(String) 
-    City = Column(String)
 
     __table_args__= ()
 

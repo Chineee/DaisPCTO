@@ -1,0 +1,23 @@
+{% extends "page.html" %}  
+
+{% block content %} 
+
+    <div class="row">
+        {% for c in certificates %}
+            <div class="col-md-12 mb-3 float-right">
+                <div class="card text-center float-right" style="width : 750px;">
+                    <div class="card-header text-white" style="background-color : #8736aa;">
+                        <h4 class="float-center"> {{c.Name}} </h4>
+                    </div>
+                    <div class="card-body">
+                        Congratulazioni {{c.StudentName}}!! É ora disponibile l'attestato di partecipazione al corso {{c.Name}}-{{c.CourseID}}.
+                    </div>
+                    <div class="card-footer float-end">
+                        <button type="button" class="btn float-end text-white" style="background-color: #47297B">Scaricami!</button>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>    
+
+{% endblock %}

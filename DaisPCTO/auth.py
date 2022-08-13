@@ -6,15 +6,7 @@ from flask import Blueprint, render_template, url_for, redirect, flash, abort, r
 from DaisPCTO.models import *
 from DaisPCTO.db import *
 from functools import wraps
-
-def get_schools_tuple():
-    l = get_schools()
-    res = []
-    
-    for i in l:
-        t = (i.SchoolID, f'{i.SchoolName} {i.City}')
-        res.append(t)
-    return res
+        
 
 class RegisterForm(FlaskForm):
     name = StringField('Nome', validators=[DataRequired(message="Campo richiesto")], render_kw={"placeholder":"Nome"}, id='name')
@@ -29,10 +21,10 @@ class RegisterForm(FlaskForm):
     birth_date = DateField('Data di Nascita', validators=[DataRequired(message="Campo richiesto")], render_kw={"placeholder":"Data di Nascita"})
     student_city = StringField("Provincia di provenienza", validators=[DataRequired(message="Inserire provincia")], render_kw={"placeholder":"Provincia"})
 
-    school_name = StringField('Nome scuola di provenienza', render_kw={"placeholder" : "Nome scuola"})
-    school_id = StringField()
+    school_name = StringField('Nome scuola di provenienza', render_kw={"placeholder" : "Nome scuola"}, validators=[DataRequired(message="Campo Richiesto")])
+    school_id = StringField(validators=[DataRequired(message="Campo Richiesto")])
 
-    school_year = StringField('Anno scolastico', render_kw={"placeholder":"Anno scolastico"})
+    school_year = StringField('Anno scolastico', render_kw={"placeholder":"Anno scolastico"}, validators=[DataRequired(message="Campo richiesto")])
 
     def validate_repeat_password(self, password):
         
@@ -55,19 +47,17 @@ class RegisterForm(FlaskForm):
 
         (category, throw_error) = ("notpassed", True) if not self.check_password_length(password.data) else ("passed", throw_error)
 
-        flash("La password deve avere almeno 8 caratteri", category)
         
         (category, throw_error) = ("notpassed", True) if not self.check_password_caps(password.data) else ("passed", throw_error)
 
-        flash("La password deve contenere almeno un carattere maiuscolo", category)
         
         (category, throw_error) = ("notpassed", True) if not self.check_password_special(password.data) else ("passed", throw_error)
 
-        flash("La password deve contenere almeno un carattere speciale", category)
+       
         
         (category, throw_error) = ("notpassed", True) if not self.check_password_number(password.data) else ("passed", throw_error)
         
-        flash("La password deve contenere almeno un numero", category)
+       
         
         if throw_error == True:
             raise ValidationError("Inserisci una password valida!")
@@ -147,7 +137,7 @@ def register():
     form = RegisterForm()
     if form.validate_on_submit():
         new_user = create_user(form)
-        if add_user(new_user):
+        if add_user(new_user, form):
             return redirect(url_for("home"))
     
     return render_template("register.html", form=form, user=current_user, is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"))

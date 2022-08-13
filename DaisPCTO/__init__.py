@@ -7,7 +7,7 @@ from flask.json import jsonify
 import base64 
 import io
 import qrcode
-
+import json
 # from flask_admin import Admin, expose, BaseView, AdminIndexView
 # from flask_admin.contrib.sqla import ModelView
 
@@ -65,16 +65,31 @@ def create_app():
             school_add["School_region"] = school.Region
             school_add["School_address"] = school.Address
 
-            if (school.SchoolID == 28397):
-                print(school.Address)
-            
-            if (school.SchoolID == 26253):
-                print(school.Address)
             
             res.append(school_add)
     
    
         return jsonify({"success" : True, "result" : res})
+
+    @app.route('/action/get/province')
+    def give_province():
+        with open("province.json") as f:
+            data = json.load(f)
+            res = []
+
+            name = request.args.get("name").upper()
+            if (len(name) == 0):
+                 return jsonify({"success" : False})
+            
+            for city in data:
+                if city['nome'].upper().startswith(name):
+                    city_add = {}
+                    city_add['nome'] = city['nome'].upper()
+                    city_add['sigla'] = city['sigla'].upper()
+                    city_add['regione'] = city['regione'].upper()
+                    res.append(city_add)
+            
+            return jsonify({"success" : True, "result" : res})
 
     @app.route('/test')
     def test():
@@ -84,7 +99,7 @@ def create_app():
     @app.route("/")
     def home():            
         return render_template("page.html", user=current_user, is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"))
-        
+    
     @login_manager.user_loader
     def load_user(UserID):   
         return get_user_by_id(UserID)
@@ -153,5 +168,8 @@ def create_app():
 
     from DaisPCTO.lessons import lessons as lessons_blueprint 
     app.register_blueprint(lessons_blueprint)
+
+    from DaisPCTO.feedback import feedback as feedback_blueprint
+    app.register_blueprint(feedback_blueprint)
     
     return app

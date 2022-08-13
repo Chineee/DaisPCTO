@@ -1,4 +1,4 @@
-from DaisPCTO.models import Feedback,\
+from DaisPCTO.models import Certificate, Feedback,\
      ProfessorCourse, StudentCourse, User, Student, Professor,\
      UserRole, Course, Role, Lesson, StudentLesson, Reservation, \
      FrontalLesson, OnlineLesson, Classroom, School
@@ -65,28 +65,14 @@ def extestone():
         #     finally:
         #         session.close()
 
-    with open("Scuole.json") as f:
-        data = json.load(f)["@graph"]
-        index = 0
-        for scuola in data:
-            try:
-                session = Session()
-                session.add(School(Address=scuola["miur:INDIRIZZOSCUOLA"], SchoolName = scuola["miur:DENOMINAZIONESCUOLA"], City = scuola["miur:PROVINCIA"], Region = scuola["miur:REGIONE"]))
-                session.commit()
-            except:
-                print("fallito")
-                index += 1
-                session.rollback()
-        print(index)
+    with open("province.json") as f:
+        data = json.load(f)
+        res = []
+        for city in data:
+            res.append( (city['nome'], city["sigla"]) )
 
-    try:
-        session = Session()
-        a = session.query(School).all()
-        print(len(a))
-
-        session.commit()
-    except:
-        pass
+        return res
+     
             
 
 def exists_role_user(user_id, role):
@@ -141,32 +127,45 @@ def create_user(form):
     Password = form.password.data
     Gender = form.gender.data
     Phone = form.phone.data
-    Address = form.address.data
 
-    new_user = User(Name=Name, Surname=Surname, Gender=Gender, Address = Address, email=Email, Password = generate_password_hash(Password).decode('utf-8'), PhoneNumber=Phone)
+    new_user = User(Name=Name, Surname=Surname, Gender=Gender, email=Email, Password = generate_password_hash(Password).decode('utf-8'), PhoneNumber=Phone)
     
     return new_user
 
-def add_user(User):
+def add_user(User, form):
     try:
         session = Session()
         session.add(User)
         session.commit()
-        add_student(User)
+        add_student(User, form)
     except:
         session.rollback()
         return False 
     return True
 
-def add_student(user):
+def add_student(user, form):
 
     #MODIFICARE ADD STUDENT IN MODO CHE ADDI TUTTI GLI ALTRI CAMPI
 
+    school_id = form.school_id.data
+    student_city = form.student_city.data.partition(',')[0]
+    student_birth_date = form.birth_date.data
+    student_school_year = form.school_year.data
+    student_address = form.address.data
+
     try:
         session = Session()
-        session.add_all([Student(UserID = user.UserID, SchoolID=None), UserRole(UserID = user.UserID, RoleID = 2)])
+        session.add_all([Student(UserID = user.UserID, \
+                                SchoolID=school_id, \
+                                birthDate = student_birth_date, \
+                                Address=student_address, \
+                                SchoolYear = student_school_year,\
+                                City = student_city
+                                ), \
+            UserRole(UserID = user.UserID, \
+                    RoleID = 2)])
         session.commit()
-    except:
+    except Exception as e:
         session.rollback()
 
 def compare_password(db_password, inserted_password):
@@ -244,6 +243,9 @@ def change_feedback(course_id):
         session = Session()       
         session.query(Course).filter(Course.CourseID == course_id).update({Course.OpenFeedback : not_(Course.OpenFeedback)})
         session.commit()
+
+        return session.query(Course).filter(Course.CourseID == course_id).first().OpenFeedback
+            
     except:
         session.rollback()
     finally:
@@ -252,7 +254,7 @@ def change_feedback(course_id):
 def subscribe_course(student_id, course_id):
     try:
         session = Session()
-        session.add(StudentCourse(StudentID=student_id, CourseID=course_id))
+        session.add(StudentCourse(StudentID=student_id, CourseID=course_id, HasSentFeedback = True))
         session.commit()
     except:
         session.rollback()
@@ -449,8 +451,6 @@ def get_student_courses(user_id):
                     .order_by(Course.Name)\
                     .group_by(Course.CourseID, Course.Name, Course.Description, Course.MinHourCertificate).all()
 
-        for i in query:
-            print(f'Corso ID == {i.CourseID} --- Ore seguite == {i.Hours}')
 
         return query
     except Exception as e:
@@ -504,6 +504,7 @@ def book_lesson(frontalLesson_id, course_id):
         
     except exc.SQLAlchemyError as e:
         session.rollback()
+        print(e)
         if e.orig.diag.message_primary == 'SeatsNoMore':
             return False
         return False
@@ -542,9 +543,10 @@ def get_classrooms():
     try:
         session = Session()
         return session.query(Classroom).order_by(Classroom.Name).all()
-    except:
+    except Exception as e:
         session.rollback()
         session.close()
+        print(e)
         return None
 
 def get_schools():
@@ -561,7 +563,58 @@ def get_schools_with_name(name):
     except:
         return []
 
+def send_certificate_to_students(course_id):
+   
+        session = Session()
+             
+        try:
+            hours = session.query(Course).filter(Course.CourseID == course_id.upper()).first().MinHourCertificate
+            student_courses = session.query(StudentCourse).filter(course_id == StudentCourse.CourseID).all()
+        except:
+            return
+
+        for student in student_courses:
+            students_courses_hours = get_student_courses(student.StudentID)
+            for course in students_courses_hours:
+                if course.CourseID == course_id.upper() and course.Hours.total_seconds()/3600 >= hours:
+                    try:
+                        session.add(Certificate(StudentID = student.StudentID, CourseID = course_id.upper(), Hours = course.Hours.total_seconds()/3600))
+                        session.commit()
+        
+                    except Exception as e:
+                        print(e)
+
+def get_student_certificates(user_id):
+    try:
+        session = Session()
+        return session.query(User.Name.label("StudentName"), Certificate.StudentID, Certificate.CourseID, Certificate.CertificateID, Certificate.Hours, Course.Name)\
+        .join(Course, Course.CourseID == Certificate.CourseID)\
+        .join(User, User.UserID == Certificate.StudentID)\
+        .filter(Certificate.StudentID == user_id).all()
+        
+        
+    except Exception as e:
+        print(e)
+        return None
+
+def can_student_send_feedback(user_id, course_id):
+    try:
+        session = Session()
+        return session.query(StudentCourse).filter(and_(StudentCourse.CourseID == course_id, StudentCourse.StudentID == user_id, StudentCourse.HasSentFeedback == False)).first() is not None
+    except:
+        return False
+
+def send_feedback(form, course_id):
+    try:
+        session = Session()
+        session.add(Feedback(CourseID = course_id, CourseGrade = form.course_grade.data, TeacherGrade = form.teacher_grade.data, Comments = form.comments.data))
+        session.commit()
+    except:
+        session.rollback()
+
+
 """
+
 (Lesson.Date - date.today).days <= 7
 
 SELECT "Courses"."CourseID", SUM(CASE WHEN ("Lessons"."StartTime" IS NOT NULL AND "Lessons"."EndTime" IS NOT NULL) THEN "Lessons"."EndTime" - "Lessons"."StartTime" ELSE '00:00:00' END)

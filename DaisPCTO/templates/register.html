@@ -3,21 +3,6 @@
 {% block content %}
 
 <form method='POST' novalidate>
-    
-    {% with messages = get_flashed_messages(with_categories=True) %}
-        {% if messages %}
-            <div class="alert alert-secondary alert-dismissible fade show" role="alert">
-                <ul class="flashes">
-                    {% for category, message in messages %}
-                        <div class="alert-{{category}}">
-                        <li> {{ message }} </li>
-                        </div>
-                    {% endfor %}
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endif %}
-    {% endwith %}
 
     {{ form.hidden_tag() }}
 
@@ -115,6 +100,12 @@
             {% else %}
                 {{form.student_city(class="form-control")}}
             {% endif %}
+            
+            <ul class="list-group" id="list-group-province" style="max-height : 300px; overflow-y: scroll; position : absolute;">
+                
+            </ul>
+
+
         </div>
     </div>
 
@@ -179,17 +170,36 @@
     <div class="row">
         <div class="col-md-6 mb-3">
             {{ form.school_name.label }}
-            {{form.school_name(class="form-control selectpicker")}}
+
+            {% if form.school_name.errors or form.school_id.errors %}
+                {{form.school_name(class="form-control is-invalid")}}
+                <div class="invalid-feedback">
+                    {{form.school_name.errors[0]}}
+                    
+                </div>
+            {% else %}
+                {{form.school_name(class="form-control selectpicker")}}
+            {% endif %}
             
             <ul class="list-group" id="list-group-schools" style="max-height : 300px; overflow-y: scroll;">
                 
             </ul>
+
+            
             
         </div>
     
         <div class="col-md-6 mb-3">
             {{form.school_year.label}}
-            {{form.school_year(class="form-control")}}
+  
+            {% if form.school_year.errors %}
+                {{form.school_year(class="form-control is-invalid")}}
+                <div class="invalid-feedback">
+                    {{form.school_year.errors[0]}}
+                </div>
+            {% else %}
+                {{form.school_year(class="form-control")}}
+            {% endif %}
         </div>
     </div>
     
@@ -202,8 +212,9 @@
 <script>
     
     var typingTimer;                //timer identifier
-    var doneTypingInterval = 1200;  //time in ms, 5 seconds for example
+    var doneTypingInterval = 900;  //time in ms, 5 seconds for example
     var $input = $('#school_name');
+    var $input_2 = $('#student_city');
 
     $input.on('keyup', function () {
         clearTimeout(typingTimer);
@@ -214,6 +225,37 @@
     $input.on('keydown', function () {
         clearTimeout(typingTimer);
     });
+
+    $input_2.on('keyup', function() {
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(doneTypingProvincia, doneTypingInterval);
+    });
+
+    $input_2.on('keydown', function () {
+        clearTimeout(typingTimer);
+    });
+
+    function doneTypingProvincia() {
+        $("#list-group-province").empty()
+
+        let nome = $('#student_city').val()
+        
+        $.ajax({
+            type : 'get',
+            url : '/action/get/province?name='+nome,
+            success : function (data){
+                if (data["success"]) {
+                    console.log(data["result"])
+                    for (let i = 0; i < data["result"].length; i++) {
+                            $('#list-group-province').append("<li class='list-group-item list-group-item-action' onclick='set_student_city(" 
+                            + '"' + data["result"][i]["nome"] + '", ' + '"' + data["result"][i]["sigla"] + '")' + "'"+ ">" 
+                            + data["result"][i]["nome"] + ", (" + data["result"][i]['sigla'] + ")" + "</li>")   
+                    } 
+                }                 
+            },             
+        });
+
+    }
 
     //user is "finished typing," do something
     function doneTyping () {
@@ -250,6 +292,13 @@
         // $('#school_id').val(id)
         // console.log($('#school_id').val())
     }
+
+    function set_student_city(name, sig) {
+        $('#student_city').val(name + ", (" + sig + ")")
+        $('#list-group-province').empty()
+    }
+
+
 </script>
 
 {% endblock content %}

@@ -1,0 +1,50 @@
+{% extends "page.html" %}
+
+{% block content %}
+
+    <form method="post" novalidate>
+
+        <input type="number" name="course_grade" id="course_grade" style="display : none;"/>
+        <input type="number" name="teacher_grade" id = "teacher_grade" style="display : none" />
+
+        <div class="container">
+            <h5>Assegna un voto da 0 a 10 al corso :</h5>
+            {% for i in range(11) %}
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="course_grade_set" id="course_grade_set" value="{{ i }}" onclick="set_course_grade({{ i }})">
+                    <label class="form-check-label" for="course_grade_set">{{ i }} {% if i == 0 %} - Per niente soddisfatto {% elif i == 10 %} - Completamente soddisfatto {%  endif %}</label>
+                </div>
+            {% endfor %}
+        </div>
+
+        <br>
+
+        <h5>Assegna un voto da 0 a 10 al professore :</h5>
+        {% for i in range(11) %}
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="teacher_grade_set" id="teacher_grade_set" value="{{ i }}" onclick="set_teacher_grade({{ i }})">
+                <label class="form-check-label" for="teacher_grade_set">{{ i }}</label>
+            </div>
+        {% endfor %}
+
+        <br>
+
+        <h5>Commenti aggiuntivi :</h5>
+
+        {{form.comments(class="form-control")}} <br><br>
+    </form>
+
+
+    <script>
+        function set_course_grade(value) {
+            $('#course_grade').val(value);
+            console.log($('#course_grade').val());
+        }
+
+        function set_teacher_grade(value) {
+            $('#teacher_grade').val(value);
+            console.log($('#teacher_grade').val());
+        }
+    </script>
+{% endblock %}
+

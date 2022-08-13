@@ -1,4 +1,3 @@
-from symtable import SymbolTableFactory
 from flask import Blueprint, jsonify, render_template, url_for, redirect, flash, abort, request, logging
 from flask_login import current_user, login_required
 from DaisPCTO.auth import role_required
@@ -20,7 +19,6 @@ def get_classrooms_tuple():
         res.append(tuple)
     return res
         
-
 
 class AddLesson(FlaskForm):
    
@@ -200,6 +198,7 @@ def action_lesson():
         list_lessons_bookable = get_lessons_bookable(current_user.get_id())
         
         for l in list_lessons_bookable:
+            print("helloooo")
             if lesson.LessonID == l.LessonID and l.StudentID == -1:
                 if book_lesson(lesson_id, lesson.CourseID):
                     # print((datetime.datetime.now()-f).total_seconds())
@@ -270,23 +269,15 @@ END
 
 TRIGGER PER IMPEDIRE DI AGGIUNGERE UNA LEZIONE CHE HA GIÀ L'AULA OCCUPPATA IN QUELL'ORARIO/DATA
 
-CREATE TRIGGER check_no_overlapping_lesson
-BEFORE INSERT AND UPDATE ON FrontalLesson
-FOR EACH ROW EXECUTE FUNCTION check_no_overlapping_lesson_func()
-
-CREATE FUNCTION check_no_overlapping_lesson_func() RETURN TRIGGER
-BEGIN
-    IF (EXISTS (SELECT *
-                FROM Lessons l NATURAL JOIN FrontalLesson fl
-                WHERE (l.Date = NEW.Date) AND (fl.ClassroomID = NEW.ClassroomID) AND ((NEW.StartTime BETWEEN l.StartTime AND l.EndTime) 
-                                                                                      OR (NEW.EndTime BETWEEN l.StartTime AND l.EndTime) 
-                                                                                      OR (NEW.StartTime <= l.StartTime AND NEW.EndTime >= l.EndTime))) THEN RAISE "ClassroomNoASv"
-                                                                                        
-                )
-    ENDIF;
-    
-    RETUNRN NEW
-END
+CREATE OR REPLACE FUNCTION "public"."check_no_overlapping_lesson_func"()
+RETURNS "pg_catalog"."trigger" AS $BODY$BEGIN
+	
+	IF ( EXISTS (SELECT *
+                FROM "public"."FrontalLessons" AS fl1 JOIN "public"."Lessons" AS l USING ("LessonID") JOIN "public"."Lessons" AS lnow ON (NEW."LessonID" = lnow."LessonID")
+                WHERE fl1."ClassroomID" = NEW."ClassroomID" AND lnow."Date" = l."Date" AND ( (l."StartTime" BETWEEN lnow."StartTime" AND lnow."EndTime") OR (l."EndTime" BETWEEN lnow."StartTime" AND lnow."EndTime") OR (l."StartTime" <= lnow."StartTime" AND l."EndTime" >= lnow."EndTime")) )) THEN RAISE EXCEPTION 'LessonOverlapping';
+	END IF;
+	
+	RETURN NEW;
 
 """
 
@@ -304,6 +295,29 @@ BEGIN
                                                                          OR NEW.StartTime <= l.StartTime AND NEW.EndTime >= l.EndTime)) THEN RAISE "SameCourseOverlapping"
     ENDIF;
     RETURN NEW
+END
+
+"""
+
+
+"""
+CREATE TRIGGER check_lesson_update_overlapping
+BEFORE UPDATE ON Lessons
+FOR EACH ROW EXECUTE FUNCTION check_lesson_update_overlapping_func()
+
+CREATE FUNCTION check_lesson_update_overlapping_func() RETURN TRIGGER AS
+BEGIN
+
+    IF (EXISTS (SELECT *
+                FROM FrontalLessons fl JOIN Lessons l USING(LessonID) JOIN FrontalLesson fl2 ON (fl2.LessonID = NEW.LessonID)
+                WHERE l.Date == NEW.Date AND fl.ClassroomID == fl2.ClassroomID AND 
+                ( (NEW.StartTime BETWEEN l.StartTime AND l.EndTime) 
+                 OR (NEW.EndTime BETWEEN l.StartTime AND l.EndTime)
+                OR (NEW.StartTime <= l.StartTime AND NEW.EndTime >= l.EndTime))) THEN RAISE EXCEPTION "LessonOverlapping"
+        
+    END IF;
+    RETURN NEW;
+
 END
 
 """
