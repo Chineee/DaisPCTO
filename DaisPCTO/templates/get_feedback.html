@@ -12,9 +12,11 @@
         </thead>
         <tbody>
         <tr>
-            <th scope="row">1</th>
-            <td> {{"%.2f" | format(avg_grades.CourseGrade)}} </td>
-            <td> {{"%.2f" | format(avg_grades.TeacherGrade)}} </td>
+            {% if avg_grades.CourseGrade != None %}
+                <th scope="row">1</th>
+                <td> {{"%.2f" | format(avg_grades.CourseGrade)}} </td>
+                <td> {{"%.2f" | format(avg_grades.TeacherGrade)}} </td>
+            {% endif %}
         </tr>
         </tbody>
     </table>

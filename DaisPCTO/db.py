@@ -660,6 +660,16 @@ def type_school_subscribed(course_id):
         print(e)
         return None
 
+# def hours_attended(course_id):
+#     try:
+#         session = Session()
+#         return session.query(func.sum(Lesson.EndTime - Lesson.EndTime).label("Hours"))\
+#             .join(StudentLesson, StudentLesson.LessonID == Lesson.LessonID)\
+#             .filter(Lesson.CourseID == course_id)\
+#             .group_by(StudentLesson.StudentID).all()
+#     except:
+#         return []
+
 """
 (Lesson.Date - date.today).days <= 7
 
