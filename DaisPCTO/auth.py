@@ -126,7 +126,8 @@ def role_required(role_name):
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated:
                 abort(401)
-            elif not current_user.hasRole(role_name):
+            elif not exists_role_user(current_user.get_id(), role_name):
+                
                 abort(401)
             return f(*args, **kwargs)
         return decorated_function

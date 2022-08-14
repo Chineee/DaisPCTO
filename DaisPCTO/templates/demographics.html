@@ -2,13 +2,15 @@
 
 {% block content%}
 
-<div id="piechart" data-id="{{course_id}}" style="width: 900px; height: 500px;"></div>
+{% if not no_student %}
+    <div id="piechart" data-id="{{course_id}}" style="width: 900px; height: 500px;"></div>
 
-<div id="bar_chart" style="width: 900px; height: 700px;"></div>
+    <div id="bar_chart" style="width: 900px; height: 700px;"></div>
 
-<div id="bar_chart-2" style="width: 900px; height: 500px;"></div>
+    <div id="bar_chart-2" style="width: 900px; height: 500px;"></div>
 
-<div id="piechart-2" data-id="{{course_id}}" style="width: 900px; height: 500px;"></div>
+    <div id="piechart-2" data-id="{{course_id}}" style="width: 900px; height: 500px;"></div>
+
 
 <script type="text/javascript">
     
@@ -25,13 +27,12 @@
             google.charts.setOnLoadCallback(drawChart);
 
        
-
             function drawChart() {
         
                 var my_data = google.visualization.arrayToDataTable([
                     ['Gender', "Gender studenti"],
-                    ['Maschile',  data["Male"]],
-                    ['Femminile',  data["Female"]],
+                    ['Maschi',  data["Male"]],
+                    ['Femmine',  data["Female"]],
                     ['Non-Binary',  data["Non-Binary"]],
                     ['Altro', data["Other"]]
                 ]);
@@ -45,6 +46,10 @@
                 var chart = new google.visualization.PieChart(document.getElementById('piechart'));
                 chart.draw(my_data, options);
             }
+        },
+
+        error : function() {
+            console.log("errore")
         }
     });
 
@@ -144,7 +149,7 @@
                 for (let i = data['min']; i <= data['max']; i++) {
                     const row = [];
                     let ts = i.toString()
-                    row.push(ts)
+                    row.push(ts + " Anni")
                     if (ages[i] == undefined || ages[i] ==  null) {
                         row.push(0)
                     }else {
@@ -169,6 +174,12 @@
     })
    
   </script>
+
+  {% else %} 
+
+  <h5>Non ci sono iscritti</h5>
+
+  {% endif %}
 
 
 {% endblock %}

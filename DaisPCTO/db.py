@@ -12,7 +12,7 @@ import datetime
 import json
 
 engine = {
-    "Admin" : create_engine("postgresql://postgres:123456@localhost/testone8", echo=False, pool_size=20, max_overflow=0),
+    "Admin" : create_engine("postgresql://postgres:123456@localhost/testone8", echo=False, pool_size=50, max_overflow=0),
     "Student" : create_engine("postgresql://Student:studente01@localhost/testone8",echo=False, pool_size=20, max_overflow=0),
     "Professor" : create_engine("postgresql://Professor:123456@localhost/testone8",echo=False, pool_size=20, max_overflow=0),
     "Anonymous" : create_engine("postgresql://Anonymous:123456@localhost/testone8", echo=False, pool_size=20, max_overflow=0)
@@ -65,19 +65,25 @@ def extestone():
         #     finally:
         #         session.close()
 
-    with open("Scuole.json") as f:
-        data = json.load(f)["@graph"]
-        res = []
-        session = Session()
-        for school in data:
-            try:
-                session.add(School(SchoolName = school["miur:DENOMINAZIONESCUOLA"], Type = school["miur:DESCRIZIONETIPOLOGIAGRADOISTRUZIONESCUOLA"], City = school["miur:PROVINCIA"], Region = school["miur:REGIONE"], Address = school["miur:INDIRIZZOSCUOLA"])) 
-                session.commit()
-            except:
-                session.rollback()
+    # with open("Scuole.json") as f:
+    #     data = json.load(f)["@graph"]
+    #     res = []
+    #     session = Session()
+    #     for school in data:
+    #         try:
+    #             session.add(School(SchoolName = school["miur:DENOMINAZIONESCUOLA"], Type = school["miur:DESCRIZIONETIPOLOGIAGRADOISTRUZIONESCUOLA"], City = school["miur:PROVINCIA"], Region = school["miur:REGIONE"], Address = school["miur:INDIRIZZOSCUOLA"])) 
+    #             session.commit()
+    #         except:
+    #             session.rollback()
        
 
-        return res
+    #     return res
+
+    session = Session()
+    # a = session.query(Student, School.SchoolName).join(School).join(StudentCourse, and_(Student.UserID == StudentCourse.StudentID, StudentCourse.CourseID == '777')).all()
+    a = get_student_by_course('666')
+    for i in a:
+        print(i.UserID)
      
             
 
@@ -85,8 +91,8 @@ def exists_role_user(user_id, role):
     try:
         session = Session()
         return session.query(UserRole).join(Role).filter(and_(UserRole.UserID == user_id, Role.Name == role)).first() is not None
-    except:
-        pass 
+    except Exception as e:
+        print(e) 
     finally:
         session.close()
     return False
@@ -446,6 +452,14 @@ def get_student_courses(user_id):
     except Exception as e:
         return None
 
+def get_student_by_course(course_id):
+    try:
+        session = Session()
+
+        return session.query(Student).filter(and_(StudentCourse.CourseID == course_id, StudentCourse.StudentID == Student.UserID)).all()
+    except:
+        return []
+
 def get_lesson_by_id(lesson_id):
     try:
         session = Session()
@@ -555,7 +569,7 @@ def get_schools_with_name(name):
 
 def send_certificate_to_students(course_id):
    
-        session = Session()
+        
              
         try:
             hours = session.query(Course).filter(Course.CourseID == course_id.upper()).first().MinHourCertificate
@@ -568,11 +582,14 @@ def send_certificate_to_students(course_id):
             for course in students_courses_hours:
                 if course.CourseID == course_id.upper() and course.Hours.total_seconds()/3600 >= hours:
                     try:
+                        session = Session()
                         session.add(Certificate(StudentID = student.StudentID, CourseID = course_id.upper(), Hours = course.Hours.total_seconds()/3600))
                         session.commit()
         
                     except Exception as e:
-                        print(e)
+                        session.rollback()
+                    finally:
+                        session.close()
 
 def get_student_certificates(user_id):
     try:
@@ -621,7 +638,6 @@ def feedback_comments(course_id):
 
 def gender_subscribed(course_id):
     try:
-        print(course_id)
         session = Session()
         return session.query(func.sum(case((and_(User.Gender.isnot(None), User.Gender == "Male"), 1), else_=0)).label("Male"),\
             func.sum(case((and_(User.Gender.isnot(None), User.Gender == "Female"), 1), else_=0)).label("Female"),\
@@ -652,13 +668,14 @@ def type_school_subscribed(course_id):
         return session.query(func.sum(case((and_(School.Type.contains("LICEO"), School.Type.isnot(None)), 1), else_=0)).label("Liceo"),\
             func.sum(case((and_(School.Type.contains("ISTITUTO TECNICO"), School.Type.isnot(None)), 1), else_=0)).label("Tecnico"),\
             func.sum(case((and_(School.Type.contains("PROFESSIONALE"), School.Type.isnot(None)), 1), else_=0)).label("Professionale"), \
-            func.sum(case((and_(not_(and_(School.Type.contains("LICEO"), School.Type.contains("ISTITUTO TECNICO"), School.Type.contains("PROFESSIONALE"))), School.Type.isnot(None)), 1), else_=0)).label("Altro")).\
-            join(Student, Student.SchoolID == School.SchoolID)\
-            .join(StudentCourse, StudentCourse.StudentID == Student.UserID)\
-            .filter(StudentCourse.CourseID == course_id).first()
+            func.sum(case((and_(and_(not_(School.Type.contains("LICEO")), not_(School.Type.contains("ISTITUTO TECNICO")), not_(School.Type.contains("PROFESSIONALE"))), School.Type.isnot(None)), 1), else_=0)).label("Altro"))\
+            .join(Student, Student.SchoolID == School.SchoolID)\
+            .join(StudentCourse, and_(StudentCourse.StudentID == Student.UserID, StudentCourse.CourseID == course_id))\
+            .first()
     except Exception as e:
-        print(e)
         return None
+
+       
 
 # def hours_attended(course_id):
 #     try:

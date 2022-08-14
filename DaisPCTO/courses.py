@@ -40,8 +40,7 @@ def certificate():
     return render_template("certificates.html",
                             is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"),
                             user = current_user,
-                            certificates = certificates)
-    pass 
+                            certificates = certificates) 
 
 @courses.route('/')
 def home_courses():
@@ -156,11 +155,18 @@ def demographics(coursePage):
 
     if not can_professor_modify(current_user.get_id(), coursePage.upper()):
         abort(404)
+
+    no_student = False
+
+    if count_student(course_id=coursePage.upper()) == 0:
+        no_student = True
+
     
     return render_template("demographics.html",
                             is_professor = True,
                             user = current_user,
-                            course_id = coursePage.upper())
+                            course_id = coursePage.upper(),
+                            no_student = no_student)
 
 
 @courses.route('/action/get/student_gender')
@@ -198,7 +204,6 @@ def get_student_region():
 @role_required("Professor")
 def get_student_school():
     course_id=request.args.get("course_id").upper()
-    print(course_id)
     type_schools = type_school_subscribed(course_id)
     
 
