@@ -6,5 +6,6 @@ __pycache__
 venv
 .gitignore
 Scuole.json
+province.json
 /env
 env

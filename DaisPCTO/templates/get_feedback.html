@@ -1,0 +1,45 @@
+{% extends "page.html" %} 
+
+{% block content %}
+
+    <table class="table table-dark table-striped">
+        <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Valutazione media al corso</th>
+            <th scope="col">Valutazione media all'insegnante</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <th scope="row">1</th>
+            <td> {{"%.2f" | format(avg_grades.CourseGrade)}} </td>
+            <td> {{"%.2f" | format(avg_grades.TeacherGrade)}} </td>
+        </tr>
+        </tbody>
+    </table>
+
+
+    
+        <table class="table table-dark table-striped">
+            <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Commenti</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for i in range(comments | length) %} 
+               
+                <tr>
+                    <th scope="row">{{i+1}}</th>
+                    <td> {{comments[i].Comment }} </td>
+                </tr>
+                
+            {% endfor %}
+
+            </tbody>
+        </table>
+  
+
+{% endblock content %}

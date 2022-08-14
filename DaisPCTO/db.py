@@ -65,11 +65,17 @@ def extestone():
         #     finally:
         #         session.close()
 
-    with open("province.json") as f:
-        data = json.load(f)
+    with open("Scuole.json") as f:
+        data = json.load(f)["@graph"]
         res = []
-        for city in data:
-            res.append( (city['nome'], city["sigla"]) )
+        session = Session()
+        for school in data:
+            try:
+                session.add(School(SchoolName = school["miur:DENOMINAZIONESCUOLA"], Type = school["miur:DESCRIZIONETIPOLOGIAGRADOISTRUZIONESCUOLA"], City = school["miur:PROVINCIA"], Region = school["miur:REGIONE"], Address = school["miur:INDIRIZZOSCUOLA"])) 
+                session.commit()
+            except:
+                session.rollback()
+       
 
         return res
      
@@ -254,7 +260,7 @@ def change_feedback(course_id):
 def subscribe_course(student_id, course_id):
     try:
         session = Session()
-        session.add(StudentCourse(StudentID=student_id, CourseID=course_id, HasSentFeedback = True))
+        session.add(StudentCourse(StudentID=student_id, CourseID=course_id, HasSentFeedback = False))
         session.commit()
     except:
         session.rollback()
@@ -385,22 +391,6 @@ def get_course_by_lesson_id(lesson_id):
     except:
         return None
         
-# def can_reserve(user_id, lesson_id):
-#     try:
-#         session = Session()
-#         num_reserved = session.query(Reservation).filter(Reservation.FrontalLessonID == lesson_id).count()
-#         classroom_seats = session.query(Classroom.Seats).filter(FrontalLesson.LessonID == lesson_id, Classroom.ClassroomID == FrontalLesson.ClassroomID)
-#         # return session.query(Reservation).filter(and_(Reservation.StudentID == user_id, Reservation.FrontalLessonID == lesson_id, Lesson.LessonID == Reservation.FrontalLessonID, Lesson.Token == token)).first() is not None  
-#         if classroom_seats > num_reserved:
-#             token = None #unione di una serie di cose che ora non abbiamo voglia di fare hashate
-#             session.add(Reservation(StudentID = user_id, FrontalLessonID = lesson_id, HasValidation = False, ReservationID = token))
-#             return True
-#         else:
-#             return False
-#     except:  
-#         return False
-
-
 
 def change_lesson_information(lesson_id, data):
     try:
@@ -601,20 +591,76 @@ def can_student_send_feedback(user_id, course_id):
     try:
         session = Session()
         return session.query(StudentCourse).filter(and_(StudentCourse.CourseID == course_id, StudentCourse.StudentID == user_id, StudentCourse.HasSentFeedback == False)).first() is not None
-    except:
+    except Exception as e:
         return False
 
 def send_feedback(form, course_id):
     try:
         session = Session()
-        session.add(Feedback(CourseID = course_id, CourseGrade = form.course_grade.data, TeacherGrade = form.teacher_grade.data, Comments = form.comments.data))
+        session.add(Feedback(CourseID = course_id, CourseGrade = form.course_grade.data, TeacherGrade = form.teacher_grade.data, Comment = form.comments.data))
         session.commit()
-    except:
+        session.query(StudentCourse).filter(StudentCourse.CourseID == course_id.upper(), StudentCourse.StudentID == current_user.get_id()).update({StudentCourse.HasSentFeedback : not_(StudentCourse.HasSentFeedback)})
+        session.commit()
+    except Exception as e:
         session.rollback()
 
+def avg_feedback(course_id):
+    try:
+        session = Session()
+        return session.query(func.avg(Feedback.CourseGrade).label("CourseGrade"), func.avg(Feedback.TeacherGrade).label("TeacherGrade")).filter(Feedback.CourseID == course_id).first()
+    except Exception as e:
+
+        return None
+
+def feedback_comments(course_id):
+        try:
+            session = Session()
+            return session.query(Feedback).filter(and_(Feedback.CourseID == course_id, Feedback.Comment.isnot(None))).all()
+        except:
+            return []
+
+def gender_subscribed(course_id):
+    try:
+        print(course_id)
+        session = Session()
+        return session.query(func.sum(case((and_(User.Gender.isnot(None), User.Gender == "Male"), 1), else_=0)).label("Male"),\
+            func.sum(case((and_(User.Gender.isnot(None), User.Gender == "Female"), 1), else_=0)).label("Female"),\
+            func.sum(case((and_(User.Gender.isnot(None), User.Gender == "Non Binary"), 1), else_=0)).label("NonBinary"), \
+            func.sum(case((and_(User.Gender.isnot(None), User.Gender == "Other"), 1), else_=0)).label("Other"))\
+            .join(StudentCourse, User.UserID == StudentCourse.StudentID).filter(StudentCourse.CourseID == course_id).first()
+    except Exception as e:
+        print(e)
+        return None
+
+def age_subscribed(course_id):
+    try:
+        session = Session()
+        return session.query(Student.birthDate).join(StudentCourse, StudentCourse.StudentID == Student.UserID).filter(StudentCourse.CourseID == course_id).all()
+    except:
+        return []
+
+def city_subscribed(course_id):
+    try:
+        session = Session()
+        return session.query(Student.City).join(StudentCourse, StudentCourse.StudentID == Student.UserID).filter(StudentCourse.CourseID == course_id).all()
+    except:
+        return
+
+def type_school_subscribed(course_id):
+    try:
+        session = Session()
+        return session.query(func.sum(case((and_(School.Type.contains("LICEO"), School.Type.isnot(None)), 1), else_=0)).label("Liceo"),\
+            func.sum(case((and_(School.Type.contains("ISTITUTO TECNICO"), School.Type.isnot(None)), 1), else_=0)).label("Tecnico"),\
+            func.sum(case((and_(School.Type.contains("PROFESSIONALE"), School.Type.isnot(None)), 1), else_=0)).label("Professionale"), \
+            func.sum(case((and_(not_(and_(School.Type.contains("LICEO"), School.Type.contains("ISTITUTO TECNICO"), School.Type.contains("PROFESSIONALE"))), School.Type.isnot(None)), 1), else_=0)).label("Altro")).\
+            join(Student, Student.SchoolID == School.SchoolID)\
+            .join(StudentCourse, StudentCourse.StudentID == Student.UserID)\
+            .filter(StudentCourse.CourseID == course_id).first()
+    except Exception as e:
+        print(e)
+        return None
 
 """
-
 (Lesson.Date - date.today).days <= 7
 
 SELECT "Courses"."CourseID", SUM(CASE WHEN ("Lessons"."StartTime" IS NOT NULL AND "Lessons"."EndTime" IS NOT NULL) THEN "Lessons"."EndTime" - "Lessons"."StartTime" ELSE '00:00:00' END)

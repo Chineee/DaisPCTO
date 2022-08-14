@@ -2,12 +2,13 @@
 
 {% block content %}
 
-    <form method="post" novalidate>
 
+    <form method="post" novalidate>
+        {{form.hidden_tag()}}
         <input type="number" name="course_grade" id="course_grade" style="display : none;"/>
         <input type="number" name="teacher_grade" id = "teacher_grade" style="display : none" />
 
-        <div class="container">
+        <div class="container center">
             <h5>Assegna un voto da 0 a 10 al corso :</h5>
             {% for i in range(11) %}
                 <div class="form-check">
@@ -18,20 +19,28 @@
         </div>
 
         <br>
-
-        <h5>Assegna un voto da 0 a 10 al professore :</h5>
-        {% for i in range(11) %}
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="teacher_grade_set" id="teacher_grade_set" value="{{ i }}" onclick="set_teacher_grade({{ i }})">
-                <label class="form-check-label" for="teacher_grade_set">{{ i }}</label>
-            </div>
-        {% endfor %}
+        
+        <div class = "container center">
+            <h5>Assegna un voto da 0 a 10 al professore :</h5>
+            {% for i in range(11) %}
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="teacher_grade_set" id="teacher_grade_set" value="{{ i }}" onclick="set_teacher_grade({{ i }})">
+                    <label class="form-check-label" for="teacher_grade_set">{{ i }}</label>
+                </div>
+            {% endfor %}
+        </div>
 
         <br>
 
-        <h5>Commenti aggiuntivi :</h5>
+        <div class = "container center" style="border : 3px solid white!important;">
+            <h5>Commenti aggiuntivi (facoltativo) :</h5>
 
-        {{form.comments(class="form-control")}} <br><br>
+            {{form.comments(class="form-control")}} <br><br>
+
+            <button type="submit" class="btn btn-success">Invia feedback</button>
+        </div>
+
+       
     </form>
 
 

@@ -93,6 +93,7 @@ class School(Base):
     Address = Column(String)
     City = Column(String)
     Region = Column(String)
+    Type = Column(String)
 
     Students = relationship("Student", backref = "School")
 
@@ -174,7 +175,7 @@ class Feedback(Base):
     CourseID = Column(String, ForeignKey("Courses.CourseID"))
     CourseGrade = Column(Integer)
     TeacherGrade = Column(Integer)
-    Comments = Column(Text)
+    Comment = Column(Text)
 
     Courses = relationship("Course", backref="Feedbacks")
 

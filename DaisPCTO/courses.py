@@ -1,14 +1,15 @@
-from flask import Blueprint, render_template, url_for, redirect, flash, abort, request
+from flask import Blueprint, render_template, url_for, redirect, flash, abort, request, jsonify
 from flask_login import current_user, login_required
 from DaisPCTO.auth import role_required
 # from DaisPCTO.models import *
-from DaisPCTO.db import add_course, get_course_by_id, can_professor_modify, \
+from DaisPCTO.db import add_course, city_subscribed, gender_subscribed, get_course_by_id, can_professor_modify, \
     get_user_by_id, get_professor_by_course_id, change_course_attr, \
-    count_student, change_feedback, subscribe_course, \
-    delete_subscription, is_subscribed, get_courses_list, get_professor_courses, get_student_courses, send_certificate_to_students, get_student_certificates
+    count_student, change_feedback, subscribe_course, age_subscribed, \
+    delete_subscription, is_subscribed, get_courses_list, get_professor_courses, get_student_courses, send_certificate_to_students, get_student_certificates, type_school_subscribed
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, EmailField, SelectField, DateField, BooleanField, SubmitField, validators, SelectMultipleField, IntegerField, TextAreaField
 from wtforms.validators import DataRequired, EqualTo, ValidationError, Length, NumberRange
+import json
 
 courses = Blueprint("courses_blueprint", __name__, template_folder="templates")
 
@@ -146,7 +147,91 @@ def subs(course):
     return redirect(url_for("courses_blueprint.course", coursePage=course))
 
 
+@courses.route('/<coursePage>/demographics')
+@role_required("Professor")
+def demographics(coursePage):
+    #gender medio
+    #regioni di provenienza medie
+    #ogni età quanta percentuale
 
+    if not can_professor_modify(current_user.get_id(), coursePage.upper()):
+        abort(404)
+    
+    return render_template("demographics.html",
+                            is_professor = True,
+                            user = current_user,
+                            course_id = coursePage.upper())
+
+
+@courses.route('/action/get/student_gender')
+@role_required("Professor")
+def get_student_gender():
+
+    course_id = request.args.get("course_id").upper()
+
+    g = gender_subscribed(course_id)
+    return jsonify({"success" : True, "Male" : g.Male, "Female" : g.Female, "Non-Binary": g.NonBinary, "Other" : g.Other})
+
+@courses.route('/action/get/region')
+@role_required("Professor")
+def get_student_region():
+
+
+    course_id = request.args.get("course_id").upper()
+    c = city_subscribed(course_id)
+        
+    res = {}
+    with open("province.json") as f:
+        data = json.load(f)
+        for city in c:
+            for i in data:
+                if i["nome"].upper() == city.City:
+                    if i["regione"] not in res:
+                        res[i["regione"]] = 1
+                    else:
+                        res[i["regione"]] += 1
+    
+
+    return jsonify({"success" : True, "Regioni" : res, "Total" : len(c)})
+
+@courses.route('/action/get/school')
+@role_required("Professor")
+def get_student_school():
+    course_id=request.args.get("course_id").upper()
+    print(course_id)
+    type_schools = type_school_subscribed(course_id)
+    
+
+    return jsonify({"success" : True, "Liceo" : type_schools.Liceo, "Tecnico" : type_schools.Tecnico, "Professionale" : type_schools.Professionale, "Altro" : type_schools.Altro})
+    
+@courses.route('/action/get/mean_age')
+@role_required("Professor")
+def get_age_student():
+    course_id = request.args.get("course_id").upper()
+    ages = age_subscribed(course_id)
+    
+    def calculate_age(born):
+        from datetime import date
+        today = date.today()
+        return today.year - born.year - ((today.month, today.day) < (born.month, born.day)) 
+    
+    res = {}
+    minim = -1
+    maxi = 0
+    for date in ages:
+        if date.birthDate is not None:
+            age = calculate_age(date.birthDate)
+            if age < minim or minim == -1:
+                minim = age
+            if age > maxi:
+                maxi = age
+            if age not in res:
+                res[age] = 1
+            else:
+                res[age] += 1
+    
+
+    return jsonify({"success" : True, "ages" : res, "len" : len(res), "min" : minim, "max" : maxi})
 """
 
 CREATE TRIGGER max_students_check

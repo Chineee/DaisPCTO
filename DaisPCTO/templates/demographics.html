@@ -1,0 +1,174 @@
+{% extends "page.html" %}
+
+{% block content%}
+
+<div id="piechart" data-id="{{course_id}}" style="width: 900px; height: 500px;"></div>
+
+<div id="bar_chart" style="width: 900px; height: 700px;"></div>
+
+<div id="bar_chart-2" style="width: 900px; height: 500px;"></div>
+
+<div id="piechart-2" data-id="{{course_id}}" style="width: 900px; height: 500px;"></div>
+
+<script type="text/javascript">
+    
+    let course_id = $('#piechart').data('id');
+
+    
+
+    $.ajax({
+        type : 'get',
+        url : '/courses/action/get/student_gender?course_id='+course_id,
+        success : function(data) {
+            
+            google.charts.load("current", {packages:["corechart"]});
+            google.charts.setOnLoadCallback(drawChart);
+
+       
+
+            function drawChart() {
+        
+                var my_data = google.visualization.arrayToDataTable([
+                    ['Gender', "Gender studenti"],
+                    ['Maschile',  data["Male"]],
+                    ['Femminile',  data["Female"]],
+                    ['Non-Binary',  data["Non-Binary"]],
+                    ['Altro', data["Other"]]
+                ]);
+
+                var options = {
+                 
+                    title: 'Gender medio studenti iscritti',
+                  
+                };
+
+                var chart = new google.visualization.PieChart(document.getElementById('piechart'));
+                chart.draw(my_data, options);
+            }
+        }
+    });
+
+    $.ajax({
+        type : 'get',
+        url : '/courses/action/get/region?course_id='+course_id,
+        success : function(data) {
+         
+            region = data['Regioni']
+            google.charts.load("current", {packages:["corechart"]});
+            google.charts.setOnLoadCallback(drawChart);
+
+       
+            function drawChart() {
+                var my_data = google.visualization.arrayToDataTable([
+                    ['Regioni', 'Numero studenti'],
+                    ['Abruzzo', region['Abruzzo']],
+                    ['Basilicata', region['Basilicata']],
+                    ['Calabria', region['Calabria']],
+                    ['Campania', region['Campania']],
+                    ['Emilia-Romagna', region['Emilia-Romagna']],
+                    ['Friuli Venezia-Giulia', region["Friuli-Venezia Giulia"]],
+                    ['Lazio', region['Lazio']],
+                    ['Liguria', region['Liguria']],
+                    ['Lombardia', region['Lombardia']],
+                    ['Marche', region['Marche']],
+                    ['Molise', region['Molise']],
+                    ['Piemonte', region['Piemonte']],
+                    ['Puglia', region['Puglia']],
+                    ['Sardegna', region["Sardegna"]],
+                    ['Sicilia', region["Sicilia"]],
+                    ['Toscana', region["Toscana"]],
+                    ['Trentino Alto-Adige', region["Trentino-Alto Adige/Südtirol"]],
+                    ['Umbria', region["Umbria"]],
+                    ["Val D'Aosta",region["Valle d'Aosta/Vallée d'Aoste"]],
+                    ['Veneto', region["Veneto"]]]);
+    
+
+                var options = {
+                title: 'Studenti regioni',
+               
+                };
+
+                var chart = new google.visualization.BarChart(document.getElementById('bar_chart'));
+                chart.draw(my_data, options);
+            }
+        }
+    })
+
+    $.ajax({
+        type : 'get',
+        url : '/courses/action/get/school?course_id='+course_id,
+        success : function(data) {
+            
+            google.charts.load("current", {packages:["corechart"]});
+            google.charts.setOnLoadCallback(drawChart);
+
+       
+
+            function drawChart() {
+        
+                var my_data = google.visualization.arrayToDataTable([
+                    ['SchoolType', "Tipologia di Istituto"],
+                    ['Liceo',  data["Liceo"]],
+                    ['Istituto Tecnico',  data["Tecnico"]],
+                    ['Professionale',  data["Professionale"]],
+                    ['Altro', data["Altro"]]
+                ]);
+
+                var options = {
+                 
+                    title: 'Tipologia di istituto di provenienza',
+                  
+                };
+
+                var chart = new google.visualization.PieChart(document.getElementById('piechart-2'));
+                chart.draw(my_data, options);
+            }
+        }
+    });
+
+
+    $.ajax({
+        type : 'get',
+        url : '/courses/action/get/mean_age?course_id='+course_id,
+        success : function(data) {
+         
+            google.charts.load("current", {packages:["corechart"]});
+            google.charts.setOnLoadCallback(drawChart);
+            
+            let ages = data['ages']
+
+            const table = [["Età studenti", "Numero Studenti"]];
+
+            function drawChart() {
+                
+                for (let i = data['min']; i <= data['max']; i++) {
+                    const row = [];
+                    let ts = i.toString()
+                    row.push(ts)
+                    if (ages[i] == undefined || ages[i] ==  null) {
+                        row.push(0)
+                    }else {
+                        row.push(ages[i])
+                    }
+                    table.push(row)  
+                }
+
+                console.log(table)
+             
+                var my_data = google.visualization.arrayToDataTable(table)
+    
+                var options = {
+                    title: 'Età studenti',
+               
+                };
+
+                var chart = new google.visualization.BarChart(document.getElementById('bar_chart-2'));
+                chart.draw(my_data, options);
+            }
+        }
+    })
+   
+  </script>
+
+
+{% endblock %}

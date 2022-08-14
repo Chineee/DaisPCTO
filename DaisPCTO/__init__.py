@@ -100,6 +100,8 @@ def create_app():
     def home():            
         return render_template("page.html", user=current_user, is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"))
     
+    
+
     @login_manager.user_loader
     def load_user(UserID):   
         return get_user_by_id(UserID)
@@ -156,7 +158,6 @@ def create_app():
         
         return img
     
-
     app.register_error_handler(404, page_not_found)
 
 
