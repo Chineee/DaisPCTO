@@ -1,10 +1,10 @@
 from DaisPCTO.models import Certificate, Feedback,\
      ProfessorCourse, StudentCourse, User, Student, Professor,\
      UserRole, Course, Role, Lesson, StudentLesson, Reservation, \
-     FrontalLesson, OnlineLesson, Classroom, School
+     FrontalLesson, OnlineLesson, Classroom, School, QnA
 from sqlalchemy import create_engine, and_, not_, or_, not_, exc, func, case, text
 from sqlalchemy.orm import sessionmaker
-from flask_login import current_user, user_accessed
+from flask_login import current_user
 from flask import flash
 from flask_bcrypt import generate_password_hash, check_password_hash
 import random 
@@ -85,8 +85,6 @@ def extestone():
     for i in a:
         print(i.UserID)
      
-            
-
 def exists_role_user(user_id, role):
     try:
         session = Session()
@@ -117,12 +115,6 @@ def get_user_by_id(id):
         return session.query(User).filter(User.UserID == id).first()
     except:
         return None
-
-def get_user_id_by_email(email):
-    pass
-
-def get_user_email_by_id(userId):
-    pass 
 
 def get_user_by_email(email):
     try:
@@ -181,9 +173,7 @@ def add_student(user, form):
         session.rollback()
 
 def compare_password(db_password, inserted_password):
-    return check_password_hash(db_password, inserted_password)
-
-        
+    return check_password_hash(db_password, inserted_password)      
 
 def add_course(form):
     
@@ -200,7 +190,7 @@ def add_course(form):
         session.commit()
     except:
         session.rollback()
-
+        
 #ritorna true se e solo se esiste una tupla che contenga l'id del professore e l'id del corso all'interno della tabella professorcourse
 def can_professor_modify(prof_id, course_id):
     try:
@@ -216,10 +206,6 @@ def get_professor_by_course_id(course_id):
     except:
         session.close()
         return None
-
-# select user
-# from ( user u natural join professor p ) natural join professorcourse pc
-# where pc.courseid = 'id'
 
 def count_student(course_id):
     try:
@@ -305,7 +291,6 @@ def add_lesson(form, course_id, professor):
 
     return _add_lesson(lesson_new, type_lesson, classroom, link, password)
 
-
 def _add_lesson(lesson_new, type_less, classroom, link=None, password=None):
     try: 
         session = Session()
@@ -344,13 +329,11 @@ def add_multiple_lesson(form, course_id, professor):
     """
     VOGLIAMO FARE IN MODO CHE AGGIUNGA TUTTE LE LEZIONI CHE SI POSSONO AGGIUNGERE, IGNORANDO QUELLE CHE NON SI POSSONO AGGIUNGERE
     """
-
     start_date = form.start_date_2.data
     end_date = form.end_date_2.data
     diff_date = start_date
     
     is_dual = True if form.lesson_type_2.data == "Duale" else False
-
 
     while diff_date < end_date:
         token = generate_password_hash(f'{current_user.get_id()}{course_id}{diff_date}{form.start_time_2.data}{form.end_time_2.data}{form.classroom_2.data}{random.randint(0, 1000)}')
@@ -362,9 +345,6 @@ def add_multiple_lesson(form, course_id, professor):
             flash(f'Lezione del {diff_date} non aggiunta per sovrapposizione')
     
         diff_date = diff_date + datetime.timedelta(days=7)
-
-        
-    
 
 def delete_lesson(lesson_id):
     try:
@@ -397,7 +377,6 @@ def get_course_by_lesson_id(lesson_id):
     except:
         return None
         
-
 def change_lesson_information(lesson_id, data):
     try:
         session = Session() 
@@ -418,13 +397,6 @@ def get_courses_list():
 def get_professor_courses(user_id):
     try:
         session = Session()
-        # if not is_professor:
-        #     return session.query(Course)\
-        #         .join(StudentCourse)\
-        #         .filter(StudentCourse.StudentID == user_id)\
-        #         .order_by(Course.Name)\
-        #         .all()
-        # else:
         return session.query(Course)\
             .join(ProfessorCourse)\
             .filter(ProfessorCourse.ProfessorID == user_id)\
@@ -446,7 +418,6 @@ def get_student_courses(user_id):
                     .filter(StudentCourse.StudentID == user_id)\
                     .order_by(Course.Name)\
                     .group_by(Course.CourseID, Course.Name, Course.Description, Course.MinHourCertificate).all()
-
 
         return query
     except Exception as e:
@@ -518,7 +489,6 @@ def book_lesson(frontalLesson_id, course_id):
 
     return True
         
-
 def delete_reservation(frontalLesson_id):
     try:
         session = Session()
@@ -536,7 +506,6 @@ def get_reservation_from_token(token):
     except:
         return None
 
-
 def confirm_attendance(reservation):
     try:
         session = Session()
@@ -544,7 +513,6 @@ def confirm_attendance(reservation):
         session.commit()
     except:
         session.rollback()
-
 
 def get_classrooms():
     try:
@@ -570,29 +538,25 @@ def get_schools_with_name(name):
     except:
         return []
 
-def send_certificate_to_students(course_id):
-   
-        
-             
-        try:
-            hours = session.query(Course).filter(Course.CourseID == course_id.upper()).first().MinHourCertificate
-            student_courses = session.query(StudentCourse).filter(course_id == StudentCourse.CourseID).all()
-        except:
-            return
+def send_certificate_to_students(course_id):        
+    try:
+        hours = session.query(Course).filter(Course.CourseID == course_id.upper()).first().MinHourCertificate
+        student_courses = session.query(StudentCourse).filter(course_id == StudentCourse.CourseID).all()
+    except:
+        return
 
-        for student in student_courses:
-            students_courses_hours = get_student_courses(student.StudentID)
-            for course in students_courses_hours:
-                if course.CourseID == course_id.upper() and course.Hours.total_seconds()/3600 >= hours:
-                    try:
-                        session = Session()
-                        session.add(Certificate(StudentID = student.StudentID, CourseID = course_id.upper(), Hours = course.Hours.total_seconds()/3600))
-                        session.commit()
-        
-                    except Exception as e:
-                        session.rollback()
-                    finally:
-                        session.close()
+    for student in student_courses:
+        students_courses_hours = get_student_courses(student.StudentID)
+        for course in students_courses_hours:
+            if course.CourseID == course_id.upper() and course.Hours.total_seconds()/3600 >= hours:
+                try:
+                    session = Session()
+                    session.add(Certificate(StudentID = student.StudentID, CourseID = course_id.upper(), Hours = course.Hours.total_seconds()/3600))
+                    session.commit()     
+                except Exception as e:
+                    session.rollback()
+                finally:
+                    session.close()
 
 def get_student_certificates(user_id):
     try:
@@ -601,8 +565,6 @@ def get_student_certificates(user_id):
         .join(Course, Course.CourseID == Certificate.CourseID)\
         .join(User, User.UserID == Certificate.StudentID)\
         .filter(Certificate.StudentID == user_id).all()
-        
-        
     except Exception as e:
         print(e)
         return None
@@ -634,11 +596,11 @@ def avg_feedback(course_id):
         return None
 
 def feedback_comments(course_id):
-        try:
-            session = Session()
-            return session.query(Feedback).filter(and_(Feedback.CourseID == course_id, Feedback.Comment.isnot(None))).all()
-        except:
-            return []
+    try:
+        session = Session()
+        return session.query(Feedback).filter(and_(Feedback.CourseID == course_id, Feedback.Comment.isnot(None))).all()
+    except:
+        return []
 
 def gender_subscribed(course_id):
     try:
@@ -678,8 +640,6 @@ def type_school_subscribed(course_id):
             .first()
     except Exception as e:
         return None
-
-       
 
 def hours_attended(course_id):
     try:
@@ -726,11 +686,52 @@ def hours_attended(course_id):
         print(type(e))
         return []
 
+def get_questions_by_course(course_id):
+    try:
+        session = Session()
+        return session.query(QnA).filter(and_(QnA.RefTo.is_(None), QnA.CourseID == course_id)).all()
+    except Exception as e:
+        return None
+
+def can_user_delete_post(user_id, post_id):
+    try:
+        session = Session()
+        return session.query(QnA).filter(and_(QnA.UserID == user_id, QnA.TextID == post_id)).first() is not None
+    except:
+        return False
+
+def delete_post(post_id):
+    try:
+        session = Session()
+        session.query(QnA).filter(QnA.TextID == post_id).delete()
+        session.commit()
+    except:
+        session.rollback()
+
+def add_post(form, course_id):
+    try:
+        session = Session()
+        session.add(QnA(Text = form.text.data, UserID = current_user.get_id(), RefTo = form.ref_to.data, CourseID = course_id))  
+        session.commit()
+    except:
+        session.rollback()   
+
+def update_post(form, post_id):
+    try:
+        session = Session()
+        session.query(QnA).filter(QnA.TextID == post_id).update({QnA.Text : form.text.data})
+        session.commit()
+    except:
+        session.rollback()
+
+'''
+ADD MI PIACE BY POST ID
+
+DELETE MI PIACE BY POST ID
+
+'''
+
 """
-
-# This returns a list of object A by choosing the 'left' side to be B using select_from()
-session.query(A).select_from(B).outerjoin(A).all()   # SELECT A.* FROM B LEFT OUTER JOIN A ...
-
 
 (Lesson.Date - date.today).days <= 7
 

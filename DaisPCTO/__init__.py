@@ -68,7 +68,6 @@ def create_app():
             
             res.append(school_add)
     
-   
         return jsonify({"success" : True, "result" : res})
 
     @app.route('/action/get/province')
@@ -101,7 +100,6 @@ def create_app():
         return render_template("page.html", user=current_user, is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"))
     
     
-
     @login_manager.user_loader
     def load_user(UserID):   
         return get_user_by_id(UserID)
@@ -173,5 +171,8 @@ def create_app():
 
     from DaisPCTO.feedback import feedback as feedback_blueprint
     app.register_blueprint(feedback_blueprint)
+
+    from DaisPCTO.qna import QnA as qna_blueprint 
+    app.register_blueprint(qna_blueprint)
     
     return app

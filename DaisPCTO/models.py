@@ -33,6 +33,7 @@ class User(Base, UserMixin):
     PhoneNumber = Column(String)
 
     Roles = relationship('Role', secondary = "user_role")
+    Posts = relationship("QnA", backref = "UserID")
 
     __table_args__ = (
         CheckConstraint(or_(Gender == 'Female', Gender=='Male', Gender=='Non Binary', Gender == 'Other')),
@@ -252,10 +253,12 @@ class QnA(Base):
 
     TextID = Column(Integer, primary_key=True)
     RefTo = Column(Integer, ForeignKey("QnA.TextID"))
-    LessonID = Column(Integer, ForeignKey("Lessons.LessonID"))
+    CourseID = Column(Integer, ForeignKey("Courses.CourseID"))
     Text = Column(Text)
 
-    Lessons = relationship("Lesson", backref="Questions")
+    UserID = Column(Integer, ForeignKey("Users.UserID"))
+
+    Courses = relationship("Course", backref="Questions")
     Answers = relationship("QnA")
 
     __table_args__ = ()

@@ -1,0 +1,11 @@
+{% extends "page.html" %}
+
+{% block content %}
+
+    {% for q in questions %} 
+        {{q.Text}}
+        {% for answer in q.Answers %} 
+            {{answer.Text}}
+        {% endfor %}
+    {% endfor %}
+{% endblock content %}
