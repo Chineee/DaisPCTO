@@ -35,8 +35,6 @@ def forum(coursePage):
                             user = current_user,
                             questions = questions)
 
-
-
 @QnA.route('/action/post/delete')
 @login_required
 def delete():

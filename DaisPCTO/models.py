@@ -33,7 +33,7 @@ class User(Base, UserMixin):
     PhoneNumber = Column(String)
 
     Roles = relationship('Role', secondary = "user_role")
-    Posts = relationship("QnA", backref = "UserID")
+    Posts = relationship("QnA", backref = "User")
 
     __table_args__ = (
         CheckConstraint(or_(Gender == 'Female', Gender=='Male', Gender=='Non Binary', Gender == 'Other')),
