@@ -30,10 +30,13 @@ def feedback_home(coursePage):
         abort(404)
     form = SendFeedback()
     can_send = can_student_send_feedback(current_user.get_id(), coursePage.upper())
-    print(can_send)
 
-    if can_send and form.validate_on_submit():
+    if not can_send:
+        abort(401)
+
+    if form.validate_on_submit():
         send_feedback(form, coursePage.upper())
+        return redirect(f'/courses/{coursePage}')
 
     return render_template("feedback.html",
                            is_professor = False,
@@ -49,7 +52,6 @@ def get_feedback(coursePage):
         abort(401)
 
     h = feedback_comments(coursePage.upper())
-    print(h)
 
     return render_template("get_feedback.html",
                             is_professor = True,

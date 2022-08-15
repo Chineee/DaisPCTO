@@ -127,6 +127,7 @@ def create_app():
 
     @app.template_filter("convert_to_integer")
     def convert_to_integer(number):
+        #a quanto pare jinja non permette la conversione da str a int kekw
         return int(number)
 
     @app.template_filter("can_be_booked")

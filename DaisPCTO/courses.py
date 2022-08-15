@@ -2,10 +2,10 @@ from flask import Blueprint, render_template, url_for, redirect, flash, abort, r
 from flask_login import current_user, login_required
 from DaisPCTO.auth import role_required
 # from DaisPCTO.models import *
-from DaisPCTO.db import add_course, city_subscribed, gender_subscribed, get_course_by_id, can_professor_modify, \
-    get_user_by_id, get_professor_by_course_id, change_course_attr, \
+from DaisPCTO.db import add_course, can_student_send_feedback, city_subscribed, gender_subscribed, get_course_by_id, can_professor_modify, \
+    get_user_by_id, get_professor_by_course_id, change_course_attr, hours_attended, \
     count_student, change_feedback, subscribe_course, age_subscribed, \
-    delete_subscription, is_subscribed, get_courses_list, get_professor_courses, get_student_courses, send_certificate_to_students, get_student_certificates, type_school_subscribed
+    delete_subscription, is_subscribed, get_courses_list, get_professor_courses, get_student_courses, send_certificate_to_students, get_student_certificates, type_school_subscribed, get_students_by_course
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, EmailField, SelectField, DateField, BooleanField, SubmitField, validators, SelectMultipleField, IntegerField, TextAreaField
 from wtforms.validators import DataRequired, EqualTo, ValidationError, Length, NumberRange
@@ -123,7 +123,8 @@ def course(coursePage):
          prof = get_professor_by_course_id(coursePage.upper()),
          form = form,
          subs = count_student(coursePage.upper()),
-         iscritto = is_subscribed(current_user.get_id(), coursePage.upper()))
+         iscritto = is_subscribed(current_user.get_id(), coursePage.upper()),
+         can_send = can_student_send_feedback(current_user.get_id(), coursePage.upper()))
     #controlliamo chi sta accedendo
     #se è un prof che ha creato il corso o che fa parte della relazione facciamo comparire un bottone "modifica corso"
     #renderizza ad una pagina modifica corso accessibile solo ai prof che l'hanno modificata
@@ -145,6 +146,23 @@ def subs(course):
 
     return redirect(url_for("courses_blueprint.course", coursePage=course))
 
+
+@courses.route('/<coursePage>/students')
+@role_required("Professor")
+def students_list(coursePage):
+
+    if not can_professor_modify(current_user.get_id(), coursePage.upper()):
+        abort(401)
+
+    # students_list_info = hours_attended(coursePage.upper())
+    students_list_info = get_students_by_course(coursePage.upper())
+
+    return render_template("student_list_info.html",
+                            is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"),
+                            user = current_user,
+                            students = students_list_info,
+                            course = get_course_by_id(coursePage.upper())
+                            )
 
 @courses.route('/<coursePage>/demographics')
 @role_required("Professor")
@@ -237,6 +255,25 @@ def get_age_student():
     
 
     return jsonify({"success" : True, "ages" : res, "len" : len(res), "min" : minim, "max" : maxi})
+
+@courses.route('/action/get/hours_attended')
+@role_required("Professor")
+def get_hours_attended():
+    course_id = request.args.get("course_id").upper()
+    hours = hours_attended(course_id)
+
+    res = {}
+
+    for i in hours:
+        if i.Hours not in res:
+            res[i.Hours.total_seconds()/3600] = 1
+        else:
+            res[i.Hours.total_seconds()/3600] += 1
+
+    res = {k: v for k, v in sorted(res.items(), key=lambda item: item[1])}  
+    
+    return jsonify({"success" : True, "hours_attended" : res})
+
 """
 
 CREATE TRIGGER max_students_check

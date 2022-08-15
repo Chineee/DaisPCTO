@@ -5,13 +5,15 @@
 {% if not no_student %}
     <div id="piechart" data-id="{{course_id}}" style="width: 900px; height: 500px;"></div>
 
-    <div id="bar_chart" style="width: 900px; height: 700px;"></div>
-
-    <div id="bar_chart-2" style="width: 900px; height: 500px;"></div>
+    <div id="bar_chart" style="width: 1350px; height: 700px;"></div>
 
     <div id="piechart-2" data-id="{{course_id}}" style="width: 900px; height: 500px;"></div>
 
+    <div id="bar_chart-2" style="width: 1200px; height: 500px;"></div>
 
+    <div id="hours_att" style="width: 800px; height: 600px;"></div>
+
+    
 <script type="text/javascript">
     
     let course_id = $('#piechart').data('id');
@@ -51,6 +53,7 @@
         error : function() {
             console.log("errore")
         }
+
     });
 
     $.ajax({
@@ -61,8 +64,7 @@
             region = data['Regioni']
             google.charts.load("current", {packages:["corechart"]});
             google.charts.setOnLoadCallback(drawChart);
-
-       
+      
             function drawChart() {
                 var my_data = google.visualization.arrayToDataTable([
                     ['Regioni', 'Numero studenti'],
@@ -82,18 +84,18 @@
                     ['Sardegna', region["Sardegna"]],
                     ['Sicilia', region["Sicilia"]],
                     ['Toscana', region["Toscana"]],
-                    ['Trentino Alto-Adige', region["Trentino-Alto Adige/Südtirol"]],
+                    ['Trentino Alto-Adige', region["Trentino"]],
                     ['Umbria', region["Umbria"]],
-                    ["Val D'Aosta",region["Valle d'Aosta/Vallée d'Aoste"]],
-                    ['Veneto', region["Veneto"]]]);
+                    ["Val D'Aosta",region["Valle"]],
+                    ['Veneto', region["Veneto"]]
+                ]);
     
-
                 var options = {
                 title: 'Studenti regioni',
                
                 };
 
-                var chart = new google.visualization.BarChart(document.getElementById('bar_chart'));
+                var chart = new google.visualization.ColumnChart(document.getElementById('bar_chart'));
                 chart.draw(my_data, options);
             }
         }
@@ -107,8 +109,7 @@
             google.charts.load("current", {packages:["corechart"]});
             google.charts.setOnLoadCallback(drawChart);
 
-       
-
+    
             function drawChart() {
         
                 var my_data = google.visualization.arrayToDataTable([
@@ -158,7 +159,6 @@
                     table.push(row)  
                 }
 
-                console.log(table)
              
                 var my_data = google.visualization.arrayToDataTable(table)
     
@@ -167,11 +167,49 @@
                
                 };
 
-                var chart = new google.visualization.BarChart(document.getElementById('bar_chart-2'));
+                var chart = new google.visualization.ColumnChart(document.getElementById('bar_chart-2'));
                 chart.draw(my_data, options);
             }
         }
-    })
+    });
+
+    $.ajax({
+        type : 'get',
+        url : '/courses/action/get/hours_attended?course_id='+course_id,
+        success : function(data) {
+            
+            google.charts.load("current", {packages:["corechart"]});
+            google.charts.setOnLoadCallback(drawChart);
+
+
+
+            function drawChart() {
+                
+                const table = [["Ore di lezione seguite", "Numero studenti"]]
+                
+                for (const [key, value] of Object.entries(data['hours_attended'])) {
+                    let row = []
+                    row.push(key + " Ore")
+                    row.push(value)
+                    table.push(row)
+                }
+
+                var my_data = google.visualization.arrayToDataTable(table);
+
+                var options = {
+                 
+                    title: 'Grafico degli studenti che hanno seguito le lezioni',
+                  
+                };
+
+                var chart = new google.visualization.ColumnChart(document.getElementById('hours_att'));
+                chart.draw(my_data, options);
+            }
+        }
+    });
+
+
+    
    
   </script>
 

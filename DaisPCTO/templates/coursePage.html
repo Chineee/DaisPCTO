@@ -3,7 +3,16 @@
 {% block content %}
     <h1>
         <center>
-            {{ course.Name }} - {{ course.CourseID }}
+            {{ course.Name }} - {{ course.CourseID }} 
+            {% if is_professor == False and course.OpenFeedback == True and can_send == True %} 
+                <a href="/courses/{{course.CourseID}}/feedback">
+                    <button type="button" class="btn btn-success"> Invia feedback! </button>
+                </a>
+            {% elif is_professor == True and can_modify == True %} 
+                <a href="/courses/{{course.CourseID}}/get_feedback">
+                    <button type="button" class="btn btn-success"> Leggi feedback studenti! </button>
+                </a> 
+            {% endif %}
         </center>
     </h1>
 

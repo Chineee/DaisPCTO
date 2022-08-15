@@ -81,7 +81,7 @@ def extestone():
 
     session = Session()
     # a = session.query(Student, School.SchoolName).join(School).join(StudentCourse, and_(Student.UserID == StudentCourse.StudentID, StudentCourse.CourseID == '777')).all()
-    a = get_student_by_course('666')
+    a = get_students_by_course('666')
     for i in a:
         print(i.UserID)
      
@@ -452,11 +452,14 @@ def get_student_courses(user_id):
     except Exception as e:
         return None
 
-def get_student_by_course(course_id):
+def get_students_by_course(course_id):
     try:
         session = Session()
 
-        return session.query(Student).filter(and_(StudentCourse.CourseID == course_id, StudentCourse.StudentID == Student.UserID)).all()
+        return session.query(User.Name, User.Surname, Student.birthDate, Student.City).join(Student, Student.UserID == User.UserID)\
+            .filter(and_(StudentCourse.CourseID == course_id, StudentCourse.StudentID == Student.UserID))\
+            .order_by(User.Surname, User.Name)\
+            .all()
     except:
         return []
 
@@ -619,6 +622,7 @@ def send_feedback(form, course_id):
         session.query(StudentCourse).filter(StudentCourse.CourseID == course_id.upper(), StudentCourse.StudentID == current_user.get_id()).update({StudentCourse.HasSentFeedback : not_(StudentCourse.HasSentFeedback)})
         session.commit()
     except Exception as e:
+    
         session.rollback()
 
 def avg_feedback(course_id):
@@ -677,17 +681,57 @@ def type_school_subscribed(course_id):
 
        
 
-# def hours_attended(course_id):
-#     try:
-#         session = Session()
-#         return session.query(func.sum(Lesson.EndTime - Lesson.EndTime).label("Hours"))\
-#             .join(StudentLesson, StudentLesson.LessonID == Lesson.LessonID)\
-#             .filter(Lesson.CourseID == course_id)\
-#             .group_by(StudentLesson.StudentID).all()
-#     except:
-#         return []
+def hours_attended(course_id):
+    try:
+        session = Session()
+        print('INIT QUERY')
+        q1 = session.query(func.sum(case((and_(Lesson.StartTime.isnot(None), Lesson.EndTime.isnot(None)), Lesson.EndTime-Lesson.StartTime), else_="00:00:00")).label("Hours"))\
+            .join(StudentLesson, StudentLesson.LessonID == Lesson.LessonID, isouter=True)\
+            .filter(Lesson.CourseID == course_id)\
+            .group_by(StudentLesson.StudentID).all()
+        
+        # q3 = session.query(StudentLesson.StudentID).join(Lesson, Lesson.LessonID == StudentLesson.LessonID).filter(Lesson.CourseID == course_id)
+        
+        # q2 = session.query(StudentCourse)\
+        #     .filter(StudentCourse.CourseID == course_id)\
+        #     .filter(StudentCourse.StudentID.not_in(q3))
+
+        # print("aaa")
+    
+        # return q2.union(q1).all()
+        return q1
+
+#     q1 = session.\
+#      query(beard.person.label('person'),
+#            beard.beardID.label('beardID'),
+#            beard.beardStyle.label('beardStyle'),
+#            sqlalchemy.sql.null().label('moustachID'),
+#            sqlalchemy.sql.null().label('moustachStyle'),
+#      ).\
+#      filter(beard.person == 'bob')
+
+# q2 = session.\
+#      query(moustache.person.label('person'),
+#            sqlalchemy.sql.null().label('beardID'), 
+#            sqlalchemy.sql.null().label('beardStyle'),
+#            moustache.moustachID,
+#            moustache.moustachStyle,
+#      ).\
+#      filter(moustache.person == 'bob')
+
+        # result = q1.union(q2).all()
+
+    except Exception as e:
+        print("sss")
+        print(type(e))
+        return []
 
 """
+
+# This returns a list of object A by choosing the 'left' side to be B using select_from()
+session.query(A).select_from(B).outerjoin(A).all()   # SELECT A.* FROM B LEFT OUTER JOIN A ...
+
+
 (Lesson.Date - date.today).days <= 7
 
 SELECT "Courses"."CourseID", SUM(CASE WHEN ("Lessons"."StartTime" IS NOT NULL AND "Lessons"."EndTime" IS NOT NULL) THEN "Lessons"."EndTime" - "Lessons"."StartTime" ELSE '00:00:00' END)
@@ -695,7 +739,6 @@ FROM "StudentsCourses" NATURAL JOIN "Courses" NATURAL LEFT JOIN "Lessons" NATURA
 WHERE "StudentsCourses"."StudentID" = 1
 ORDER BY "Courses"."Name"
 GROUP BY "Courses"."CourseID"
-
 
 FROM "Courses" NATURAL JOIN "StudentsCourses" NATURAL LEFT JOIN "StudentsLessons" NATURAL LEFT JOIN "Lessons"
 

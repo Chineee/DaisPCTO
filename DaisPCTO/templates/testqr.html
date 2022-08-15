@@ -36,6 +36,13 @@
             $.ajax({
                 type : "POST",
                 url : '/action/lessons?action=formalize&lesson_id=1&token='+decodedText,
+                success : function(data) {
+                    if (data['success'] == true) {
+                        console.log("prenotazione confermata")
+                    } else {
+                        console.log("prenotazione non validata")
+                    }
+                }
             })
 
             setTimeout(set_fps, 300);

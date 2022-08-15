@@ -72,7 +72,7 @@
     {
       "nome": "Bolzano/Bozen",
       "sigla": "BZ",
-      "regione": "Trentino-Alto Adige/Südtirol"
+      "regione": "Trentino"
     },
     {
       "nome": "Brescia",
@@ -487,7 +487,7 @@
     {
       "nome": "Trento",
       "sigla": "TN",
-      "regione": "Trentino-Alto Adige/Südtirol"
+      "regione": "Trentino"
     },
     {
       "nome": "Treviso",
@@ -505,9 +505,9 @@
       "regione": "Friuli-Venezia Giulia"
     },
     {
-      "nome": "Valle d'Aosta/Vallée d'Aoste",
+      "nome": "Aosta",
       "sigla": "AO",
-      "regione": "Valle d'Aosta/Vallée d'Aoste"
+      "regione": "Valle"
     },
     {
       "nome": "Varese",
