@@ -13,12 +13,62 @@
 
         
     </div>
+
+    {% if is_reader %}
+    <div class="list-group"> 
+        
+    </div>
     
     <script type="text/javascript">
         
         
         var csrf_token = "{{ csrf_token() }}";
-        let fps_now = 20
+
+
+        $.ajaxSetup({
+                    beforeSend: function(xhr, settings) {
+                        if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                            xhr.setRequestHeader("X-CSRFToken", csrf_token);
+
+                        }
+                    }
+        });
+
+        function onScanSuccess(decodedText, decodedResult) {
+     
+            $.ajax({
+                type : "POST",
+                url : '/action/lessons?action=formalize&lesson_id=-1&token='+decodedText,
+                success : function(data) {
+                    if (data['success'] == true) {
+                        $('.list-group').append('<div href="#" class="list-group-item-success"> PRENOTAZIONE AVVENUTA CON SUCCESSO </a>')
+                    } else {
+                        $('.list-group').append('<a href="#" class="list-group-item-danger"> ERRORE </a>')
+                    }
+                },
+
+                error : function() {
+                    console.log(decodedText)
+                    console.log("oh merda")
+                }
+                
+            })
+                  
+        }
+
+        
+        function onScanFailure(error) {
+            // console.log(error)
+            
+        }
+
+        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 0.5, qrbox: {width: 500, height: 500} }, /* verbose= */ false);
+
+        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    </script>  
+    {% else %}  
+    <script type="text/javascript">
+        var csrf_token = "{{ csrf_token() }}";
 
         $.ajaxSetup({
                     beforeSend: function(xhr, settings) {
@@ -32,35 +82,28 @@
         function onScanSuccess(decodedText, decodedResult) {
             
   // handle the scanned code as you like, for example:
-            fps_now = 0;
+     
             $.ajax({
                 type : "POST",
-                url : '/action/lessons?action=formalize&lesson_id=1&token='+decodedText,
+                url : '/action/lessons?action=formalize-student&lesson_id=-1&lesson_id=1&token='+decodedText,
                 success : function(data) {
-                    if (data['success'] == true) {
-                        console.log("prenotazione confermata")
-                    } else {
-                        console.log("prenotazione non validata")
-                    }
-                }
+                    if (data['success'] == true)
+                        window.location.href = '/'
+                },
             })
-
-            setTimeout(set_fps, 300);
                   
         }
 
-        function set_fps() {
-            fps_now = 30;
-        }
-
+        
         function onScanFailure(error) {
             console.log(error)
             
         }
 
-        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: fps_now, qrbox: {width: 500, height: 500} }, /* verbose= */ false);
+        let html5QrcodeScanners = new Html5QrcodeScanner("reader", { fps: 0.5, qrbox: {width: 500, height: 500} }, /* verbose= */ false);
 
-        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-    </script>    
+        html5QrcodeScanners.render(onScanSuccess, onScanFailure);
+    </script>
 
+    {% endif %}
 {% endblock content %} 

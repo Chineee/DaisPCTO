@@ -80,10 +80,8 @@ def extestone():
     #     return res
 
     session = Session()
-    # a = session.query(Student, School.SchoolName).join(School).join(StudentCourse, and_(Student.UserID == StudentCourse.StudentID, StudentCourse.CourseID == '777')).all()
-    a = get_students_by_course('666')
-    for i in a:
-        print(i.UserID)
+    session.add(Reservation(FrontalLessonID=1, StudentID=1))
+    session.commit()
      
 def exists_role_user(user_id, role):
     try:
@@ -286,7 +284,7 @@ def add_lesson(form, course_id, professor):
     classroom = form.classroom.data
     link = form.link.data
     password = form.password.data
-    token = generate_password_hash(f'{current_user.get_id()}{course_id}{date}{start_time}{end_time}{classroom}{random.randint(0, 501)}')
+    token = generate_password_hash(f'{current_user.get_id()}{course_id}{date}{start_time}{end_time}{classroom}{random.randint(0, 10000)}').decode('utf-8')
     lesson_new = Lesson(Date = date, StartTime = start_time, EndTime = end_time, Topic = topic, IsDual = is_dual, CourseID = course_id, ProfessorID=professor, Token=token)
 
     return _add_lesson(lesson_new, type_lesson, classroom, link, password)
@@ -311,7 +309,7 @@ def _add_lesson(lesson_new, type_less, classroom, link=None, password=None):
         session.rollback()
         
         if e.orig.diag.message_primary == "LessonOverlapping":
-            delete_lesson(lesson_new.LessonID)
+            # delete_lesson(lesson_new.LessonID)
             return "ClashError"
 
         if e.orig.diag.message_primary == "SameCourseOverlapping":
@@ -336,7 +334,7 @@ def add_multiple_lesson(form, course_id, professor):
     is_dual = True if form.lesson_type_2.data == "Duale" else False
 
     while diff_date < end_date:
-        token = generate_password_hash(f'{current_user.get_id()}{course_id}{diff_date}{form.start_time_2.data}{form.end_time_2.data}{form.classroom_2.data}{random.randint(0, 1000)}')
+        token = generate_password_hash(f'{current_user.get_id()}{course_id}{diff_date}{form.start_time_2.data}{form.end_time_2.data}{form.classroom_2.data}{random.randint(0, 1000)}').decode('utf-8')
         lesson_new = Lesson(Date = diff_date, StartTime = form.start_time_2.data, EndTime = form.end_time_2.data, CourseID = course_id, IsDual = is_dual, ProfessorID=professor, Token=token)
 
         result_query = _add_lesson(lesson_new, form.lesson_type_2.data, form.classroom_2.data)
@@ -360,7 +358,7 @@ def delete_lesson(lesson_id):
 def get_lessons_by_course_id(course_id):
     try:
         session = Session()
-        return session.query(Lesson.LessonID, Lesson.CourseID, Lesson.Date, Lesson.StartTime, Lesson.EndTime, Lesson.Topic, Classroom.Name, Classroom.Building, Lesson.IsDual, OnlineLesson.RoomLink, OnlineLesson.RoomPassword)\
+        return session.query(Lesson.LessonID, Lesson.CourseID, Lesson.Date, Lesson.StartTime, Lesson.EndTime, Lesson.Topic, Classroom.Name, Classroom.Building, Lesson.IsDual, OnlineLesson.RoomLink, OnlineLesson.RoomPassword, Lesson.Token)\
             .join(FrontalLesson, Lesson.LessonID == FrontalLesson.LessonID, isouter = True)\
             .join(Classroom, Classroom.ClassroomID == FrontalLesson.ClassroomID, isouter=True)\
             .join(OnlineLesson, OnlineLesson.LessonID == Lesson.LessonID, isouter = True)\
@@ -427,7 +425,7 @@ def get_students_by_course(course_id):
     try:
         session = Session()
 
-        return session.query(User.Name, User.Surname, Student.birthDate, Student.City).join(Student, Student.UserID == User.UserID)\
+        return session.query(User.Name, User.Surname, Student.birthDate, Student.City, User.UserID).join(Student, Student.UserID == User.UserID)\
             .filter(and_(StudentCourse.CourseID == course_id, StudentCourse.StudentID == Student.UserID))\
             .order_by(User.Surname, User.Name)\
             .all()
@@ -448,6 +446,7 @@ def get_lessons_bookable(user_id):
 
         return session.query(Course.Name.label("CourseName"), Lesson.Date, Lesson.StartTime, Lesson.EndTime, Classroom.Name, Classroom.Building, Classroom.Seats, Lesson.LessonID, func.coalesce(Reservation.StudentID, -1).label("StudentID"), Reservation.ReservationID)\
             .join(Course, Course.CourseID == Lesson.CourseID)\
+            .join(StudentCourse, and_(StudentCourse.StudentID == user_id, StudentCourse.CourseID == Course.CourseID))\
             .join(FrontalLesson, FrontalLesson.LessonID == Lesson.LessonID)\
             .join(Classroom, Classroom.ClassroomID == FrontalLesson.ClassroomID)\
             .join(Reservation, and_(Reservation.FrontalLessonID == FrontalLesson.LessonID, Reservation.StudentID == user_id), isouter=True)\
@@ -492,8 +491,11 @@ def book_lesson(frontalLesson_id, course_id):
 def delete_reservation(frontalLesson_id):
     try:
         session = Session()
-        session.query(Reservation).filter(and_(Reservation.FrontalLessonID == frontalLesson_id, Reservation.StudentID == current_user.get_id())).delete()
-        session.commit()
+        if session.query(Reservation).filter(and_(Reservation.FrontalLessonID == frontalLesson_id, Reservation.StudentID == current_user.get_id())).first().HasValidation == False:
+            session.query(Reservation).filter(and_(Reservation.FrontalLessonID == frontalLesson_id, Reservation.StudentID == current_user.get_id())).delete()
+            session.commit()
+        else:
+            return False
     except Exception as e:
         session.rollback()
         return False
@@ -511,8 +513,25 @@ def confirm_attendance(reservation):
         session = Session()
         session.query(Reservation).filter(and_(Reservation.StudentID == reservation.StudentID, Reservation.FrontalLessonID == reservation.FrontalLessonID)).update({Reservation.HasValidation : True})
         session.commit()
+        formalize_student(reservation.StudentID, reservation.FrontalLessonID)
+    except Exception as e:
+        session.rollback()
+
+def formalize_student(user_id, lesson_id):
+    try:
+        session = Session()
+        session.add(StudentLesson(StudentID = user_id, LessonID = lesson_id))
+        session.commit()
+    except Exception as e:
+        session.rollback()
+
+def get_lesson_from_token(token):
+    try:
+        session = Session()
+        return session.query(Lesson).filter(Lesson.Token == token).first()
     except:
         session.rollback()
+        session.close()
 
 def get_classrooms():
     try:
@@ -539,11 +558,12 @@ def get_schools_with_name(name):
         return []
 
 def send_certificate_to_students(course_id):        
-    try:
-        hours = session.query(Course).filter(Course.CourseID == course_id.upper()).first().MinHourCertificate
-        student_courses = session.query(StudentCourse).filter(course_id == StudentCourse.CourseID).all()
-    except:
-        return
+    
+    # hours = session.query(Course).filter(Course.CourseID == course_id.upper()).first().MinHourCertificate
+    hours = get_course_by_id(course_id).MinHourCertificate
+    # student_courses = session.query(StudentCourse).filter(course_id == StudentCourse.CourseID).all()
+    student_courses = get_students_by_course(course_id)
+    
 
     for student in student_courses:
         students_courses_hours = get_student_courses(student.StudentID)
@@ -553,7 +573,7 @@ def send_certificate_to_students(course_id):
                     session = Session()
                     session.add(Certificate(StudentID = student.StudentID, CourseID = course_id.upper(), Hours = course.Hours.total_seconds()/3600))
                     session.commit()     
-                except Exception as e:
+                except exc.SQLAlchemyError as e:
                     session.rollback()
                 finally:
                     session.close()
@@ -723,6 +743,14 @@ def update_post(form, post_id):
         session.commit()
     except:
         session.rollback()
+
+# def update_lesson(lesson_id, form):
+#     try:
+#         session = Session()
+#         session.query(Lesson).filter(Lesson.LessonID == lesson_id)update({Lesson.Date : form.date_update, Lesson.StartTime : form.start_time_update, Lesson.EndTime : form.end_time_update, Lesson.Classroom : form.classroom.update, Lesson.lesson_type_update })
+#         session.commit()
+#     except:
+#         session.rollback()
 
 '''
 ADD MI PIACE BY POST ID

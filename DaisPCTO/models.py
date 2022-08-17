@@ -121,7 +121,7 @@ class Course(Base):
 
     CourseID = Column(String, primary_key=True)
     Name = Column(String)
-    Description = Column(String)
+    Description = Column(Text)
     MaxStudents = Column(Integer)
     MinHourCertificate = Column(Integer)
     OpenFeedback = Column(Boolean)
@@ -253,9 +253,9 @@ class QnA(Base):
 
     TextID = Column(Integer, primary_key=True)
     RefTo = Column(Integer, ForeignKey("QnA.TextID"))
-    CourseID = Column(Integer, ForeignKey("Courses.CourseID"))
+    CourseID = Column(String, ForeignKey("Courses.CourseID"))
     Text = Column(Text)
-
+    
     UserID = Column(Integer, ForeignKey("Users.UserID"))
 
     Courses = relationship("Course", backref="Questions")
@@ -267,9 +267,9 @@ class QnA(Base):
 class Reservation(Base):
     __tablename__ = "Reservation"
 
-    StudentID = Column(Integer, ForeignKey("Students.UserID"), primary_key=True)
-    FrontalLessonID = Column(Integer, ForeignKey("FrontalLessons.LessonID"), primary_key=True)
-    ReservationID = Column(String) 
+    StudentID = Column(Integer, ForeignKey("Students.UserID", ondelete='CASCADE'), primary_key=True)
+    FrontalLessonID = Column(Integer, ForeignKey("FrontalLessons.LessonID", ondelete='CASCADE'), primary_key=True)
+    ReservationID = Column(String, unique=True) 
     HasValidation = Column(Boolean)
 
     __table_args__= ()

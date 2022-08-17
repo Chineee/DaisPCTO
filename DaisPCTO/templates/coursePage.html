@@ -94,7 +94,7 @@
 
                                     <div class="invalid-feedback" id="invalid-feedback-hour-certificate"
                                          style="display : none">
-                                        Le ore devono essere di almeno 0!
+                                        Le ore devono essere almeno 0!
                                     </div>
 
                                     <br><br>
@@ -139,7 +139,7 @@
                     {% else %}
                         <button class="btn btn-{% if iscritto %}danger{% else %}success{% endif %}"
                                 data-bs-toggle="modal" data-bs-target="#subscription"
-                                {% if subs == course.MaxStudents and not iscritto %} disabled {% endif %}>
+                                {% if subs == course.MaxStudents and not iscritto and course.MaxStudents > 0 %} disabled {% endif %}>
                         {% if iscritto %} Disiscriviti! {% else %} Iscriviti! {% endif %}
                         </button>
                     {% endif %}

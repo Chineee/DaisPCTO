@@ -1,9 +1,11 @@
-from flask import Blueprint, jsonify, render_template, url_for, redirect, flash, abort, request, logging
+from sqlite3 import Time
+from flask import Blueprint, jsonify, render_template, url_for, redirect, flash, abort, request, logging, session as flasksession
 from flask_login import current_user, login_required
 from DaisPCTO.auth import role_required
-from DaisPCTO.db import add_multiple_lesson, can_professor_modify, get_classrooms, get_course_by_id, get_lesson_by_id, get_user_by_id, get_professor_by_course_id, \
+from DaisPCTO.db import add_multiple_lesson, can_professor_modify, exists_role_user, formalize_student, get_classrooms, get_course_by_id, get_lesson_by_id, get_students_by_course, get_user_by_id, get_professor_by_course_id, \
     change_course_attr, add_lesson, get_lessons_by_course_id, delete_lesson, get_course_by_lesson_id,\
-    confirm_attendance, change_lesson_information, get_lessons_bookable, get_full_lessons, book_lesson, delete_reservation, get_reservation_from_token, get_classrooms
+    confirm_attendance, change_lesson_information, get_lessons_bookable, get_full_lessons, book_lesson, delete_reservation,\
+    get_reservation_from_token, get_classrooms, formalize_student, get_lesson_from_token
 from flask_wtf import FlaskForm, CSRFProtect
 from wtforms import StringField, DateField, SelectField, BooleanField, SubmitField, validators, SelectMultipleField, IntegerField, TextAreaField, TimeField
 from wtforms.validators import DataRequired, ValidationError
@@ -69,6 +71,19 @@ class AddMultipleLessons(FlaskForm):
             raise ValidationError("L'orario deve avere senso")
  
 
+class UpdateLesson(FlaskForm):
+    date_update = DateField("Data lezione", validators =[DataRequired(message="Campo richiesto")], render_kw={"placeholder" : "Data"})
+    start_time_update = TimeField("Orario di inizio", validators =[DataRequired(message="Campo richiesto")], render_kw={"placeholder" : "Orario di Inizio"})
+    end_time_update = TimeField("Orario di fine", validators =[DataRequired(message="Campo richiesto")], render_kw={"placeholder" : "Orario di Fine"})
+    classroom_update = SelectField("Seleziona aula", choices=get_classrooms_tuple())
+    lesson_type_update = SelectField('Modalità erogazione', choices=[("", "--Seleziona un tipo--"),("Frontale", "Frontale"),("Online", "Online"), ("Duale", "Duale")], validators=[DataRequired(message="Campo richiesto")])
+    link_update = StringField("Link lezione", render_kw={"placeholder" : "Link lezione"})
+    password_update = StringField("Password lezione", render_kw={"placeholder" : "Password lezione"})
+
+    lesson_id = IntegerField()
+    
+    submit_update = SubmitField()
+
 @lessons.route('/')
 def lessons_home():
     pass
@@ -80,6 +95,8 @@ def lessons_course_home(coursePage):
 
     form2 = AddMultipleLessons()
 
+    form3 = UpdateLesson()
+   
     can_modify = can_professor_modify(current_user.get_id(), coursePage.upper())
 
     
@@ -102,9 +119,27 @@ def lessons_course_home(coursePage):
             return redirect(url_for("lessons_blueprint.lessons_course_home", coursePage = coursePage))
 
     elif form2.submit_lessons.data and form2.validate_on_submit() and can_modify:
-        
+
         add_multiple_lesson(form2, coursePage.upper(), current_user.get_id())
 
+    elif form3.submit_update.data and form3.validate_on_submit() and can_modify:
+        pass
+        # answer = update_lesson(form3.lesson_id.data, form3)
+        # if answer == 'ClashError': #se l'inserimento non va a buon fine, avvertiamo il chiamante
+        #     form.classroom_update.errors.append("Aula già prenotata per quell'ora")
+
+        # elif answer == 'DateError':
+        #     form.start_time_update.errors.append("L'ora di inizio deve essere minore di quella di fine!")
+        #     form.end_time.errors_update.append("L'ora di fine deve essere maggiore di quella di inzio")
+        
+        # elif answer == "SameCourseClashError":
+        #     form.start_time_update.errors.append("Un'altra tua lezione è presente nel range di orario selezionato")
+        #     form.end_time_update.errors.append("Un'altra tua lezione è presente nel range di orario selezionato")
+        #     form.date_update.errors.append("Un'altra tua lezione è presente nel range di orario selezionato")
+        # elif answer == "UnknownError":
+        #     flash("Something goes wrong...")
+        # else:
+        #     return redirect(url_for("lessons_blueprint.lessons_course_home", coursePage = coursePage))
 
     list_lessons = get_lessons_by_course_id(coursePage.upper())
 
@@ -116,11 +151,13 @@ def lessons_course_home(coursePage):
                             form=form,
                             list_lessons = list_lessons,
                             course=get_course_by_id(coursePage.upper()),
-                            form2 = form2
+                            form2 = form2,
+                            form3 = form3
                         )
 
 
 @lessons.route('/lessons/reservations')
+@login_required
 def reservations():
 
     lessons_bookable = get_lessons_bookable(current_user.get_id())
@@ -136,6 +173,7 @@ def reservations():
 
 
 @lessons.route('/lessons/reservations/private')
+@login_required
 def private():
 
     lessons_bookable = get_lessons_bookable(current_user.get_id())
@@ -152,7 +190,9 @@ def private():
 
 @lessons.route('/qr')
 def qreader():
-    return render_template("testqr.html", user=current_user, is_professor=False if not current_user.is_authenticated else current_user.hasRole("Professor"))
+    is_reader_qr = exists_role_user(current_user.get_id(), "QrReader")
+
+    return render_template("testqr.html", is_reader = is_reader_qr, user=current_user, is_professor=False if not current_user.is_authenticated else current_user.hasRole("Professor"))
 
 #crea  la relazione studente-lezioni per certificare che lo studente ha seguito la lezione x
 #oppure se si tratta di una prenotazione di una frontallesson, esegue la prenotazione (a meno che i posti in aula non siano finiti)
@@ -200,6 +240,7 @@ def action_lesson():
         for l in list_lessons_bookable:
             print("helloooo")
             if lesson.LessonID == l.LessonID and l.StudentID == -1:
+                #se lo studentID è uguale a -1 significa che lo studente non ha ancora prenotato quella lezione (abbiamo utilizzato una coalesce)
                 if book_lesson(lesson_id, lesson.CourseID):
                     # print((datetime.datetime.now()-f).total_seconds())
                     return jsonify({"success" : True})
@@ -217,24 +258,60 @@ def action_lesson():
         return jsonify({"success" : False})
 
     elif action == 'formalize':
-        if not current_user.hasRole("Admin"):
-            abort(401)
+
+        # if not exists_role_user(current_user.get_id(), "Admin"):
+        #     abort(401)
 
         tok = request.args.get("token")
         reservation = get_reservation_from_token(tok)
-        if reservations is not None:
+    
+        if reservation is not None:
+            
             if reservation.HasValidation == False:
                 bookable_lesson = get_lessons_bookable(reservation.StudentID)
-                for lesson in bookable_lesson:
-                    if lesson.LessonID == reservation.FrontalLessonID and lesson.StudentID >= 0:
-                        confirm_attendance(reservation)
+                for lesson in bookable_lesson:                  
+                    '''
+                        se il current user è un admin significa che chi sta facendo la richiesta è il tablet che sta davanti all'ingresso, quindi stiamo formalizzando una prenotazione frontale
+                        la logica sarebbe che uno studente può prenotarsi al massimo due ore prima rispetto all'inizio della lezione ed nel giorno stesso
+                    '''
+                    # print(type(lesson.StartTime))
+                    if lesson.LessonID == reservation.FrontalLessonID and lesson.StudentID >= 0 and lesson.Date == datetime.datetime.today().date():
+                        date_1 = datetime.datetime.combine(datetime.datetime.today().date(), lesson.StartTime) - datetime.datetime.today()
+                        if date_1.total_seconds()/3600 <= 2 and date_1.total_seconds()/3600 >= 0:
+                            confirm_attendance(reservation)
+                            return jsonify({"success" : True})
+        
+        return jsonify({"success" : False})
+        
+    elif action == 'formalize-student':
+
+        '''
+        a differenza della formalize fatta sopra, in questo caso sono gli studenti che scanerizzano un qr code mostrato dal prof, per certificare la loro presenza
+        azione pensata più per gli studenti online che ovviamente non si possono prenotare, tuttavia anche quelli in presenza possono farlo, nel caso non si siano potuti prenotare per tempo
+        o per mancata scanerizzazione qrcode della loro prenotazione a causa di mal funzionamenti del tablet all'ingresso o quant'altro
+        '''
+        # if not exists_role_user(current_user.get_id(), "Student"):
+        #     abort(401)
+
+        token = request.args.get("token")
+        
+        lesson = get_lesson_from_token(token)
+
+        students = get_students_by_course(lesson.CourseID)
+        
+        for s in students:
+            if s.UserID == current_user.get_id():
+                if lesson.Date == datetime.datetime.today().date():
+                    if lesson.EndTime >= datetime.datetime.today().time() and lesson.StartTime <= datetime.datetime.today().time():
+                        formalize_student(current_user.get_id(), lesson.LessonID)
+                        flash("Presenza confermata con successo")
                         return jsonify({"success" : True})
         
-
+       
         return jsonify({"success" : False})
             
         """
-            in caso di lezione online lo studente dovrà inserire manualmente il token, che verrà mostrato dal prof.
+            in caso di lezione online lo studente dovrà scannerizzare il qr code che mostrerà il prof (potranno farlo anche gli studenti in presenza in caso di mal funzionamenti o altri problemi all'ingresso dell'edificio/aula), che verrà mostrato dal prof.
             In caso di lezione frontale invece, lo studente dovrà presentare il qr code all'ingresso (al tablet) che verificherà se la prenotazione è valida
             Tipi di errore possibili:
                 Se l'errore inizia con qr allora lo studente ha prenotato una lezione frontale e l'errore verrà mostrato dal tablet all'ingresso degli edifici

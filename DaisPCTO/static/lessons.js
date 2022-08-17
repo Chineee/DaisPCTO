@@ -6,6 +6,7 @@ $(window).on('load', function() {
     for (let i = 0; i < docs.length; i++) {
         let item_id = docs[i].id;
         let text_replaced = docs[i].innerHTML.replaceAll("&lt;", "<").replaceAll('&gt;', '>');
+        text_replaced = text_replaced.replace(/<script/ig , "").replace(/script>/ig, "");
         $('#'+item_id).html(text_replaced);
     }
 });

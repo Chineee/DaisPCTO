@@ -261,11 +261,11 @@ def get_age_student():
 def get_hours_attended():
     course_id = request.args.get("course_id").upper()
     hours = hours_attended(course_id)
-
+    print(len(hours))
     res = {}
 
     for i in hours:
-        if i.Hours not in res:
+        if i.Hours.total_seconds()/3600 not in res:
             res[i.Hours.total_seconds()/3600] = 1
         else:
             res[i.Hours.total_seconds()/3600] += 1

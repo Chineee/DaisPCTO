@@ -17,6 +17,11 @@
         <button type="button" class="btn-close float-end" id="btn-close-dan"></button>
     </div>
 
+    <div class="alert alert-danger already-reserved-error" role="alert" style="display : none">
+        Hai già scannerizzato questa prenotazione, non puoi cancellarla
+        <button type="button" class="btn-close float-end" id="btn-close-dan-2"></button>
+    </div>
+
     <nav class="nav nav-pills flex-column flex-sm-row">
         <a href="/lessons/reservations" class="nav-link {% if request.path == '/lessons/reservations' %} active" {% endif %}>
             <i class="bi bi-arrow-right-circle"></i> Prenotazione Future
@@ -127,10 +132,14 @@
             url : '/action/lessons?action=delete_reservation&lesson_id='+lesson_id,
             success : function(data) {
                 if (data['success'] == true) {
+                    // $('#lesson-'+lesson_id).css("visibility", "hidden")
                     $('#lesson-'+lesson_id).remove()
                     $('#success-remove').slideDown();
-                   
-                } 
+                    // setTimeout(() => {  $('#lesson-'+lesson_id).remove(); }, 1000);
+                    
+                }  else {
+                    $('.already-reserved-error').slideDown()
+                }
             },
         });
     }
@@ -161,6 +170,12 @@
     })
 
     
+    $('#btn-close-dan-2').on('click', function() {
+        $('.already-reserved-error').slideUp()
+    })
+    
+
+    
     $('#btn-close-dan-classroom').on('click', function() {
         $('#success-remove').slideUp();
     })
@@ -172,8 +187,10 @@
             url : '/action/lessons?action=reservation&lesson_id='+lesson_id,
             success : function(data) {
                 if (data['success'] == true) {
-                    $('#lesson-'+lesson_id).remove();
+                    // $('#lesson-'+lesson_id).css("visibility", "hidden")
+                    $('#lesson-'+lesson_id).remove()
                     $('.alert-success').slideDown();
+                    // setTimeout(() => {  $('#lesson-'+lesson_id).remove(); }, 1000);
                 }else {
                     $('.classroom-error').slideDown();
                 }

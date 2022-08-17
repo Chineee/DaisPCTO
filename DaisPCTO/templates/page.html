@@ -83,6 +83,15 @@
         </nav>
         
       <div class="container">
+
+          {% with messages = get_flashed_messages(with_categories=True) %}
+            {% if messages and messages[0][1] == "Presenza confermata con successo" %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{messages[0][1]}}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endif %}
+          {% endwith %}
         {% block content %} 
             
         {% endblock %}
