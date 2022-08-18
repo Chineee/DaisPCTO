@@ -9,9 +9,9 @@
 
     <div id="piechart-2" data-id="{{course_id}}" style="width: 900px; height: 500px;"></div>
 
-    <div id="bar_chart-2" style="width: 1200px; height: 500px;"></div>
+    <div id="bar_chart-2" style="width: 900px; height: 500px;"></div>
 
-    <div id="hours_att" style="width: 800px; height: 600px;"></div>
+    <div id="hours_att" style="width: 900px; height: 500px;"></div>
 
     
 <script type="text/javascript">
@@ -42,6 +42,20 @@
                 var options = {
                  
                     title: 'Gender medio studenti iscritti',
+                    slices : {
+                        0 : {
+                            color : '#C14D9C'
+                        },
+                        1 : {
+                            color : '#E26F98'
+                        },
+                        2 : {
+                            color: '#F3A65E'
+                        },
+                        3: {
+                            color: '#EDCB61'
+                        }
+                    }
                   
                 };
 
@@ -67,32 +81,39 @@
       
             function drawChart() {
                 var my_data = google.visualization.arrayToDataTable([
-                    ['Regioni', 'Numero studenti'],
-                    ['Abruzzo', region['Abruzzo']],
-                    ['Basilicata', region['Basilicata']],
-                    ['Calabria', region['Calabria']],
-                    ['Campania', region['Campania']],
-                    ['Emilia-Romagna', region['Emilia-Romagna']],
-                    ['Friuli Venezia-Giulia', region["Friuli-Venezia Giulia"]],
-                    ['Lazio', region['Lazio']],
-                    ['Liguria', region['Liguria']],
-                    ['Lombardia', region['Lombardia']],
-                    ['Marche', region['Marche']],
-                    ['Molise', region['Molise']],
-                    ['Piemonte', region['Piemonte']],
-                    ['Puglia', region['Puglia']],
-                    ['Sardegna', region["Sardegna"]],
-                    ['Sicilia', region["Sicilia"]],
-                    ['Toscana', region["Toscana"]],
-                    ['Trentino Alto-Adige', region["Trentino"]],
-                    ['Umbria', region["Umbria"]],
-                    ["Val D'Aosta",region["Valle"]],
-                    ['Veneto', region["Veneto"]]
+                    ['Regioni', 'Percentuale studenti', {role: 'style'}],
+                    ['Abruzzo', region['Abruzzo'], '#5D2F92'],
+                    ['Basilicata', region['Basilicata'], '#C14D9C'],
+                    ['Calabria', region['Calabria'], '#E26F98'],
+                    ['Campania', region['Campania'], '#F3A65E'],
+                    ['Emilia-Romagna', region['Emilia-Romagna'], '#EDCB61'],
+                    ['Friuli Venezia-Giulia', region["Friuli-Venezia Giulia"], '#F3A65E'],
+                    ['Lazio', region['Lazio'], '#E26F98'],
+                    ['Liguria', region['Liguria'], '#C14D9C'],
+                    ['Lombardia', region['Lombardia'], '#5D2F92'],
+                    ['Marche', region['Marche'], '#C14D9C'],
+                    ['Molise', region['Molise'], '#E26F98'],
+                    ['Piemonte', region['Piemonte'], '#F3A65E'],
+                    ['Puglia', region['Puglia'], '#EDCB61'],
+                    ['Sardegna', region["Sardegna"], '#F3A65E'],
+                    ['Sicilia', region["Sicilia"], '#E26F98'],
+                    ['Toscana', region["Toscana"], '#C14D9C'],
+                    ['Trentino Alto-Adige', region["Trentino"], '#5D2F92'],
+                    ['Umbria', region["Umbria"], '#C14D9C'],
+                    ["Val D'Aosta", region["Valle"], '#E26F98'],
+                    ['Veneto', region["Veneto"], '#F3A65E']
+
                 ]);
-    
+                
+                
                 var options = {
-                title: 'Studenti regioni',
-               
+                    title: 'Studenti regioni',
+                    vAxis : {
+                        format:'0',
+                        // ticks: [0, 10, 20, 30, 40, 50]
+                    }
+         
+                                                 
                 };
 
                 var chart = new google.visualization.ColumnChart(document.getElementById('bar_chart'));
@@ -123,6 +144,20 @@
                 var options = {
                  
                     title: 'Tipologia di istituto di provenienza',
+                    slices : {
+                        0 : {
+                            color : '#C14D9C'
+                        },
+                        1 : {
+                            color : '#E26F98'
+                        },
+                        2 : {
+                            color: '#F3A65E'
+                        },
+                        3: {
+                            color: '#EDCB61'
+                        }
+                    }
                   
                 };
 
@@ -143,7 +178,7 @@
             
             let ages = data['ages']
 
-            const table = [["Età studenti", "Numero Studenti"]];
+            const table = [["Età studenti", "Numero Studenti", {role: 'style'}]];
 
             function drawChart() {
                 
@@ -153,9 +188,12 @@
                     row.push(ts + " Anni")
                     if (ages[i] == undefined || ages[i] ==  null) {
                         row.push(0)
+                    
                     }else {
                         row.push(ages[i])
+                        
                     }
+                    row.push('#5D2F92')
                     table.push(row)  
                 }
 
@@ -164,6 +202,10 @@
     
                 var options = {
                     title: 'Età studenti',
+                    vAxis : {
+                        format:'0',
+                        // ticks: [0, 10, 20, 30, 40, 50]
+                    }
                
                 };
 
@@ -185,12 +227,13 @@
 
             function drawChart() {
                 
-                const table = [["Ore di lezione seguite", "Numero studenti"]]
+                const table = [["Ore di lezione seguite", "Numero studenti", {role: 'style'}]]
                 
                 for (const [key, value] of Object.entries(data['hours_attended'])) {
                     let row = []
                     row.push(key + " Ore")
                     row.push(value)
+                    row.push('#F3A65E')
                     table.push(row)
                 }
 
@@ -199,6 +242,10 @@
                 var options = {
                  
                     title: 'Grafico degli studenti che hanno seguito le lezioni',
+                    vAxis : {
+                        format:'0',
+                        // ticks: [0, 10, 20, 30, 40, 50]
+                    }
                   
                 };
 

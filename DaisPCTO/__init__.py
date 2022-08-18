@@ -130,6 +130,16 @@ def create_app():
 
     @app.template_filter("can_be_booked")
     def can_be_booked(lesson, number_reservation):
+        '''
+
+        data una lezione frontale, controlliamo il numero di studenti che hanno prenotato il posto in aula per questa, se supera o è uguale al numero di posti disponibili
+        ritorniamo false. Questo valore viene controllato da jinja, e si comporta in modo diverso a seconda della risposta:
+        False : Il bottone per prenotarsi sarà disattivato e non potrà essere premuto
+        True : Nessun cambiamento
+
+        NB che questi sono controlli solo per la parte front-end e non backend. I controlli "veri" per verificare se uno studente può o meno prenotarsi ad una lezione
+        vengono effettuati tramite trigger di postgresql
+        '''
         # print(lesson.LessonID)
         # print(f'{number_reservation[2].Reserv} PRENOTAZIONI SU {number_reservation[2].Seats}')
         # print(type(number_reservation))

@@ -5,7 +5,7 @@ from DaisPCTO.auth import role_required
 from DaisPCTO.db import add_multiple_lesson, can_professor_modify, exists_role_user, formalize_student, get_classrooms, get_course_by_id, get_lesson_by_id, get_students_by_course, get_user_by_id, get_professor_by_course_id, \
     change_course_attr, add_lesson, get_lessons_by_course_id, delete_lesson, get_course_by_lesson_id,\
     confirm_attendance, change_lesson_information, get_lessons_bookable, get_full_lessons, book_lesson, delete_reservation,\
-    get_reservation_from_token, get_classrooms, formalize_student, get_lesson_from_token
+    get_reservation_from_token, get_classrooms, formalize_student, get_lesson_from_token, update_lesson
 from flask_wtf import FlaskForm, CSRFProtect
 from wtforms import StringField, DateField, SelectField, BooleanField, SubmitField, validators, SelectMultipleField, IntegerField, TextAreaField, TimeField
 from wtforms.validators import DataRequired, ValidationError
@@ -84,6 +84,16 @@ class UpdateLesson(FlaskForm):
     
     submit_update = SubmitField()
 
+
+    def validate_classroom_update(self, classroom_update):
+        if self.lesson_type_update.data == 'Frontale' or self.lesson_type_update.data == "Duale":
+            if classroom_update.data == "" or classroom_update is None or classroom_update.data is None:
+                raise ValidationError("Aula obbligatoria in caso di lezione Frontale o Duale")
+
+        elif self.lesson_type_update.data == 'Online':
+            if classroom_update.data != "" and classroom_update is not None and classroom_update.data is not None:
+                raise ValidationError("Non è richiesta l'aula per le lezione online")
+
 @lessons.route('/')
 def lessons_home():
     pass
@@ -123,23 +133,25 @@ def lessons_course_home(coursePage):
         add_multiple_lesson(form2, coursePage.upper(), current_user.get_id())
 
     elif form3.submit_update.data and form3.validate_on_submit() and can_modify:
-        pass
-        # answer = update_lesson(form3.lesson_id.data, form3)
-        # if answer == 'ClashError': #se l'inserimento non va a buon fine, avvertiamo il chiamante
-        #     form.classroom_update.errors.append("Aula già prenotata per quell'ora")
-
-        # elif answer == 'DateError':
-        #     form.start_time_update.errors.append("L'ora di inizio deve essere minore di quella di fine!")
-        #     form.end_time.errors_update.append("L'ora di fine deve essere maggiore di quella di inzio")
         
-        # elif answer == "SameCourseClashError":
-        #     form.start_time_update.errors.append("Un'altra tua lezione è presente nel range di orario selezionato")
-        #     form.end_time_update.errors.append("Un'altra tua lezione è presente nel range di orario selezionato")
-        #     form.date_update.errors.append("Un'altra tua lezione è presente nel range di orario selezionato")
-        # elif answer == "UnknownError":
-        #     flash("Something goes wrong...")
-        # else:
-        #     return redirect(url_for("lessons_blueprint.lessons_course_home", coursePage = coursePage))
+        answer = update_lesson(form3.lesson_id.data, form3)
+        print(answer)
+        
+        if answer == 'ClashError': #se l'inserimento non va a buon fine, avvertiamo il chiamante
+            form3.classroom_update.errors.append("Aula già prenotata per quell'ora")
+
+        elif answer == 'DateError':
+            form3.start_time_update.errors.append("L'ora di inizio deve essere minore di quella di fine!")
+            form3.end_time.errors_update.append("L'ora di fine deve essere maggiore di quella di inzio")
+        
+        elif answer == "SameCourseClashError":
+            form3.start_time_update.errors.append("Un'altra tua lezione è presente nel range di orario selezionato")
+            form3.end_time_update.errors.append("Un'altra tua lezione è presente nel range di orario selezionato")
+            form3.date_update.errors.append("Un'altra tua lezione è presente nel range di orario selezionato")
+        elif answer == "UnknownError":
+            flash("Something goes wrong...")
+        else:
+            return redirect(url_for("lessons_blueprint.lessons_course_home", coursePage = coursePage))
 
     list_lessons = get_lessons_by_course_id(coursePage.upper())
 
@@ -189,6 +201,7 @@ def private():
 
 
 @lessons.route('/qr')
+@login_required
 def qreader():
     is_reader_qr = exists_role_user(current_user.get_id(), "QrReader")
 
@@ -209,7 +222,6 @@ def action_lesson():
     URL Inoltre cambia in base al tipo di richiesta che viene fatta sfruttando gli url arguments.
     Prima di eseguire la post, flask controllerà il csrf token, se è corretto procederà tutto nella norma, altrimenti verrà ritornato un errore 400)
     """
-
 
     action = request.args.get('action')
     lesson_id = int(request.args.get('lesson_id'))

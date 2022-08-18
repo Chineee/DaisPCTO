@@ -14,7 +14,7 @@
 
     {% with messages = get_flashed_messages(with_categories=True) %}
         {% if messages %}
-            <div class="alert alert-secondary alert-dismissible fade show" role="alert">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 <ul class="flashes">
                     {% for category, message in messages %}
                         <div class="alert-{{category}}">
@@ -70,7 +70,7 @@
         <form method="post" novalidate>
             {{form3.hidden_tag()}}
             <input type="number" id="lesson_id" name = "lesson_id" style="display : none" /> 
-            <div class="modal fade" id="changeLessonInfo" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal fade" id="changeLessonInfo" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" {% if form3.errors %} data-error="true" data-lesson = {{form3.lesson_id.data}} {% endif %}>
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -80,32 +80,96 @@
 
                         <div class="modal-body" style="font-weight : normal">
                             {{form3.date_update.label}}
-                            {{form3.date_update(class="form-control")}}
-                            <div class="invalid-feedback" id="invalid_date_feedback" {% if form3.date_update.errors %} style="display: none" {% endif %}>La data deve essere valida!</div>
+
+                            {% if form3.date_update.errors %}
+                            
+                                {{form3.date_update(class="form-control is-invalid")}}
+                                <div class="invalid-feedback" id="invalid_date_feedback">
+                                    {{form3.date_update.errors[0]}}
+                                </div>
+                            {% else %} 
+
+                                {{form3.date_update(class="form-control")}}
+
+                            {% endif %}
+                            
+                            
 
                             {{form3.start_time_update.label}}
-                            {{form3.start_time_update(class="form-control")}}
-                            <div class="invalid-feedback" id="invalid_start_time_feedback" {% if form3.start_time_update.errors %} style="display: none" {% endif %}>L'orario di inizio deve essere valido</div>
+                            
+                            {%if form3.start_time_update.errors %}
+                                {{form3.start_time_update(class="form-control is-invalid")}}
+                                <div class="invalid-feedback" id="invalid_start_time_feedback">
+                                    {{form3.start_time_update.errors[0]}}
+                                </div>
+                            {% else %}
+                            
+                                {{form3.start_time_update(class="form-control")}}
+
+                            {% endif %}
+
+
 
                             {{form3.end_time_update.label}}
-                            {{form3.end_time_update(class="form-control")}}
-                            <div class="invalid-feedback" id="invalid_end_time_feedback" {% if form3.end_time_update.errors %} style="display: none" {% endif %}>L'orario di fine deve essere valido</div>
+                            {% if form3.end_time_update.errors %}
+                                {{form3.end_time_update(class="form-control is-invalid")}}
+                                <div class="invalid-feedback" id="invalid_end_time_feedback">
+                                    {{form3.end_time_update.errors[0]}}
+                                </div>
+                            {% else %}
+                                {{form3.end_time_update(class="form-control")}}
+                            {% endif %}
+
+
 
                             {{form3.lesson_type_update.label}}
-                            {{form3.lesson_type_update(class="form-control")}}
-                            <div class="invalid-feedback" id="invalid_lesson_type_feedback" {% if form3.lesson_type_update.errors %} style="display: none" {% endif %}>La modalità di erogazione non è valida</div>
+                            {% if form3.lesson_type_update.errors %}
+                                {{form3.lesson_type_update(class="form-control is-invalid")}}
+                                <div class="invalid-feedback" id="invalid_lesson_type_feedback"}>
+                                    {{form3.lesson_type_update.errors[0]}}
+                                </div>
+                            {% else %}
+                                {{form3.lesson_type_update(class="form-control")}}
+                            {% endif %}
+
+
 
                             {{form3.classroom_update.label}}
-                            {{form3.classroom_update(class="form-control")}}
-                            <div class="invalid-feedback" id="invalid_end_time_feedback" {% if form3.classroom_update.errors %} style="display:none" {% endif %}>L'aula non è valida</div>
+                            {% if form3.classroom_update.errors %}
+                                {{form3.classroom_update(class="form-control is-invalid")}}
+                                <div class="invalid-feedback" id="invalid_end_time_feedback">
+                                    {{form3.classroom_update.errors[0]}}
+                                </div>
+                            {% else %}
+                                {{form3.classroom_update(class="form-control")}}
+                            {% endif %}
+
+
 
                             {{form3.link_update.label}}
-                            {{form3.link_update(class="form-control")}}
-                            <div class="invalid-feedback" id="invalid_link_feedback" {% if form3.link_update.errors %} style="display: none" {% endif %}>Inserisci il link</div>
+                            {% if form3.link_update.errors %}
+                            
+                                {{form3.link_update(class="form-control is-invalid")}}
+                                <div class="invalid-feedback" id="invalid_link_feedback">
+                                    {{form3.link_update.errors[0]}}
+                                </div>
+
+                            {% else %}
+                                {{form3.link_update(class="form-control")}}
+                            {% endif %}
+
+
 
                             {{form3.password_update.label}}
-                            {{form3.password_update(class="form-control")}}
-                            <div class="invalid-feedback" id="invalid_password_feedback" {% if form3.password_update.errors %} style="display: none"{% endif %}>Inserisci la password</div>
+                            {% if form3.password_update.errors %} 
+                
+                                {{form3.password_update(class="form-control is-invalid")}}
+                                <div class="invalid-feedback" id="invalid_password_feedback">
+                                    {{form3.password_update.errors[0]}}
+                                </div>
+                            {% else %} 
+                                {{form3.password_update(class="form-control")}}
+                            {% endif %}
 
                         </div>
 
@@ -154,7 +218,7 @@
                                 <div class="modal-dialog">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h5 class="modal-title" id="modalTopicLesson-{{i}}">Modifica Argomento e Materiali (HTML TAG DISPONIBILI)</h5>
+                                            <h5 class="modal-title" id="modalTopicLesson-{{i}}">Modifica Argomento e Materiali</h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
 
@@ -179,7 +243,7 @@
                                 </button> 
 
                                 <button type="button" class="btn btn-secondary update_lesson" data-bs-toggle="modal" data-lesson = "{{list_lessons[i].LessonID}}"
-                                    data-bs-target="#changeLessonInfo">
+                                    data-bs-target="#changeLessonInfo" data-index="{{loop.index}}">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14px" height="14px" fill="currentColor"
                                         class="bi bi-pencil" viewBox="0 0 16 16" style="height:15px;width:15px">
                                             <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"></path>
@@ -454,7 +518,18 @@
 
     
     <script type="text/javascript">
+        $(document).ready(function(){
+            let visible = $('#changeLessonInfo').data("error")
+           
+            if (visible == true) {
+                $("#changeLessonInfo").modal('show');
+                // let info = $('#changeLessonInfo').data("lesson")
+                // $('#lesson_id').val(info)
+                // console.log(info)
+            }
 
+
+        });
             
         
         "{% if is_professor and can_modify %}"
@@ -477,7 +552,6 @@
         $('.update_lesson').on('click', function() {
             let info = $(this).data("lesson");
             $('#changeLessonInfo').data("lesson", info);
-            console.log(info)
             
         })
 
@@ -495,6 +569,7 @@
             let lesson_id = text_area_object.data("lessonid")
             lesson_topic = lesson_topic.replace(/<script/ig , "");
             lesson_topic = lesson_topic.replace(/script>/ig , "");
+            $('#textarea-information-course-'+ lesson_index).val(lesson_topic);
             
         
 
@@ -503,6 +578,7 @@
                 url : '/action/lessons?action=modify_topic&lesson_id='+lesson_id,
                 // headers : { 'topic':lesson_topic },
                 data : {"topic" : lesson_topic},
+                
 
                 success : function(data) {
                     if ( data['success'] == true ) {

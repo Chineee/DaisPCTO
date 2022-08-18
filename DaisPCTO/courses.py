@@ -203,6 +203,7 @@ def get_student_region():
 
     course_id = request.args.get("course_id").upper()
     c = city_subscribed(course_id)
+
         
     res = {}
     with open("province.json") as f:
@@ -261,7 +262,7 @@ def get_age_student():
 def get_hours_attended():
     course_id = request.args.get("course_id").upper()
     hours = hours_attended(course_id)
-    print(len(hours))
+
     res = {}
 
     for i in hours:

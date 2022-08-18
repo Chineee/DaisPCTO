@@ -1,3 +1,4 @@
+from tkinter import ON
 from DaisPCTO.models import Certificate, Feedback,\
      ProfessorCourse, StudentCourse, User, Student, Professor,\
      UserRole, Course, Role, Lesson, StudentLesson, Reservation, \
@@ -664,9 +665,8 @@ def type_school_subscribed(course_id):
 def hours_attended(course_id):
     try:
         session = Session()
-        print('INIT QUERY')
         q1 = session.query(func.sum(case((and_(Lesson.StartTime.isnot(None), Lesson.EndTime.isnot(None)), Lesson.EndTime-Lesson.StartTime), else_="00:00:00")).label("Hours"))\
-            .join(StudentLesson, StudentLesson.LessonID == Lesson.LessonID, isouter=True)\
+            .join(StudentLesson, StudentLesson.LessonID == Lesson.LessonID)\
             .filter(Lesson.CourseID == course_id)\
             .group_by(StudentLesson.StudentID).all()
         
@@ -744,13 +744,68 @@ def update_post(form, post_id):
     except:
         session.rollback()
 
-# def update_lesson(lesson_id, form):
-#     try:
-#         session = Session()
-#         session.query(Lesson).filter(Lesson.LessonID == lesson_id)update({Lesson.Date : form.date_update, Lesson.StartTime : form.start_time_update, Lesson.EndTime : form.end_time_update, Lesson.Classroom : form.classroom.update, Lesson.lesson_type_update })
-#         session.commit()
-#     except:
-#         session.rollback()
+def update_lesson(lesson_id, form):
+    try:
+        session = Session()
+        
+        # actual_lesson = get_lesson_by_id(lesson_id)
+        
+        is_current_lesson_frontal = session.query(FrontalLesson).filter(FrontalLesson.LessonID == lesson_id).first() is not None
+        is_current_lesson_online = session.query(OnlineLesson).filter(OnlineLesson.LessonID == lesson_id).first() is not None
+        
+        is_current_lesson_dual = is_current_lesson_frontal and is_current_lesson_online
+
+        is_new_lesson_dual = True if form.lesson_type_update.data == 'Duale' else False
+        
+        if form.lesson_type_update.data == "Frontale" and (is_current_lesson_dual or is_current_lesson_online):     
+            session.query(OnlineLesson).filter(OnlineLesson.LessonID == lesson_id).delete()      
+            session.query(FrontalLesson).filter(FrontalLesson.LessonID == lesson_id).update({FrontalLesson.ClassroomID : form.classroom_update.data})
+            if not is_current_lesson_frontal:
+                session.add(FrontalLesson(LessonID = lesson_id, ClassroomID = form.classroom_update.data))
+        
+        elif form.lesson_type_update.data == "Online" and (is_current_lesson_frontal or is_current_lesson_dual):
+            session.query(FrontalLesson).filter(FrontalLesson.LessonID == lesson_id).delete()
+            session.query(OnlineLesson).filter(OnlineLesson.LessonID == lesson_id).update({OnlineLesson.RoomLink : form.link_update.data, OnlineLesson.RoomPassword : form.password_update.data})
+            if not is_current_lesson_online:
+                session.add(OnlineLesson(LessonID = lesson_id, RoomLink = form.link_update.data, RoomPassword = form.password_update.data))
+        
+        elif form.lesson_type_update.data == "Duale" and not is_current_lesson_online:
+            session.add(OnlineLesson(LessonID= lesson_id, RoomLink=form.link_update.data, RoomPassword = form.password_update.data))
+            session.query(FrontalLesson).filter(FrontalLesson.LessonID == lesson_id).update({FrontalLesson.ClassroomID : form.classroom_update.data})
+        
+        elif form.lesson_type_update.data == "Duale" and not is_current_lesson_frontal:
+            session.add(FrontalLesson(LessonID=lesson_id, ClassroomID = form.classroom_update.data))
+            session.query(OnlineLesson).filter(OnlineLesson.LessonID == lesson_id).update({OnlineLesson.RoomLink : form.link_update.data, OnlineLesson.RoomPassword : form.password_update.data})
+        #######################
+    
+
+        session.query(Lesson).filter(Lesson.LessonID == lesson_id).update({Lesson.Date : form.date_update.data, Lesson.StartTime : form.start_time_update.data, Lesson.EndTime : form.end_time_update.data, Lesson.IsDual : is_new_lesson_dual})
+        session.commit()
+        #se e solo se il commit è stato fatto correttamente allora controlliamo se dobbiamo fare update anche del resto
+        
+    except exc.SQLAlchemyError as e:
+        session.rollback()
+        
+        if e.orig.diag.message_primary == "LessonOverlapping":
+            flash("Lesson overlapping error")
+            # delete_lesson(lesson_new.LessonID)
+            return "ClashError"
+
+        if e.orig.diag.message_primary == "SameCourseOverlapping":
+            flash("Lesson overlapping error")
+            return "SameCourseClashError"
+
+        if int(e.orig.pgcode) == 23514:
+            flash("Date error")
+            return "DataError"
+        
+        flash("Unknown error")
+        return "UnknownError"
+        
+    finally:
+        session.close()
+    
+    return "Success"
 
 '''
 ADD MI PIACE BY POST ID
