@@ -709,7 +709,11 @@ def hours_attended(course_id):
 def get_questions_by_course(course_id):
     try:
         session = Session()
-        return session.query(QnA).filter(and_(QnA.RefTo.is_(None), QnA.CourseID == course_id)).all()
+        return session.query(QnA.Text, QnA.TextID, QnA.Date, QnA.Time, QnA.RefTo, User.Name, User.Surname, User.UserID)\
+                    .join(User, User.UserID == QnA.UserID)\
+                    .filter(and_(QnA.RefTo.is_(None), QnA.CourseID == course_id))\
+                    .order_by(QnA.Date, QnA.Time)\
+                    .all()
     except Exception as e:
         return None
 
@@ -731,9 +735,15 @@ def delete_post(post_id):
 def add_post(form, course_id):
     try:
         session = Session()
-        session.add(QnA(Text = form.text.data, UserID = current_user.get_id(), RefTo = form.ref_to.data, CourseID = course_id))  
+        session.add(QnA(Text = form.text.data, 
+                        UserID = current_user.get_id(), 
+                        RefTo = form.ref_to.data, 
+                        CourseID = course_id, 
+                        Date = datetime.datetime.today().date(), 
+                        Time = datetime.datetime.today().time()))  
         session.commit()
-    except:
+    except Exception as e:
+        print(e)
         session.rollback()   
 
 def update_post(form, post_id):
@@ -806,6 +816,13 @@ def update_lesson(lesson_id, form):
         session.close()
     
     return "Success"
+
+def get_answers_by_question_id(question_id):
+    try:
+        session = Session()
+        return session.query(QnA.Text, QnA.TextID, QnA.RefTo, QnA.Date, QnA.Time, User.Name, User.Surname, User.UserID).join(User, User.UserID == QnA.UserID).filter(QnA.RefTo == question_id).order_by(QnA.Date, QnA.Time).all()
+    except:
+        return []
 
 '''
 ADD MI PIACE BY POST ID

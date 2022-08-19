@@ -7,7 +7,7 @@
 # from flask import Flask
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, String, Integer, Date, ForeignKey, CheckConstraint, Time, Boolean, or_, and_, UniqueConstraint, Text
+from sqlalchemy import Column, String, Integer, Date, ForeignKey, CheckConstraint, Time, Boolean, or_, and_, UniqueConstraint, Text, Float
 from sqlalchemy.orm import relationship
 from flask_login import UserMixin
 # import DaisPCTO.db as db
@@ -145,7 +145,7 @@ class Certificate(Base):
     CertificateID = Column(Integer, primary_key=True)
     StudentID = Column(Integer, ForeignKey("Students.UserID"), unique = True)
     CourseID = Column(String, ForeignKey("Courses.CourseID"), unique = True)
-    Hours = Column(Integer)
+    Hours = Column(Float)
 
     Students = relationship("Student", backref="Certificates")
     Courses = relationship("Course", backref="Certificates")
@@ -255,6 +255,8 @@ class QnA(Base):
     RefTo = Column(Integer, ForeignKey("QnA.TextID"))
     CourseID = Column(String, ForeignKey("Courses.CourseID"))
     Text = Column(Text)
+    Date = Column(Date)
+    Time = Column(Time)
     
     UserID = Column(Integer, ForeignKey("Users.UserID"))
 

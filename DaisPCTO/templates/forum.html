@@ -2,10 +2,124 @@
 
 {% block content %}
 
-    {% for q in questions %} 
-        {{q.Text}}
-        {% for answer in q.Answers %} 
-            {{answer.Text}}
-        {% endfor %}
-    {% endfor %}
+
+
+<section class="gradient-custom">
+    <div class="container my-5 py-5">
+        <div class="row d-flex justify-content-center">
+            <div class="col-md-12 col-lg-10 col-xl-8">
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h4 class="text-center mb-4 pb-2">Forum</h4>
+                        
+                        <form method="post" novalidate>
+                            {{form.hidden_tag()}}
+                            <textarea class="form-control" placeholder = "Scrivi un nuovo post..." id="text" name="text" style="height: 150px;"></textarea>
+                            <br>
+                            <button type="submit" class="btn btn-secondary float-end">Invia post</button>
+                        </form>
+                        
+                        <br><br>
+                        <hr/>
+
+                        <div class="row">
+                            <div class="col">
+                                {% for q in qna%}
+                                    <div class="d-flex flex-start mt-4">
+                                        <div id="profileImage" class="rounded-circle shadow-1-strong me-3" style="background-color: #C14D9C;">{{q["question"].Name[0]}}{{q["question"].Surname[0]}}</div>
+                                        <div class="flex-grow-1 flex-shrink-1">
+                                            <div>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <p class="mb-1">
+                                                        {{q["question"].Name}} {{q["question"].Surname}} {% if user.UserID == q['question'].UserID %} <strong>(You)</strong> {% endif %}<span
+                                                            class="small">-- {{q["question"].Date.strftime("%d-%m-%Y")}} - {{q["question"].Time.strftime("%H:%M")}}
+                                                        </span>
+                                                    </p>
+                                                        <u onclick="change_textarea_info({{q['question'].TextID}})" style="cursor : pointer; color : purple"><span class="small">
+                                                            Rispondi
+                                                        </span>
+                                                        </u>
+                                                    
+                                                    
+                                                </div>
+                                                <p class="small mb-0">
+                                                    {{q["question"].Text}}
+                                                </p>
+                                            </div>
+                                            <div class="answer" id="{{q['question'].TextID}}" style="display: none">
+                                                <form method="post" novalidate>
+                                                    {{form.hidden_tag()}}
+                                                    <input type="number" id="ref_to" name="ref_to" class="ref_to-{{q['question'].TextID}}" style="display : none">
+                                                    <br>
+                                                    <textarea class="form-control" id="text" name="text"></textarea>
+                                                    <br>
+                                                    <button type="button" class="btn btn-secondary float-end send-answer" id="{{q['question'].TextID}}" data-postid="{{q['question'].TextID}}">Invia risposta</button>
+                                                    <br>
+                                                </form>
+                                            </div>
+                                            {% for a in q["answers"] %}
+                                            <div class="d-flex flex-start mt-4">
+                                                
+                                                <div id="profileImage" class="rounded-circle shadow-1-strong me-3" style="background-color: #C14D9C;">{{a.Name[0]}}{{a.Surname[0]}}</div>
+                                                <div class="flex-grow-1 flex-shrink-1">
+                                                    <div>
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <p class="mb-1">
+                                                                {{a.Name}} {{a.Surname}} {% if user.UserID == a.UserID %} <strong>(You)</strong> {% endif %} <span class="small">-- {{a.Date.strftime("%d-%m-%Y")}} - {{a.Time.strftime("%H:%M")}}</span>
+                                                            </p>
+                                                        </div>
+                                                        <p class="small mb-0">
+                                                            {{a.Text}}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {%endfor%}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<style>
+   
+		#profileImage {
+		
+			  width: 65px;
+			  height: 65px;
+			  border-radius: 50%;
+			  font-size: 35px;
+			  color: #fff;
+              text-align: center;
+
+			  border: 2px solid #000;
+		}
+</style>
+
+<script type="text/javascript">
+    function change_textarea_info(id){
+
+        if ($("#"+id).hasClass("show")) {
+            $("#"+id).removeClass("show")
+            $("#"+id).slideUp()
+        }
+        else{
+            $("#"+id).slideDown()
+            $("#"+id).addClass("show")
+        }
+    }
+
+    $('.send-answer').on('click', function() {
+        let id_ = $(this).data("postid")
+        $(".ref_to-"+id_).val(id_)
+        $(this).attr("type", "submit")
+    });
+</script>
 {% endblock content %}
