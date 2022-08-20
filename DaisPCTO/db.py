@@ -1,4 +1,3 @@
-from tkinter import ON
 from DaisPCTO.models import Certificate, Feedback,\
      ProfessorCourse, StudentCourse, User, Student, Professor,\
      UserRole, Course, Role, Lesson, StudentLesson, Reservation, \
@@ -16,7 +15,7 @@ engine = {
     "Admin" : create_engine("postgresql://postgres:123456@localhost/testone8", echo=False, pool_size=50, max_overflow=0),
     "Student" : create_engine("postgresql://Student:studente01@localhost/testone8",echo=False, pool_size=20, max_overflow=0),
     "Professor" : create_engine("postgresql://Professor:123456@localhost/testone8",echo=False, pool_size=20, max_overflow=0),
-    "Anonymous" : create_engine("postgresql://Anonymous:123456@localhost/testone8", echo=False, pool_size=20, max_overflow=0)
+    "Anonymous" : create_engine("postgresql://Anonymous:12345678@localhost/testone8", echo=False, pool_size=20, max_overflow=0)
 }
 
 # studente = create_engine("postgresql://Student:ewfdwefd@localhost/testone8",echo=False, pool_size=20, max_overflow=0)
@@ -24,17 +23,24 @@ engine = {
 
 Session = sessionmaker(bind=engine['Admin'])
 
-def get_engine():
+def get_engine(id_=None):
+    
+    if id_ is not None:
+        return engine['Admin']
+
+    if current_user == None:
+        return engine['Anonymous']
     if not current_user.is_authenticated:
-        return engine["Anonymous"]
-    elif current_user.hasRole("Student"):
-        return engine["Student"]
-    elif current_user.hasRole("Professor"):
-        return engine["Professor"]
-    elif current_user.hasRole("Admin"):
-        return engine["Admin"]
-    else:
-        return None
+        return engine['Anonymous']
+    if exists_role_user(current_user.get_id(), "Student"):
+        return engine['Student']
+    if exists_role_user(current_user.get_id(), "Professor"):
+        return engine['Professor']
+    if exists_role_user(current_user.get_id(), "Admin"):
+        return engine['Admin']
+
+
+    return None
 
 def extestone():
     # try:
@@ -80,13 +86,13 @@ def extestone():
 
     #     return res
 
-    session = Session()
+    session = Session(bind=get_engine())
     session.add(Reservation(FrontalLessonID=1, StudentID=1))
     session.commit()
      
 def exists_role_user(user_id, role):
     try:
-        session = Session()
+        session = Session(bind=engine['Admin'])
         return session.query(UserRole).join(Role).filter(and_(UserRole.UserID == user_id, Role.Name == role)).first() is not None
     except Exception as e:
         print(e) 
@@ -96,14 +102,14 @@ def exists_role_user(user_id, role):
 
 def get_course_by_id(course_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(Course).filter(Course.CourseID == course_id).first()
     except:
         return None
 
 def get_user_by_id(id):
     try:
-        session = Session()
+        session = Session(bind=get_engine(id))
     # session.connection(execution_options={'isolation_level': 'SERIALIZABLE', "postgresql_readonly" : True})
     # try:
     #     session.add(User(UserID=10))
@@ -112,14 +118,15 @@ def get_user_by_id(id):
     #     print("roll back")
     # print("OK")
         return session.query(User).filter(User.UserID == id).first()
-    except:
+    except Exception as e:
         return None
 
 def get_user_by_email(email):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(User).filter(User.email == email).first()
-    except:
+    except Exception as e:
+        print(e)
         return None
     
 def create_user(form):
@@ -137,11 +144,12 @@ def create_user(form):
 
 def add_user(User, form):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         session.add(User)
         session.commit()
         add_student(User, form)
-    except:
+    except Exception as e:
+        print(e)
         session.rollback()
         return False 
     return True
@@ -157,7 +165,7 @@ def add_student(user, form):
     student_address = form.address.data
 
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         session.add_all([Student(UserID = user.UserID, \
                                 SchoolID=school_id, \
                                 birthDate = student_birth_date, \
@@ -183,7 +191,7 @@ def add_course(form):
     min_hours = form.min_hour_certificate.data
     
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         session.add(Course(OpenFeedback=False, CourseID=course_id, Name=name, Description = description, MaxStudents=max_students, MinHourCertificate = min_hours))
         session.add(ProfessorCourse(CourseID=course_id, ProfessorID=current_user.get_id()))
         session.commit()
@@ -193,14 +201,15 @@ def add_course(form):
 #ritorna true se e solo se esiste una tupla che contenga l'id del professore e l'id del corso all'interno della tabella professorcourse
 def can_professor_modify(prof_id, course_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(ProfessorCourse).filter(and_(ProfessorCourse.ProfessorID == prof_id, ProfessorCourse.CourseID == course_id)).first() is not None
-    except:
+    except Exception as e:
+        print(e)
         return False
 
 def get_professor_by_course_id(course_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(User).filter(and_(ProfessorCourse.CourseID == course_id, ProfessorCourse.ProfessorID == User.UserID)).all()
     except:
         session.close()
@@ -208,7 +217,7 @@ def get_professor_by_course_id(course_id):
 
 def count_student(course_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
 
         return session.query(StudentCourse).filter(StudentCourse.CourseID == course_id).count()
     except:
@@ -216,7 +225,7 @@ def count_student(course_id):
 
 def change_course_attr(form, course_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         
         course = session.query(Course).filter(Course.CourseID == course_id)
 
@@ -237,7 +246,7 @@ def change_course_attr(form, course_id):
 
 def change_feedback(course_id):
     try: 
-        session = Session()       
+        session = Session(bind=get_engine())       
         session.query(Course).filter(Course.CourseID == course_id).update({Course.OpenFeedback : not_(Course.OpenFeedback)})
         session.commit()
 
@@ -250,7 +259,7 @@ def change_feedback(course_id):
 
 def subscribe_course(student_id, course_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         session.add(StudentCourse(StudentID=student_id, CourseID=course_id, HasSentFeedback = False))
         session.commit()
     except:
@@ -258,7 +267,7 @@ def subscribe_course(student_id, course_id):
 
 def is_subscribed(student_id, course_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         
         if session.query(StudentCourse).filter(and_(StudentCourse.StudentID == student_id, StudentCourse.CourseID == course_id)).first() is None:
             return False
@@ -268,7 +277,7 @@ def is_subscribed(student_id, course_id):
 
 def delete_subscription(student_id, course_id): 
     try:
-        session = Session()      
+        session = Session(bind=get_engine())      
 
         session.query(StudentCourse).filter(and_(StudentCourse.StudentID == student_id, StudentCourse.CourseID == course_id)).delete()
         session.commit()
@@ -292,7 +301,7 @@ def add_lesson(form, course_id, professor):
 
 def _add_lesson(lesson_new, type_less, classroom, link=None, password=None):
     try: 
-        session = Session()
+        session = Session(bind=get_engine())
         session.add(lesson_new)
         session.flush()
 
@@ -347,7 +356,7 @@ def add_multiple_lesson(form, course_id, professor):
 
 def delete_lesson(lesson_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         session.query(Lesson).filter(Lesson.LessonID == lesson_id).delete()
         session.commit()
     except Exception as e:
@@ -358,7 +367,7 @@ def delete_lesson(lesson_id):
 
 def get_lessons_by_course_id(course_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(Lesson.LessonID, Lesson.CourseID, Lesson.Date, Lesson.StartTime, Lesson.EndTime, Lesson.Topic, Classroom.Name, Classroom.Building, Lesson.IsDual, OnlineLesson.RoomLink, OnlineLesson.RoomPassword, Lesson.Token)\
             .join(FrontalLesson, Lesson.LessonID == FrontalLesson.LessonID, isouter = True)\
             .join(Classroom, Classroom.ClassroomID == FrontalLesson.ClassroomID, isouter=True)\
@@ -366,19 +375,19 @@ def get_lessons_by_course_id(course_id):
             .filter(Lesson.CourseID == course_id)\
             .order_by(Lesson.Date, Lesson.StartTime).all()
     except Exception as e:
-
+        print(e)
         return None
 
 def get_course_by_lesson_id(lesson_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(Course).filter(and_(Lesson.LessonID == lesson_id, Course.CourseID == Lesson.CourseID)).first()
     except:
         return None
         
 def change_lesson_information(lesson_id, data):
     try:
-        session = Session() 
+        session = Session(bind=get_engine()) 
         session.query(Lesson).filter(Lesson.LessonID == lesson_id).update({Lesson.Topic : data})
         session.commit()
     except:
@@ -388,14 +397,15 @@ def change_lesson_information(lesson_id, data):
 
 def get_courses_list():
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(Course).order_by(Course.Name).all()
-    except:
-        return None
+    except Exception as e:
+        print(e)
+        return []
 
 def get_professor_courses(user_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(Course)\
             .join(ProfessorCourse)\
             .filter(ProfessorCourse.ProfessorID == user_id)\
@@ -407,8 +417,7 @@ def get_professor_courses(user_id):
 
 def get_student_courses(user_id):
     try:
-
-        session = Session()
+        session = Session(bind=get_engine())
         
         query = session.query(Course.CourseID, Course.Name, Course.Description, Course.MinHourCertificate, func.sum(case((and_(Lesson.StartTime.isnot(None), Lesson.EndTime.isnot(None)), Lesson.EndTime-Lesson.StartTime), else_="00:00:00")).label("Hours")) \
                     .join(StudentCourse, StudentCourse.CourseID == Course.CourseID)\
@@ -424,7 +433,7 @@ def get_student_courses(user_id):
 
 def get_students_by_course(course_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
 
         return session.query(User.Name, User.Surname, Student.birthDate, Student.City, User.UserID).join(Student, Student.UserID == User.UserID)\
             .filter(and_(StudentCourse.CourseID == course_id, StudentCourse.StudentID == Student.UserID))\
@@ -435,7 +444,7 @@ def get_students_by_course(course_id):
 
 def get_lesson_by_id(lesson_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(Lesson).filter(Lesson.LessonID == lesson_id).first()
     except:
         return None
@@ -443,7 +452,7 @@ def get_lesson_by_id(lesson_id):
 def get_lessons_bookable(user_id):
     try:
         
-        session = Session()
+        session = Session(bind=get_engine())
 
         return session.query(Course.Name.label("CourseName"), Lesson.Date, Lesson.StartTime, Lesson.EndTime, Classroom.Name, Classroom.Building, Classroom.Seats, Lesson.LessonID, func.coalesce(Reservation.StudentID, -1).label("StudentID"), Reservation.ReservationID)\
             .join(Course, Course.CourseID == Lesson.CourseID)\
@@ -459,11 +468,12 @@ def get_lessons_bookable(user_id):
             .all()            
 
     except Exception as e:
+        print(e)
         return None
 
 def get_full_lessons():
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(FrontalLesson.LessonID, func.count(Reservation.StudentID).label("Reserv"), Classroom.Seats)\
             .join(Classroom, Classroom.ClassroomID == FrontalLesson.ClassroomID)\
             .join(Reservation, Reservation.FrontalLessonID == FrontalLesson.LessonID, isouter=True)\
@@ -471,11 +481,12 @@ def get_full_lessons():
             .all()
 
     except Exception as e:
+        print(e)
         return []
 
 def book_lesson(frontalLesson_id, course_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         token = generate_password_hash(f'{current_user.get_id()}{frontalLesson_id}{course_id}{datetime.datetime.now()}', 10).decode('utf-8')
         session.add(Reservation(StudentID = current_user.get_id(), FrontalLessonID = frontalLesson_id, HasValidation = False, ReservationID = token))
         session.commit()
@@ -491,7 +502,7 @@ def book_lesson(frontalLesson_id, course_id):
         
 def delete_reservation(frontalLesson_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         if session.query(Reservation).filter(and_(Reservation.FrontalLessonID == frontalLesson_id, Reservation.StudentID == current_user.get_id())).first().HasValidation == False:
             session.query(Reservation).filter(and_(Reservation.FrontalLessonID == frontalLesson_id, Reservation.StudentID == current_user.get_id())).delete()
             session.commit()
@@ -504,14 +515,14 @@ def delete_reservation(frontalLesson_id):
 
 def get_reservation_from_token(token):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(Reservation).filter(Reservation.ReservationID == token).first()
     except:
         return None
 
 def confirm_attendance(reservation):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         session.query(Reservation).filter(and_(Reservation.StudentID == reservation.StudentID, Reservation.FrontalLessonID == reservation.FrontalLessonID)).update({Reservation.HasValidation : True})
         session.commit()
         formalize_student(reservation.StudentID, reservation.FrontalLessonID)
@@ -520,7 +531,7 @@ def confirm_attendance(reservation):
 
 def formalize_student(user_id, lesson_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         session.add(StudentLesson(StudentID = user_id, LessonID = lesson_id))
         session.commit()
     except Exception as e:
@@ -528,7 +539,7 @@ def formalize_student(user_id, lesson_id):
 
 def get_lesson_from_token(token):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(Lesson).filter(Lesson.Token == token).first()
     except:
         session.rollback()
@@ -536,24 +547,23 @@ def get_lesson_from_token(token):
 
 def get_classrooms():
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(Classroom).order_by(Classroom.Name).all()
     except Exception as e:
-        session.rollback()
-        session.close()
         print(e)
-        return None
+        session.rollback()
+        return []
 
 def get_schools():
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(School).all()
     except:
         return []
 
 def get_schools_with_name(name):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(School).filter(School.SchoolName.contains(name)).order_by(School.City).all()
     except:
         return []
@@ -567,11 +577,11 @@ def send_certificate_to_students(course_id):
     
 
     for student in student_courses:
-        students_courses_hours = get_student_courses(student.StudentID)
+        students_courses_hours = get_student_courses(student.UserID)
         for course in students_courses_hours:
             if course.CourseID == course_id.upper() and course.Hours.total_seconds()/3600 >= hours:
                 try:
-                    session = Session()
+                    session = Session(bind=get_engine())
                     session.add(Certificate(StudentID = student.StudentID, CourseID = course_id.upper(), Hours = course.Hours.total_seconds()/3600))
                     session.commit()     
                 except exc.SQLAlchemyError as e:
@@ -581,7 +591,7 @@ def send_certificate_to_students(course_id):
 
 def get_student_certificates(user_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(User.Name.label("StudentName"), Certificate.StudentID, Certificate.CourseID, Certificate.CertificateID, Certificate.Hours, Course.Name)\
         .join(Course, Course.CourseID == Certificate.CourseID)\
         .join(User, User.UserID == Certificate.StudentID)\
@@ -592,14 +602,14 @@ def get_student_certificates(user_id):
 
 def can_student_send_feedback(user_id, course_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(StudentCourse).filter(and_(StudentCourse.CourseID == course_id, StudentCourse.StudentID == user_id, StudentCourse.HasSentFeedback == False)).first() is not None
     except Exception as e:
         return False
 
 def send_feedback(form, course_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         session.add(Feedback(CourseID = course_id, CourseGrade = form.course_grade.data, TeacherGrade = form.teacher_grade.data, Comment = form.comments.data))
         session.commit()
         session.query(StudentCourse).filter(StudentCourse.CourseID == course_id.upper(), StudentCourse.StudentID == current_user.get_id()).update({StudentCourse.HasSentFeedback : not_(StudentCourse.HasSentFeedback)})
@@ -610,7 +620,7 @@ def send_feedback(form, course_id):
 
 def avg_feedback(course_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(func.avg(Feedback.CourseGrade).label("CourseGrade"), func.avg(Feedback.TeacherGrade).label("TeacherGrade")).filter(Feedback.CourseID == course_id).first()
     except Exception as e:
 
@@ -618,14 +628,14 @@ def avg_feedback(course_id):
 
 def feedback_comments(course_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(Feedback).filter(and_(Feedback.CourseID == course_id, Feedback.Comment.isnot(None))).all()
     except:
         return []
 
 def gender_subscribed(course_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(func.sum(case((and_(User.Gender.isnot(None), User.Gender == "Male"), 1), else_=0)).label("Male"),\
             func.sum(case((and_(User.Gender.isnot(None), User.Gender == "Female"), 1), else_=0)).label("Female"),\
             func.sum(case((and_(User.Gender.isnot(None), User.Gender == "Non Binary"), 1), else_=0)).label("NonBinary"), \
@@ -637,21 +647,21 @@ def gender_subscribed(course_id):
 
 def age_subscribed(course_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(Student.birthDate).join(StudentCourse, StudentCourse.StudentID == Student.UserID).filter(StudentCourse.CourseID == course_id).all()
     except:
         return []
 
 def city_subscribed(course_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(Student.City).join(StudentCourse, StudentCourse.StudentID == Student.UserID).filter(StudentCourse.CourseID == course_id).all()
     except:
         return
 
 def type_school_subscribed(course_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(func.sum(case((and_(School.Type.contains("LICEO"), School.Type.isnot(None)), 1), else_=0)).label("Liceo"),\
             func.sum(case((and_(School.Type.contains("ISTITUTO TECNICO"), School.Type.isnot(None)), 1), else_=0)).label("Tecnico"),\
             func.sum(case((and_(School.Type.contains("PROFESSIONALE"), School.Type.isnot(None)), 1), else_=0)).label("Professionale"), \
@@ -664,7 +674,7 @@ def type_school_subscribed(course_id):
 
 def hours_attended(course_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         q1 = session.query(func.sum(case((and_(Lesson.StartTime.isnot(None), Lesson.EndTime.isnot(None)), Lesson.EndTime-Lesson.StartTime), else_="00:00:00")).label("Hours"))\
             .join(StudentLesson, StudentLesson.LessonID == Lesson.LessonID)\
             .filter(Lesson.CourseID == course_id)\
@@ -708,8 +718,8 @@ def hours_attended(course_id):
 
 def get_questions_by_course(course_id):
     try:
-        session = Session()
-        return session.query(QnA.Text, QnA.TextID, QnA.Date, QnA.Time, QnA.RefTo, User.Name, User.Surname, User.UserID)\
+        session = Session(bind=get_engine())
+        return session.query(QnA.Text, QnA.TextID, QnA.Date, QnA.Time, QnA.RefTo, User.Name, User.Surname, User.UserID, User.email)\
                     .join(User, User.UserID == QnA.UserID)\
                     .filter(and_(QnA.RefTo.is_(None), QnA.CourseID == course_id))\
                     .order_by(QnA.Date, QnA.Time)\
@@ -717,16 +727,16 @@ def get_questions_by_course(course_id):
     except Exception as e:
         return None
 
-def can_user_delete_post(user_id, post_id):
+def is_user_owner_post(user_id, post_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         return session.query(QnA).filter(and_(QnA.UserID == user_id, QnA.TextID == post_id)).first() is not None
     except:
         return False
 
 def delete_post(post_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         session.query(QnA).filter(QnA.TextID == post_id).delete()
         session.commit()
     except:
@@ -734,7 +744,7 @@ def delete_post(post_id):
 
 def add_post(form, course_id):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         session.add(QnA(Text = form.text.data, 
                         UserID = current_user.get_id(), 
                         RefTo = form.ref_to.data, 
@@ -746,17 +756,19 @@ def add_post(form, course_id):
         print(e)
         session.rollback()   
 
-def update_post(form, post_id):
+def update_post(text, post_id):
     try:
-        session = Session()
-        session.query(QnA).filter(QnA.TextID == post_id).update({QnA.Text : form.text.data})
+        session = Session(bind=get_engine())
+        session.query(QnA).filter(QnA.TextID == post_id).update({QnA.Text : text})
         session.commit()
     except:
         session.rollback()
+        return False
+    return True
 
 def update_lesson(lesson_id, form):
     try:
-        session = Session()
+        session = Session(bind=get_engine())
         
         # actual_lesson = get_lesson_by_id(lesson_id)
         
@@ -819,8 +831,8 @@ def update_lesson(lesson_id, form):
 
 def get_answers_by_question_id(question_id):
     try:
-        session = Session()
-        return session.query(QnA.Text, QnA.TextID, QnA.RefTo, QnA.Date, QnA.Time, User.Name, User.Surname, User.UserID).join(User, User.UserID == QnA.UserID).filter(QnA.RefTo == question_id).order_by(QnA.Date, QnA.Time).all()
+        session = Session(bind=get_engine())
+        return session.query(QnA.Text, QnA.TextID, QnA.RefTo, QnA.Date, QnA.Time, User.Name, User.Surname, User.UserID, User.email).join(User, User.UserID == QnA.UserID).filter(QnA.RefTo == question_id).order_by(QnA.Date, QnA.Time).all()
     except:
         return []
 

@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, url_for, redirect, flash, abort, r
 from flask_login import current_user, login_required
 from DaisPCTO.auth import role_required
 # from DaisPCTO.models import *
-from DaisPCTO.db import get_questions_by_course, can_user_delete_post, delete_post, get_answers_by_question_id, add_post
+from DaisPCTO.db import get_questions_by_course, is_user_owner_post, delete_post, get_answers_by_question_id, add_post, update_post
 from flask_wtf import FlaskForm
 from wtforms import TextAreaField, IntegerField, SubmitField
 from wtforms.validators import DataRequired
@@ -53,10 +53,24 @@ def forum(coursePage):
                             qna = qna,
                             form=form)
 
-@QnA.route('/action/post/delete')
+# @QnA.route('/action/post/delete')
+# @login_required
+# def delete():
+#     post_id = request.args.get('postid')
+#     if is_user_owner_post(current_user.get_id(), post_id):
+#         delete_post(post_id)
+
+
+@QnA.route('/action/post/update', methods=['POST'])
 @login_required
-def delete():
-    post_id = request.args.get('postid')
-    if can_user_delete_post(current_user.get_id(), post_id):
-        delete_post(post_id)
+def update():
+    post_id = request.args.get('id')
+    if is_user_owner_post(current_user.get_id(), post_id):
+        txt = request.form['text']
+        if len(txt) == 0:
+            delete_post(post_id)
+            return jsonify({"success" : "deleted"})
+        elif update_post(txt, post_id):
+            return jsonify({"success" : True})
     
+    return jsonify({"success" : False})

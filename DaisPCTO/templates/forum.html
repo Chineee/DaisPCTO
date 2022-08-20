@@ -2,7 +2,11 @@
 
 {% block content %}
 
-
+<style>
+    body {
+        background-color: gainsboro !important;
+    }
+</style>
 
 <section class="gradient-custom">
     <div class="container my-5 py-5">
@@ -20,31 +24,39 @@
                         </form>
                         
                         <br><br>
-                        <hr/>
+                        
 
                         <div class="row">
                             <div class="col">
-                                {% for q in qna%}
-                                    <div class="d-flex flex-start mt-4">
-                                        <div id="profileImage" class="rounded-circle shadow-1-strong me-3" style="background-color: #C14D9C;">{{q["question"].Name[0]}}{{q["question"].Surname[0]}}</div>
+                                {% for q in qna %}
+                                    <hr/>
+                                    <div class="d-flex flex-start mt-4" id="flex-start-{{q['question'].TextID}}">
+                                        <img src="{{q['question'].email | gravatar }}" class="rounded-circle shadow-1-strong me-3" height="65" width="65" alt="avatar">
                                         <div class="flex-grow-1 flex-shrink-1">
                                             <div>
                                                 <div class="d-flex justify-content-between align-items-center">
                                                     <p class="mb-1">
-                                                        {{q["question"].Name}} {{q["question"].Surname}} {% if user.UserID == q['question'].UserID %} <strong>(You)</strong> {% endif %}<span
-                                                            class="small">-- {{q["question"].Date.strftime("%d-%m-%Y")}} - {{q["question"].Time.strftime("%H:%M")}}
+                                                        {{q["question"].Name}} {{q["question"].Surname}} {% if user.UserID == q['question'].UserID %} <strong>(You)</strong> {% endif %}
+                                                        <span class="small">-- {{q["question"].Date.strftime("%d-%m-%Y")}} - {{q["question"].Time.strftime("%H:%M")}}
+                                                            {% if user.UserID == q['question'].UserID %}
+                                                                <u onclick="change_textarea({{q['question'].TextID}})" style="cursor : pointer; color : #E26F98">
+                                                                    <span class="small">
+                                                                        Modifica
+                                                                    </span>
+                                                                </u>
+                                                            {% endif %}
                                                         </span>
                                                     </p>
-                                                        <u onclick="change_textarea_info({{q['question'].TextID}})" style="cursor : pointer; color : purple"><span class="small">
+                                                        <u onclick="change_textarea_info({{q['question'].TextID}})" style="cursor : pointer; color : #C14D9C"><span class="small">
                                                             Rispondi
                                                         </span>
                                                         </u>
                                                     
                                                     
                                                 </div>
-                                                <p class="small mb-0">
-                                                    {{q["question"].Text}}
-                                                </p>
+                                                <textarea class="form-control small mb-0" id="textarea-{{q['question'].TextID}}" style="display : none">{{q["question"].Text}}</textarea>
+                                                <button class="btn btn-secondary btn-sm float-end" id="button-text-{{q['question'].TextID}}" onclick="send_change_text({{q['question'].TextID}})" style="display : none">Salva modifiche</button>
+                                                <p class="small mb-0" id = "text-p-{{q['question'].TextID}}">{{q["question"].Text}}</p>
                                             </div>
                                             <div class="answer" id="{{q['question'].TextID}}" style="display: none">
                                                 <form method="post" novalidate>
@@ -58,17 +70,32 @@
                                                 </form>
                                             </div>
                                             {% for a in q["answers"] %}
-                                            <div class="d-flex flex-start mt-4">
+                                            <div class="d-flex flex-start mt-4" id ="flex-start-{{a.TextID}}">
                                                 
-                                                <div id="profileImage" class="rounded-circle shadow-1-strong me-3" style="background-color: #C14D9C;">{{a.Name[0]}}{{a.Surname[0]}}</div>
+                                                <!-- <div id="profileImage" class="rounded-circle shadow-1-strong me-3" style="background-color: #F3A65E;">{{a.Name[0]}}{{a.Surname[0]}}</div> -->
+                                                <img src="{{a.email | gravatar }}" class="rounded-circle shadow-1-strong me-3" height="65" width="65" alt="avatar">
                                                 <div class="flex-grow-1 flex-shrink-1">
                                                     <div>
                                                         <div class="d-flex justify-content-between align-items-center">
                                                             <p class="mb-1">
-                                                                {{a.Name}} {{a.Surname}} {% if user.UserID == a.UserID %} <strong>(You)</strong> {% endif %} <span class="small">-- {{a.Date.strftime("%d-%m-%Y")}} - {{a.Time.strftime("%H:%M")}}</span>
+                                                                {{a.Name}} {{a.Surname}} {% if user.UserID == a.UserID %} <strong>(You)</strong> {% endif %} 
+                                                                <span class="small">
+                                                                    -- {{a.Date.strftime("%d-%m-%Y")}} - {{a.Time.strftime("%H:%M")}}
+                                                                    {% if user.UserID == a.UserID %}
+                                                                        <u onclick="change_textarea({{a.TextID}})" style="cursor : pointer; color : #E26F98">
+                                                                            <span class="small">
+                                                                                Modifica
+                                                                            </span>
+                                                                        </u>
+                                                                    {% endif %}
+                                                                </span>
                                                             </p>
                                                         </div>
-                                                        <p class="small mb-0">
+                                                       
+                                                        <textarea class="small mb-0 form-control" id="textarea-{{a.TextID}}" style="display : none">{{a.Text}}</textarea>
+                                                        <button type="button" class="btn btn-secondary btn-sm float-end" id="button-text-{{a.TextID}}" onclick = "send_change_text({{a.TextID}})"style="display : none">Salva modifiche</button>
+                                                     
+                                                        <p class="small mb-0" id="text-p-{{a.TextID}}">
                                                             {{a.Text}}
                                                         </p>
                                                     </div>
@@ -77,6 +104,8 @@
                                             {% endfor %}
                                         </div>
                                     </div>
+                                 
+                              
                                 {%endfor%}
                             </div>
                         </div>
@@ -104,6 +133,18 @@
 </style>
 
 <script type="text/javascript">
+
+    let csrf_token = "{{ csrf_token() }}"
+
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrf_token);
+
+            }
+        }
+    });
+
     function change_textarea_info(id){
 
         if ($("#"+id).hasClass("show")) {
@@ -113,6 +154,43 @@
         else{
             $("#"+id).slideDown()
             $("#"+id).addClass("show")
+        }
+    }
+
+    function send_change_text(id) {
+        let text = $("#textarea-"+id).val()
+        $.ajax({
+            type : 'post',
+            url : "/action/post/update?id="+id,
+            data : {"text" : text},
+            success : function(data) {
+                if (data['success'] == true) {
+                    $("#text-p-"+id).text(text)
+                    $("#textarea-"+id).hide()
+                    $("#button-text-"+id).hide()
+                    $("#text-p-"+id).show()
+                } else if (data['success'] == "deleted") {
+                    $('#flex-start-'+id).remove()
+                }
+            }
+        })
+    }
+
+    function change_textarea(id){
+        
+        if (!$("#textarea-"+id).hasClass("show")){
+            $("#text-p-"+id).hide()
+            $("#textarea-"+id).addClass("show")
+            $("#textarea-"+id).show()
+            $("#button-text-"+id).addClass("show")
+            $("#button-text-"+id).show()
+        }
+        else{
+            $("#textarea-"+id).removeClass("show")
+            $("#textarea-"+id).hide()
+            $("#button-text-"+id).removeClass("show")
+            $("#button-text-"+id).hide()
+            $("#text-p-"+id).show()
         }
     }
 

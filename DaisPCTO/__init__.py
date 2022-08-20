@@ -4,6 +4,7 @@ from DaisPCTO.db import get_user_by_id, extestone, get_schools_with_name
 from flask_bootstrap import Bootstrap
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask.json import jsonify
+from flask_gravatar import Gravatar
 import base64 
 import io
 import qrcode
@@ -42,6 +43,15 @@ def create_app():
     # admin = Admin(app, index_view=UserModelView())
 
     # admin.add_view(MyView(User, Session()))
+
+    gravatar = Gravatar(app,
+                    size=100,
+                    default='retro',
+                    force_default=False,
+                    force_lower=False,
+                    use_ssl=False,
+                    base_url=None)
+
 
     @app.route('/action/get/schools')
     def give_school_attribute():

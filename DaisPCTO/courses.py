@@ -104,6 +104,7 @@ def course(coursePage):
     can_modify = can_professor_modify(current_user.get_id(), coursePage.upper())
 
 
+
     if form.validate_on_submit() and can_modify:
         if form.submit.data:
             res = change_feedback(coursePage.upper())

@@ -28,6 +28,7 @@ class SendFeedback(FlaskForm):
 def feedback_home(coursePage):
     if not get_course_by_id(coursePage.upper()).OpenFeedback:
         abort(404)
+        
     form = SendFeedback()
     can_send = can_student_send_feedback(current_user.get_id(), coursePage.upper())
 

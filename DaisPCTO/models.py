@@ -252,13 +252,14 @@ class QnA(Base):
     __tablename__ = "QnA"
 
     TextID = Column(Integer, primary_key=True)
-    RefTo = Column(Integer, ForeignKey("QnA.TextID"))
-    CourseID = Column(String, ForeignKey("Courses.CourseID"))
+    RefTo = Column(Integer, ForeignKey("QnA.TextID", ondelete='CASCADE', onupdate='CASCADE'))
+    CourseID = Column(String, ForeignKey("Courses.CourseID", ondelete='CASCADE', onupdate='CASCADE'))
+    UserID = Column(Integer, ForeignKey("Users.UserID", ondelete='CASCADE', onupdate='CASCADE'))
     Text = Column(Text)
     Date = Column(Date)
     Time = Column(Time)
     
-    UserID = Column(Integer, ForeignKey("Users.UserID"))
+    
 
     Courses = relationship("Course", backref="Questions")
     Answers = relationship("QnA")
