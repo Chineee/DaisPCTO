@@ -276,6 +276,7 @@ def action_lesson():
 
         tok = request.args.get("token")
         reservation = get_reservation_from_token(tok)
+ 
     
         if reservation is not None:
             
@@ -292,6 +293,8 @@ def action_lesson():
                         if date_1.total_seconds()/3600 <= 2 and date_1.total_seconds()/3600 >= 0:
                             confirm_attendance(reservation)
                             return jsonify({"success" : True})
+                        else:
+                            print("ELSE QUI AIUTO")
         
         return jsonify({"success" : False})
         
@@ -318,6 +321,7 @@ def action_lesson():
                         formalize_student(current_user.get_id(), lesson.LessonID)
                         flash("Presenza confermata con successo")
                         return jsonify({"success" : True})
+
         
        
         return jsonify({"success" : False})

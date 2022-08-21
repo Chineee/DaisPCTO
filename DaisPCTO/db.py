@@ -15,7 +15,8 @@ engine = {
     "Admin" : create_engine("postgresql://postgres:123456@localhost/testone8", echo=False, pool_size=50, max_overflow=0),
     "Student" : create_engine("postgresql://Student:studente01@localhost/testone8",echo=False, pool_size=20, max_overflow=0),
     "Professor" : create_engine("postgresql://Professor:123456@localhost/testone8",echo=False, pool_size=20, max_overflow=0),
-    "Anonymous" : create_engine("postgresql://Anonymous:12345678@localhost/testone8", echo=False, pool_size=20, max_overflow=0)
+    "Anonymous" : create_engine("postgresql://Anonymous:12345678@localhost/testone8", echo=False, pool_size=20, max_overflow=0),
+    "QrReader" : create_engine("postgresql://QrReader:123456@localhost/testone8", echo=False, pool_size=20, max_overflow=0),
 }
 
 # studente = create_engine("postgresql://Student:ewfdwefd@localhost/testone8",echo=False, pool_size=20, max_overflow=0)
@@ -38,7 +39,8 @@ def get_engine(id_=None):
         return engine['Professor']
     if exists_role_user(current_user.get_id(), "Admin"):
         return engine['Admin']
-
+    if exists_role_user(current_user.get_id(), "QrReader"):
+        return engine['QrReader']
 
     return None
 
@@ -93,12 +95,13 @@ def extestone():
 def exists_role_user(user_id, role):
     try:
         session = Session(bind=engine['Admin'])
-        return session.query(UserRole).join(Role).filter(and_(UserRole.UserID == user_id, Role.Name == role)).first() is not None
+        q = session.query(UserRole).join(Role).filter(and_(UserRole.UserID == user_id, Role.Name == role)).first() is not None
     except Exception as e:
         print(e) 
+        q = False
     finally:
         session.close()
-    return False
+    return q
 
 def get_course_by_id(course_id):
     try:
@@ -439,7 +442,8 @@ def get_students_by_course(course_id):
             .filter(and_(StudentCourse.CourseID == course_id, StudentCourse.StudentID == Student.UserID))\
             .order_by(User.Surname, User.Name)\
             .all()
-    except:
+    except Exception as e:
+        print(e)
         return []
 
 def get_lesson_by_id(lesson_id):
@@ -517,7 +521,8 @@ def get_reservation_from_token(token):
     try:
         session = Session(bind=get_engine())
         return session.query(Reservation).filter(Reservation.ReservationID == token).first()
-    except:
+    except Exception as e:
+        print(e)
         return None
 
 def confirm_attendance(reservation):
@@ -574,15 +579,14 @@ def send_certificate_to_students(course_id):
     hours = get_course_by_id(course_id).MinHourCertificate
     # student_courses = session.query(StudentCourse).filter(course_id == StudentCourse.CourseID).all()
     student_courses = get_students_by_course(course_id)
-    
 
     for student in student_courses:
-        students_courses_hours = get_student_courses(student.UserID)
+        students_courses_hours = get_student_courses(student.UserID) #dentro i corsi dello studente ci salviamo ANCHE  quante ore ha seguito di suddetto corso
         for course in students_courses_hours:
             if course.CourseID == course_id.upper() and course.Hours.total_seconds()/3600 >= hours:
                 try:
                     session = Session(bind=get_engine())
-                    session.add(Certificate(StudentID = student.StudentID, CourseID = course_id.upper(), Hours = course.Hours.total_seconds()/3600))
+                    session.add(Certificate(StudentID = student.UserID, CourseID = course_id.upper(), Hours = course.Hours.total_seconds()/3600))
                     session.commit()     
                 except exc.SQLAlchemyError as e:
                     session.rollback()
@@ -722,7 +726,7 @@ def get_questions_by_course(course_id):
         return session.query(QnA.Text, QnA.TextID, QnA.Date, QnA.Time, QnA.RefTo, User.Name, User.Surname, User.UserID, User.email)\
                     .join(User, User.UserID == QnA.UserID)\
                     .filter(and_(QnA.RefTo.is_(None), QnA.CourseID == course_id))\
-                    .order_by(QnA.Date, QnA.Time)\
+                    .order_by(QnA.Date.desc(), QnA.Time.desc())\
                     .all()
     except Exception as e:
         return None
@@ -753,7 +757,6 @@ def add_post(form, course_id):
                         Time = datetime.datetime.today().time()))  
         session.commit()
     except Exception as e:
-        print(e)
         session.rollback()   
 
 def update_post(text, post_id):

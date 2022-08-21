@@ -13,7 +13,8 @@
 
     <div id="hours_att" style="width: 900px; height: 500px;"></div>
 
-    
+    <img src="https://res.cloudinary.com/hcti/image/fetch/c_limit,f_auto,q_auto:good,w_400/https://docs.htmlcsstoimage.com/assets/images/cat.png">
+
 <script type="text/javascript">
     
     let course_id = $('#piechart').data('id');
@@ -231,7 +232,8 @@
                 
                 for (const [key, value] of Object.entries(data['hours_attended'])) {
                     let row = []
-                    row.push(key + " Ore")
+                    console.log(typeof(key))
+                    row.push(key.slice(0, 3) + " Ore")
                     row.push(value)
                     row.push('#F3A65E')
                     table.push(row)

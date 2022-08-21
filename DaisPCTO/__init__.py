@@ -139,7 +139,7 @@ def create_app():
         return int(number)
 
     @app.template_filter("can_be_booked")
-    def can_be_booked(lesson, number_reservation):
+    def can_be_booked(lesson, number_reservation_for_each_lesson):
         '''
 
         data una lezione frontale, controlliamo il numero di studenti che hanno prenotato il posto in aula per questa, se supera o è uguale al numero di posti disponibili
@@ -154,7 +154,7 @@ def create_app():
         # print(f'{number_reservation[2].Reserv} PRENOTAZIONI SU {number_reservation[2].Seats}')
         # print(type(number_reservation))
         # print(number_reservation)
-        for booked in number_reservation:
+        for booked in number_reservation_for_each_lesson:
             # print(f'Prenotazioni == {booked.Reserv} ==> Posti disponibili == {booked.Seats} ===> ID LEZIONE == {booked.LessonID}')
             if booked.LessonID == lesson.LessonID:
                 # print(f'Prenotazioni == {booked.Reserv} ==> Posti disponibili == {booked.Seats} ===> ID LEZIONE == {booked.LessonID}')
@@ -177,8 +177,8 @@ def create_app():
         
         return img
     
-    app.register_error_handler(404, page_not_found)
 
+    app.register_error_handler(404, page_not_found)
 
     from DaisPCTO.auth import auth as auth_blueprint
     app.register_blueprint(auth_blueprint)

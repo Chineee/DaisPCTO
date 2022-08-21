@@ -2,119 +2,142 @@
 
 {% block content %}
 
-<style>
-    body {
-        background-color: gainsboro !important;
-    }
-</style>
 
-<section class="gradient-custom">
-    <div class="container my-5 py-5">
-        <div class="row d-flex justify-content-center">
-            <div class="col-md-12 col-lg-10 col-xl-8">
-                <div class="card">
-                    <div class="card-body p-4">
-                        <h4 class="text-center mb-4 pb-2">Forum</h4>
-                        
-                        <form method="post" novalidate>
-                            {{form.hidden_tag()}}
-                            <textarea class="form-control" placeholder = "Scrivi un nuovo post..." id="text" name="text" style="height: 150px;"></textarea>
-                            <br>
-                            <button type="submit" class="btn btn-secondary float-end">Invia post</button>
-                        </form>
-                        
-                        <br><br>
-                        
 
-                        <div class="row">
-                            <div class="col">
-                                {% for q in qna %}
-                                    <hr/>
-                                    <div class="d-flex flex-start mt-4" id="flex-start-{{q['question'].TextID}}">
-                                        <img src="{{q['question'].email | gravatar }}" class="rounded-circle shadow-1-strong me-3" height="65" width="65" alt="avatar">
-                                        <div class="flex-grow-1 flex-shrink-1">
-                                            <div>
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <p class="mb-1">
-                                                        {{q["question"].Name}} {{q["question"].Surname}} {% if user.UserID == q['question'].UserID %} <strong>(You)</strong> {% endif %}
-                                                        <span class="small">-- {{q["question"].Date.strftime("%d-%m-%Y")}} - {{q["question"].Time.strftime("%H:%M")}}
-                                                            {% if user.UserID == q['question'].UserID %}
-                                                                <u onclick="change_textarea({{q['question'].TextID}})" style="cursor : pointer; color : #E26F98">
-                                                                    <span class="small">
-                                                                        Modifica
-                                                                    </span>
-                                                                </u>
-                                                            {% endif %}
-                                                        </span>
-                                                    </p>
-                                                        <u onclick="change_textarea_info({{q['question'].TextID}})" style="cursor : pointer; color : #C14D9C"><span class="small">
-                                                            Rispondi
-                                                        </span>
-                                                        </u>
-                                                    
-                                                    
+<h1>
+    <center>
+        {{ course.Name }} - {{ course.CourseID }} 
+    </center>
+</h1>
+
+
+<nav class="nav nav-pills flex-column flex-sm-row">
+    <a href="/courses/{{ course.CourseID }}" class="nav-link" style="color: #723cb0">
+        <i class="bi bi-arrow-right-circle"></i> Docenti e informazioni
+    </a>
+
+    <a href="/courses/{{ course.CourseID }}/lessons" class="nav-link" style="color: #723cb0">
+        <i class="bi bi-arrow-right-circle"></i>
+        Lezioni
+    </a>
+
+    <a href="/courses/{{ course.CourseID }}/forum" class="nav-link active" style="background-color: #723cb0">
+        <i class="bi bi-arrow-right-circle"></i>
+        Forum
+    </a>
+
+</nav>
+
+<div class="tab-content border border-2 border-start-0 border-end-0 border-bottom-0 mt-3" style="border-color: #723cb0 !important">
+
+    <section class="gradient-custom">
+        <div class="container my-5 py-5">
+            <div class="row d-flex justify-content-center">
+                <div class="col-md-12 col-lg-10 col-xl-8">
+                    <div class="card" style="background-color : #eaeaea;">
+                        <div class="card-body p-4">
+                            <h4 class="text-center mb-4 pb-2">Forum</h4>
+                            
+                            <form method="post" novalidate>
+                                {{form.hidden_tag()}}
+                                <textarea class="form-control" placeholder = "Scrivi un nuovo post..." id="text" name="text" style="height: 150px;"></textarea>
+                                <br>
+                                <button type="submit" class="btn float-end" style="background-color: #E26F98; color: white">Invia post</button>
+                            </form>
+                            
+                            <br><br>
+                            
+
+                            <div class="row">
+                                <div class="col">
+                                    {% for q in qna %}
+                                        <hr/>
+                                        <div class="d-flex flex-start mt-4" id="flex-start-{{q['question'].TextID}}">
+                                            <img src="{{q['question'].email | gravatar }}" class="rounded-circle shadow-1-strong me-3" height="65" width="65" alt="avatar">
+                                            <div class="flex-grow-1 flex-shrink-1">
+                                                <div>
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <p class="mb-1">
+                                                            {{q["question"].Name}} {{q["question"].Surname}} {% if user.UserID == q['question'].UserID %} <strong>(You)</strong> {% endif %}
+                                                            <span class="small">-- {{q["question"].Date.strftime("%d-%m-%Y")}} - {{q["question"].Time.strftime("%H:%M")}}
+                                                                {% if user.UserID == q['question'].UserID %}
+                                                                    <u onclick="change_textarea({{q['question'].TextID}})" style="cursor : pointer; color : #E26F98">
+                                                                        <span class="small">
+                                                                            Modifica
+                                                                        </span>
+                                                                    </u>
+                                                                {% endif %}
+                                                            </span>
+                                                        </p>
+                                                            <u onclick="change_textarea_info({{q['question'].TextID}})" style="cursor : pointer; color : #C14D9C"><span class="small">
+                                                                Rispondi
+                                                            </span>
+                                                            </u>
+                                                        
+                                                        
+                                                    </div>
+                                                    <textarea class="form-control small mb-0" id="textarea-{{q['question'].TextID}}" style="display : none">{{q["question"].Text}}</textarea>
+                                                    <button class="btn btn-sm float-end" id="button-text-{{q['question'].TextID}}" onclick="send_change_text({{q['question'].TextID}})" style="display : none; background-color: #E26F98; color: white">Salva modifiche</button>
+                                                    <p class="small mb-0" id = "text-p-{{q['question'].TextID}}">{{q["question"].Text}}</p>
                                                 </div>
-                                                <textarea class="form-control small mb-0" id="textarea-{{q['question'].TextID}}" style="display : none">{{q["question"].Text}}</textarea>
-                                                <button class="btn btn-secondary btn-sm float-end" id="button-text-{{q['question'].TextID}}" onclick="send_change_text({{q['question'].TextID}})" style="display : none">Salva modifiche</button>
-                                                <p class="small mb-0" id = "text-p-{{q['question'].TextID}}">{{q["question"].Text}}</p>
-                                            </div>
-                                            <div class="answer" id="{{q['question'].TextID}}" style="display: none">
-                                                <form method="post" novalidate>
-                                                    {{form.hidden_tag()}}
-                                                    <input type="number" id="ref_to" name="ref_to" class="ref_to-{{q['question'].TextID}}" style="display : none">
-                                                    <br>
-                                                    <textarea class="form-control" id="text" name="text"></textarea>
-                                                    <br>
-                                                    <button type="button" class="btn btn-secondary float-end send-answer" id="{{q['question'].TextID}}" data-postid="{{q['question'].TextID}}">Invia risposta</button>
-                                                    <br>
-                                                </form>
-                                            </div>
-                                            {% for a in q["answers"] %}
-                                            <div class="d-flex flex-start mt-4" id ="flex-start-{{a.TextID}}">
-                                                
-                                                <!-- <div id="profileImage" class="rounded-circle shadow-1-strong me-3" style="background-color: #F3A65E;">{{a.Name[0]}}{{a.Surname[0]}}</div> -->
-                                                <img src="{{a.email | gravatar }}" class="rounded-circle shadow-1-strong me-3" height="65" width="65" alt="avatar">
-                                                <div class="flex-grow-1 flex-shrink-1">
-                                                    <div>
-                                                        <div class="d-flex justify-content-between align-items-center">
-                                                            <p class="mb-1">
-                                                                {{a.Name}} {{a.Surname}} {% if user.UserID == a.UserID %} <strong>(You)</strong> {% endif %} 
-                                                                <span class="small">
-                                                                    -- {{a.Date.strftime("%d-%m-%Y")}} - {{a.Time.strftime("%H:%M")}}
-                                                                    {% if user.UserID == a.UserID %}
-                                                                        <u onclick="change_textarea({{a.TextID}})" style="cursor : pointer; color : #E26F98">
-                                                                            <span class="small">
-                                                                                Modifica
-                                                                            </span>
-                                                                        </u>
-                                                                    {% endif %}
-                                                                </span>
+                                                <div class="answer" id="{{q['question'].TextID}}" style="display: none">
+                                                    <form method="post" novalidate>
+                                                        {{form.hidden_tag()}}
+                                                        <input type="number" id="ref_to" name="ref_to" class="ref_to-{{q['question'].TextID}}" style="display : none">
+                                                        <br>
+                                                        <textarea class="form-control" id="text" name="text"></textarea>
+                                                        <br>
+                                                        <button type="button" class="btn float-end send-answer" id="{{q['question'].TextID}}" data-postid="{{q['question'].TextID}}" style="background-color: #E26F98; color: white">Invia risposta</button>
+                                                        <br>
+                                                    </form>
+                                                </div>
+                                                {% for a in q["answers"] %}
+                                                <div class="d-flex flex-start mt-4" id ="flex-start-{{a.TextID}}">
+                                                    
+                                                    <!-- <div id="profileImage" class="rounded-circle shadow-1-strong me-3" style="background-color: #F3A65E;">{{a.Name[0]}}{{a.Surname[0]}}</div> -->
+                                                    <img src="{{a.email | gravatar }}" class="rounded-circle shadow-1-strong me-3" height="65" width="65" alt="avatar">
+                                                    <div class="flex-grow-1 flex-shrink-1">
+                                                        <div>
+                                                            <div class="d-flex justify-content-between align-items-center">
+                                                                <p class="mb-1">
+                                                                    {{a.Name}} {{a.Surname}} {% if user.UserID == a.UserID %} <strong>(You)</strong> {% endif %} 
+                                                                    <span class="small">
+                                                                        -- {{a.Date.strftime("%d-%m-%Y")}} - {{a.Time.strftime("%H:%M")}}
+                                                                        {% if user.UserID == a.UserID %}
+                                                                            <u onclick="change_textarea({{a.TextID}})" style="cursor : pointer; color : #E26F98">
+                                                                                <span class="small">
+                                                                                    Modifica
+                                                                                </span>
+                                                                            </u>
+                                                                        {% endif %}
+                                                                    </span>
+                                                                </p>
+                                                            </div>
+                                                        
+                                                            <textarea class="small mb-0 form-control" id="textarea-{{a.TextID}}" style="display : none">{{a.Text}}</textarea>
+                                                            <button type="button" class="btn btn-sm float-end" id="button-text-{{a.TextID}}" onclick = "send_change_text({{a.TextID}})" style="display : none; background-color: #E26F98; color: white">Salva modifiche</button>
+                                                        
+                                                            <p class="small mb-0" id="text-p-{{a.TextID}}">
+                                                                {{a.Text}}
                                                             </p>
                                                         </div>
-                                                       
-                                                        <textarea class="small mb-0 form-control" id="textarea-{{a.TextID}}" style="display : none">{{a.Text}}</textarea>
-                                                        <button type="button" class="btn btn-secondary btn-sm float-end" id="button-text-{{a.TextID}}" onclick = "send_change_text({{a.TextID}})"style="display : none">Salva modifiche</button>
-                                                     
-                                                        <p class="small mb-0" id="text-p-{{a.TextID}}">
-                                                            {{a.Text}}
-                                                        </p>
                                                     </div>
                                                 </div>
+                                                {% endfor %}
                                             </div>
-                                            {% endfor %}
                                         </div>
-                                    </div>
-                                 
-                              
-                                {%endfor%}
+                                    
+                                
+                                    {%endfor%}
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
+</div>
 
 
 <style>

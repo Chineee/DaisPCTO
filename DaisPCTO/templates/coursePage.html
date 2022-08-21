@@ -6,11 +6,11 @@
             {{ course.Name }} - {{ course.CourseID }} 
             {% if is_professor == False and course.OpenFeedback == True and can_send == True %} 
                 <a href="/courses/{{course.CourseID}}/feedback">
-                    <button type="button" class="btn btn-success"> Invia feedback! </button>
+                    <button type="button" class="btn" style="background-color: #F3A65E; border-color: #F3A65E; color: white"> Invia feedback! </button>
                 </a>
             {% elif is_professor == True and can_modify == True %} 
                 <a href="/courses/{{course.CourseID}}/get_feedback">
-                    <button type="button" class="btn btn-success"> Leggi feedback studenti! </button>
+                    <button type="button" class="btn" style="background-color: #F3A65E; border-color: #F3A65E; color: white"> Leggi feedback studenti! </button>
                 </a> 
             {% endif %}
         </center>
@@ -18,23 +18,23 @@
 
 
     <nav class="nav nav-pills flex-column flex-sm-row">
-        <a href="/courses/{{ course.CourseID }}" class="nav-link active">
+        <a href="/courses/{{ course.CourseID }}" class="nav-link active" style="background-color: #723cb0">
             <i class="bi bi-arrow-right-circle"></i> Docenti e informazioni
         </a>
 
-        <a href="/courses/{{ course.CourseID }}/lessons" class="nav-link">
+        <a href="/courses/{{ course.CourseID }}/lessons" class="nav-link" style="color: #723cb0">
             <i class="bi bi-arrow-right-circle"></i>
             Lezioni
         </a>
 
-        <a href="/courses/{{ course.CourseID }}/forum" class="nav-link">
+        <a href="/courses/{{ course.CourseID }}/forum" class="nav-link" style="color: #723cb0">
             <i class="bi bi-arrow-right-circle"></i>
             Forum
         </a>
 
     </nav>
 
-    <div class="tab-content border border-primary border-2 border-start-0 border-end-0 border-bottom-0 mt-3">
+    <div class="tab-content border border-2 border-start-0 border-end-0 border-bottom-0 mt-3" style="border-color: #723cb0 !important">
 
 
         <br><br>
@@ -59,10 +59,10 @@
             {% if is_professor and can_modify %}
 
 
-                <button type="button" class="btn btn-secondary" data-bs-toggle="modal"
+                <button type="button" class="btn" data-bs-toggle="modal" style="background-color: #f7c42c; border-color: #f7c42c"
                         data-bs-target="#changeCourseInfo">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14px" height="14px" fill="currentColor"
-                         class="bi bi-pencil" viewBox="0 0 16 16" style="height:15px;width:15px">
+                         class="bi bi-pencil" viewBox="0 0 16 16" style="height:15px; width:15px; color:white">
                         <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"></path>
                     </svg>
                 </button>
@@ -105,10 +105,10 @@
 
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi
+                                    <button type="button" class="btn" data-bs-dismiss="modal" style="background-color: #d1d1d1; color: white">Chiudi
                                     </button>
-                                    <input type="button" class="btn btn-primary" value="Salva Modifiche"
-                                           name="changeSubmit" id="changeSubmit"> </input>
+                                    <input type="button" class="btn" value="Salva Modifiche"
+                                           name="changeSubmit" id="changeSubmit" style="background-color: #E26F98; color: white"> </input>
 
 
                                 </div>
@@ -125,7 +125,7 @@
         <hr/>
 
         <div class="list-group-item">
-            <a {% if can_modify %} href="/courses/{{course.CourseID}}/demographics" class="link-dark"{% endif %}>
+            <a {% if can_modify %} href="/courses/{{course.CourseID}}/students" class="link-dark"{% endif %}>
                 <strong> Iscritti attuali: </strong>
             </a>
 
@@ -137,8 +137,8 @@
                     {% if subs == course.MaxStudents and course.MaxStudents > 0 and iscritto == False%}
                         <button class="btn btn-danger disabled" disabled>Iscrizioni piene</button>
                     {% else %}
-                        <button class="btn btn-{% if iscritto %}danger{% else %}success{% endif %}"
-                                data-bs-toggle="modal" data-bs-target="#subscription"
+                        <button class="btn"
+                                data-bs-toggle="modal" data-bs-target="#subscription", style="color: white; background-color :{% if iscritto %} #9b54e3 {% else %} #F3A65E {% endif %}; border-color :{% if iscritto %} #9b54e3 {% else %} #F3A65E {% endif %}"
                                 {% if subs == course.MaxStudents and not iscritto and course.MaxStudents > 0 %} disabled {% endif %}>
                         {% if iscritto %} Disiscriviti! {% else %} Iscriviti! {% endif %}
                         </button>
@@ -157,9 +157,9 @@
                             </div>
 
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                                <button type="button" class="btn" data-bs-dismiss="modal" style="background-color: #d1d1d1; color: white">No</button>
                                 <a href="/courses/action/{{ course.CourseID }}?{% if iscritto %}sub=true{% else %}sub=false{% endif %}">
-                                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Si</button>
+                                    <button type="button" class="btn" data-bs-dismiss="modal" style="background-color: #E26F98; color: white">Si</button>
                                 </a>
                             </div>
                         </div>
@@ -187,7 +187,7 @@
         {% if is_professor and can_modify %}
             <form method="POST">
                 {{ form.hidden_tag() }}
-                <button type="button" class="btn btn-{% if course.OpenFeedback %}danger{% else %}success{% endif %}" data-bs-toggle="modal"
+                <button type="button" class="btn" style="background-color: {% if course.OpenFeedback %}#9b54e3{% else %}#F3A65E{% endif %}; border-color: {% if course.OpenFeedback %}#9b54e3{% else %}#F3A65E{% endif %}; color: white " data-bs-toggle="modal"
                         data-bs-target="#studentFeedback"> {% if course.OpenFeedback %} Vuoi chiudere i
                     feedback? {% else %} Vuoi aprire i feedback? {% endif %} </button>
 
@@ -203,7 +203,7 @@
                             </div>
 
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                                <button type="button" class="btn" data-bs-dismiss="modal" style="background-color: #d1d1d1; color: white">No</button>
                                 {{ form.submit(class="btn btn-primary", value = "Chiudi" if course.OpenFeedback else "Apri") }}
                             </div>
                         </div>

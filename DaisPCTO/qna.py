@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, url_for, redirect, flash, abort, r
 from flask_login import current_user, login_required
 from DaisPCTO.auth import role_required
 # from DaisPCTO.models import *
-from DaisPCTO.db import get_questions_by_course, is_user_owner_post, delete_post, get_answers_by_question_id, add_post, update_post
+from DaisPCTO.db import get_course_by_id, get_questions_by_course, is_user_owner_post, delete_post, get_answers_by_question_id, add_post, update_post
 from flask_wtf import FlaskForm
 from wtforms import TextAreaField, IntegerField, SubmitField
 from wtforms.validators import DataRequired
@@ -51,7 +51,8 @@ def forum(coursePage):
                             is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"),
                             user = current_user,
                             qna = qna,
-                            form=form)
+                            form=form,
+                            course = get_course_by_id(coursePage.upper()))
 
 # @QnA.route('/action/post/delete')
 # @login_required

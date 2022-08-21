@@ -6,14 +6,14 @@
         {% for c in certificates %}
             <div class="col-md-12 mb-3 float-right">
                 <div class="card text-center float-right" style="width : 750px;">
-                    <div class="card-header text-white" style="background-color : #8736aa;">
+                    <div class="card-header text-white" style="background-color : #ae8bc9;">
                         <h4 class="float-center"> {{c.Name}} </h4>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body" style="background-color: #e8def0">
                         Congratulazioni {{c.StudentName}}!! É ora disponibile l'attestato di partecipazione al corso {{c.Name}}-{{c.CourseID}}.
                     </div>
-                    <div class="card-footer float-end">
-                        <button type="button" class="btn float-end text-white" style="background-color: #47297B">Scaricami!</button>
+                    <div class="card-footer float-end" style="background-color : #ae8bc9;">
+                        <button type="button" class="btn float-end text-white" style="background-color: #f4cb4f; border-color: #f4cb4f; color: black !important">Scaricami!</button>
                     </div>
                 </div>
             </div>

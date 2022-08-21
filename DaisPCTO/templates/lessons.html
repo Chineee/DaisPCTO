@@ -28,24 +28,24 @@
     {% endwith %}
 
     <nav class="nav nav-pills flex-column flex-sm-row">
-        <a href="/courses/{{course.CourseID}}" class="nav-link">
+        <a href="/courses/{{course.CourseID}}" class="nav-link" style="color: #723cb0">
 
             <i class="bi bi-arrow-right-circle"></i> Docenti e informazioni
         </a>
 
-        <a href="/courses/{{course.CourseID}}/lessons" class="nav-link active">
+        <a href="/courses/{{course.CourseID}}/lessons" class="nav-link active" style="background-color: #723cb0">
             <i class="bi bi-arrow-right-circle"></i>
             Lezioni
         </a>
 
-        <a href="/courses/{{ course.CourseID }}/forum" class="nav-link">
+        <a href="/courses/{{ course.CourseID }}/forum" class="nav-link" style="color: #723cb0">
             <i class="bi bi-arrow-right-circle"></i>
             Forum
         </a>
 
     </nav>
 
-    <div class="tab-content border border-primary border-2 border-start-0 border-end-0 border-bottom-0 mt-3">
+    <div class="tab-content border border-2 border-start-0 border-end-0 border-bottom-0 mt-3" style="border-color: #723cb0 !important">
         <br><br>
 
         <br><br>
@@ -60,8 +60,8 @@
                     </div>
 
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-danger modal-button-delete" data-bs-dismiss="modal">Elimina</button>
+                        <button type="button" class="btn" data-bs-dismiss="modal" style="background-color: #d1d1d1; color: white">Chiudi</button>
+                        <button type="button" class="btn modal-button-delete" data-bs-dismiss="modal" style="background-color: #E26F98; color: white">Elimina</button>
                     </div>
                 </div>
             </div>
@@ -174,8 +174,8 @@
                         </div>
 
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <input type="button" id="submit_update" name="submit_update" value="Salva modifiche" class="btn btn-success" />
+                            <button type="button" class="btn" data-bs-dismiss="modal" style="background-color: #d1d1d1; color: white">Chiudi</button>
+                            <input type="button" id="submit_update" name="submit_update" value="Salva modifiche" class="btn" style="background-color: #E26F98; color: white"/>
                         </div>
                     </div>
                 </div>
@@ -196,8 +196,8 @@
                         </canvas>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-danger modal-button-success" data-bs-dismiss="modal">Salva QRcode</button>
+                        <button type="button" class="btn" data-bs-dismiss="modal" style="background-color: #d1d1d1; color: white">Chiudi</button>
+                        <button type="button" class="btn modal-button-success" data-bs-dismiss="modal" style="background-color: #E26F98; color: white">Salva QRcode</button>
                     </div>
                 </div>
             </div>
@@ -211,7 +211,7 @@
 
 
 
-                    <li class="list-group-item justify-content-between align-items-end" id="lesson-number-{{ list_lessons[i].LessonID }}">
+                    <li class="list-group-item justify-content-between align-items-end" id="lesson-number-{{ list_lessons[i].LessonID }}" style="background-color :  #f1f1f1 ">
                         {% if is_professor and can_modify %}
 
                             <div class="modal fade" id="modalTopicLesson-{{i}}" tabindex="-1" aria-labelledby="modalTopicLessonLabel-{{i}}" aria-hidden="true">
@@ -226,8 +226,8 @@
                                             <textarea class="form-control" style="white-space: normal; height: 200px" id="textarea-information-course-{{i}}" data-lessonid="{{list_lessons[i].LessonID}}">{{list_lessons[i].Topic}}</textarea>
                                         </div>
                                         <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
-                                            <button type="button" class="btn btn-primary changeTopicLesson" data-value="{{i}}" data-bs-dismiss="modal">Salva Modifiche</button>
+                                            <button type="button" class="btn" data-bs-dismiss="modal" style="background-color: #d1d1d1; color: white">Chiudi</button>
+                                            <button type="button" class="btn changeTopicLesson" data-value="{{i}}" data-bs-dismiss="modal" style="background-color: #E26F98; color: white">Salva Modifiche</button>
                                         </div>
 
                                     </div>
@@ -238,14 +238,14 @@
                                 <button name="button_to_delete" type="button" class="btn btn-danger btn-sm btn_to_delete_lesson" data-bs-toggle="modal" data-bs-target="#exampleModal">X</button>
                             </div>
                             {% if is_professor and can_modify %} 
-                                <button class="btn text-white" data-bs-toggle="modal" data-bs-target="#qrCodeModal" style="background-color: #734b92" onclick="set_modal({{list_lessons[i].LessonID}}, '{{list_lessons[i].Token}}')">
+                                <button class="btn text-white" data-bs-toggle="modal" data-bs-target="#qrCodeModal" style="background-color: #C14D9C" onclick="set_modal({{list_lessons[i].LessonID}}, '{{list_lessons[i].Token}}')">
                                     <i class="bi bi-qr-code"></i>
                                 </button> 
 
-                                <button type="button" class="btn btn-secondary update_lesson" data-bs-toggle="modal" data-lesson = "{{list_lessons[i].LessonID}}"
+                                <button type="button" class="btn update_lesson" data-bs-toggle="modal" data-lesson = "{{list_lessons[i].LessonID}}" style="background-color: #f4c741; border-color: #f4c741"
                                     data-bs-target="#changeLessonInfo" data-index="{{loop.index}}">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14px" height="14px" fill="currentColor"
-                                        class="bi bi-pencil" viewBox="0 0 16 16" style="height:15px;width:15px">
+                                        class="bi bi-pencil" viewBox="0 0 16 16" style="height:15px;width:15px; color: white">
                                             <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"></path>
                                     </svg>
                                 </button>
@@ -278,8 +278,8 @@
                                     <strong> Argomento e Materiali : </strong>
                                     &emsp;
                                     {% if is_professor and can_modify %}
-                                        <button type="button" class="btn btn-primary change-topic-lesson" style="font-size : 75%" data-bs-toggle="modal" data-bs-target="#modalTopicLesson-{{i}}">
-                                            <i class="bi bi-pencil" style="font-size : 95%"></i>
+                                        <button type="button" class="btn change-topic-lesson" style="font-size : 75%; background-color: #F3A65E; border: #F3A65E" data-bs-toggle="modal" data-bs-target="#modalTopicLesson-{{i}}">
+                                            <i class="bi bi-pencil" style="font-size : 95%; color: white"></i>
                                         </button>
                                     {% endif %}
                                     <br>
@@ -419,7 +419,7 @@
                         </div>
                     </div>
 
-                    <input type="submit" class="btn btn-primary" value="Conferma" name="submit_button"/>
+                    <input type="submit" class="btn" value="Conferma" name="submit_button" style="background-color: #E26F98; color: white"/>
                
                 </form>
 
@@ -506,7 +506,7 @@
                         </div>
                     </div>
                     
-                    <input type="submit" class="btn btn-primary" value="Conferma" name="submit_lessons"/>
+                    <input type="submit" class="btn" value="Conferma" name="submit_lessons" style="background-color: #E26F98; color: white"/>
 
                 </form>
             </div>

@@ -8,6 +8,6 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        'flask', 'flask_login', 'flask_wtf', 'psycopg2', "sqlalchemy", "flask_bcrypt", "flask_bootstrap", "flask_admin", 'Flask-OAuth'
+        'flask', 'flask_login', 'flask_wtf', 'psycopg2', "sqlalchemy", "flask_bcrypt", "flask_bootstrap", "flask_admin", 'Flask-OAuth', "Flask-Gravitar"
     ],
 )

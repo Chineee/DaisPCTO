@@ -6,19 +6,19 @@
 
 
     <nav class="nav nav-pills flex-column flex-sm-row">
-        <a href="/courses" class="nav-link{% if request.path == '/courses/' %} active {% endif %}">
+        <a href="/courses" class="nav-link{% if request.path == '/courses/' %} active {% endif %}" style="{% if request.path == '/courses/' %}background-color: #723cb0{% else %}color: #723cb0{% endif %}">
             <i class="bi bi-arrow-right-circle"></i> Tutti i corsi
         </a>
 
         <a href="/courses/subscriptions"
-           class="nav-link{% if request.path == '/courses/subscriptions' %} active {% endif %}">
+           class="nav-link {% if request.path == '/courses/subscriptions' %} active {% endif %}" style="{% if request.path == '/courses/' %}color: #723cb0{% else %}background-color: #723cb0{% endif %}">
             <i class="bi bi-arrow-right-circle"></i>
             I miei corsi
         </a>
 
     </nav>
 
-    <div class="tab-content border border-primary border-2 border-start-0 border-end-0 border-bottom-0 mt-3"><br><br>
+    <div class="tab-content border border-2 border-start-0 border-end-0 border-bottom-0 mt-3" style="border-color: #723cb0 !important"><br><br>
 
         {% set closed_div = {"closed" : False} %}
 
@@ -28,8 +28,8 @@
                 {% if closed_div.update({"closed" : False}) %} {% endif %}
             {% endif %}
             <div class="col-md-4 mb-3 align-items-stretch" id="card-course-{{ course_list[i].CourseID }}">
-                <div class="card">
-                    <div class="card-header bg-secondary text-white d-flex flex-column">
+                <div class="card" style="border-color : black"">
+                    <div class="card-header text-white d-flex flex-column" style="background-color: #ae8bc9;">
                         <h4>
                             {{ course_list[i].Name }}
                         </h4>
@@ -39,16 +39,16 @@
 
                     </div>
 
-                    <div class="card-body" style="height: 175px; overflow-y: auto">
+                    <div class="card-body" style="height: 175px; overflow-y: auto; background-color: #e8def0">
                         <h5 class="card-title">Descrizione Corso:</h5>
                         <p class="card-text">{% if course_list[i].Description %}
                             {{ course_list[i].Description }} {% endif %}</p>
 
                     </div>
-                    <div class="card-footer bg-secondary">
+                    <div class="card-footer" style="background-color: #ae8bc9;">
                         <div class="float-end">
 
-                            <a href="/courses/{{ course_list[i].CourseID }}" class="btn btn-warning">Visualizza pagina del
+                            <a href="/courses/{{ course_list[i].CourseID }}" class="btn" style="background-color: #f4cb4f; border-color: #f4cb4f">Visualizza pagina del
                                 corso</a>
                         </div>
 

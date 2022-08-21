@@ -23,12 +23,12 @@
     </div>
 
     <nav class="nav nav-pills flex-column flex-sm-row">
-        <a href="/lessons/reservations" class="nav-link {% if request.path == '/lessons/reservations' %} active" {% endif %}>
+        <a href="/lessons/reservations" class="nav-link {% if request.path == '/lessons/reservations' %} active {% endif %}"  style="{% if request.path == '/lessons/reservations' %} background-color: #723cb0 {% else %}color: #723cb0{% endif %}">
             <i class="bi bi-arrow-right-circle"></i> Prenotazione Future
         </a>
 
         <a href="/lessons/reservations/private"
-        class="nav-link{% if request.path == '/lessons/reservations/private' %} active {% endif %}">
+        class="nav-link{% if request.path == '/lessons/reservations/private' %} active {% endif %}" style="{% if request.path == '/lessons/reservations/private' %} background-color: #723cb0 {% else %} color: #723cb0 {% endif %}">
             <i class="bi bi-arrow-right-circle"></i>
             Le mie Prenotazioni
         </a>
@@ -49,14 +49,14 @@
                     </canvas>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-danger modal-button-success" data-bs-dismiss="modal">Salva QRcode</button>
+                    <button type="button" class="btn" data-bs-dismiss="modal" style="background-color: #d1d1d1; color: white">Chiudi</button>
+                    <button type="button" class="btn modal-button-success" data-bs-dismiss="modal" style="background-color: #E26F98; color: white">Salva QRcode</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="tab-content border border-primary border-2 border-start-0 border-end-0 border-bottom-0 mt-3"><br><br>
+    <div class="tab-content border border-2 border-start-0 border-end-0 border-bottom-0 mt-3" style="border-color: #723cb0 !important"><br><br>
 
         <div class="container-fluid">
             <div class="row">

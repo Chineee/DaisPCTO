@@ -9,7 +9,7 @@
             <a href="/courses/{{ course_list[i].CourseID }}/demographics"> </a>
         {% else %}
 
-        <a href="/courses/action/{{ course_list[i].CourseID }}?sub=true&lastpage=coursespage" class="btn btn-danger"> Disiscriviti </a>
+        <a href="/courses/action/{{ course_list[i].CourseID }}?sub=true&lastpage=coursespage" class="btn" style="background-color: #9b54e3; color: white; border-color: #9b54e3"> Disiscriviti </a>
 
         {% endif %}
 
@@ -22,7 +22,7 @@
     {% set percentage = (course_list[i].Hours | to_minutes) %}
     {% set percentage2 = percentage | get_completed_percentage(course_list[i].MinHourCertificate) %}
 
-    <div class="card-footer bg-secondary">
+    <div class="card-footer" style="background-color: #ae8bc9; border-color : #ae8bc9">
         <div class="progress">
             <div class="text-dark progress-bar progress-bar-striped progress-bar-animated bg-{% if percentage2 < 25 %}danger {% elif percentage2 < 50 %}warning {% elif percentage2 < 100 %}success{% else %}info{% endif %}" role="progressbar" style="width: {{ percentage2 }}%;" aria-valuenow= "{{ percentage | get_completed_percentage(course_list[i].MinHourCertificate) }}" aria-valuemin="0" aria-valuemax={{ course_list[i].MinHourCertificate }}>
                 {{ percentage2 | convert_to_integer }}%
@@ -45,9 +45,9 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                    <button type="button" class="btn" data-bs-dismiss="modal" style="background-color: #d1d1d1; color: white">No</button>
                     <a href="/courses/action/?{% if iscritto %}sub=true{% else %}sub=false{% endif %}">
-                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Si</button>
+                        <button type="button" class="btn" data-bs-dismiss="modal" style="background-color: #E26F98; color: white">Si</button>
                     </a>
                 </div>
             </div>

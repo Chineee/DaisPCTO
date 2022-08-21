@@ -24,22 +24,32 @@
 
             padding: 10px;
         }
+
+        .navbar {
+          background-image : linear-gradient(-90deg, #EDCB61, #F3A65E, #bb3ecc, #5D2F92)
+        }
+
+
     </style>
 </head>
 <body>
       <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-3">
-          <div class="container-fluid">
-            <a class="navbar-brand" href="/">DaisPCTO</a>
+          <div class="container">
+            <a class="navbar-brand" href="/">
+              <div class="logo-image">
+                <img src="{{url_for('static', filename='logo2.png')}}" class="img-responsive" width="70" height="70">
+              </div>
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
               <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
-              <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <ul class="navbar-nav me-auto mb-2 mb-lg-0 d-flex justify-content-center">
                 <li class="nav-item">
                   <a class="nav-link {% if request.path == '/' %} active {% endif %}" aria-current="page" href="/">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if request.path == '/courses' %} active {% endif %}" href="/courses"> Corsi </a>
+                    <a class="nav-link {% if '/courses/' in request.path %} active {% endif %}" href="/courses"> Corsi </a>
                 </li>
                 {% if is_professor == False %} 
                       <li class="nav-item">
