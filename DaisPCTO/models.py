@@ -67,7 +67,7 @@ class User(Base, UserMixin):
 class Student(Base):
     __tablename__ = "Students"
 
-    UserID = Column(Integer, ForeignKey("Users.UserID"), primary_key=True)
+    UserID = Column(Integer, ForeignKey("Users.UserID", ondelete='CASCADE'), primary_key=True)
     SchoolID = Column(Integer, ForeignKey("Schools.SchoolID"))
     birthDate = Column(Date)
     SchoolYear = Column(Integer)
@@ -80,7 +80,7 @@ class Student(Base):
 class Professor(Base):
     __tablename__ = "Professors"
 
-    UserID = Column(Integer, ForeignKey("Users.UserID"), primary_key=True)
+    UserID = Column(Integer, ForeignKey("Users.UserID", ondelete='CASCADE'), primary_key=True)
 
     LessonsList = relationship("Lesson", backref="Professor")
 
@@ -156,7 +156,7 @@ class StudentCourse(Base):
     __tablename__ = "StudentsCourses"
 
     CourseID = Column(String, ForeignKey("Courses.CourseID"), primary_key=True)
-    StudentID = Column(Integer, ForeignKey("Students.UserID"), primary_key=True)
+    StudentID = Column(Integer, ForeignKey("Students.UserID", ondelete='CASCADE'), primary_key=True)
     HasSentFeedback = Column(Boolean)
 
     __table_args__ = ()

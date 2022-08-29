@@ -22,7 +22,9 @@ engine = {
 # studente = create_engine("postgresql://Student:ewfdwefd@localhost/testone8",echo=False, pool_size=20, max_overflow=0)
 # engine2 = create_engine("postgresql://Student:studente01@localhost/testone8", echo=False, pool_size=20, max_overflow=0)
 
-Session = sessionmaker(bind=engine['Admin'])
+Session = sessionmaker()
+en = engine['Admin']
+sess2 = sessionmaker(bind=en)
 
 def get_engine(id_=None):
     
@@ -88,10 +90,19 @@ def extestone():
 
     #     return res
 
-    session = Session(bind=get_engine())
-    session.add(Reservation(FrontalLessonID=1, StudentID=1))
-    session.commit()
-     
+    try:
+        s  = sess2()
+        s.query(Feedback).all()
+        en = engine['Anonymous']
+        s = sess2()
+        s.query(Feedback).all()
+        print("ssss")
+    except Exception as e:
+        print(e)
+        raise e
+
+    
+    
 def exists_role_user(user_id, role):
     try:
         session = Session(bind=engine['Admin'])
@@ -109,6 +120,16 @@ def get_course_by_id(course_id):
         return session.query(Course).filter(Course.CourseID == course_id).first()
     except:
         return None
+
+def get_student_by_user(user_id):
+    try:
+        session = Session(bind=get_engine())
+        return session.query(Student).filter(Student.UserID == user_id).first()
+    except:
+        session.close()
+        session.rollback()
+        return None
+
 
 def get_user_by_id(id):
     try:
@@ -132,30 +153,51 @@ def get_user_by_email(email):
         print(e)
         return None
     
-def create_user(form):
+def create_user(form, password = None, is_student=True):
 
     Name = form.name.data
     Surname = form.surname.data
     Email = form.email.data
-    Password = form.password.data
-    Gender = form.gender.data
-    Phone = form.phone.data
+    if is_student:
+        Password = form.password.data
+        Gender = form.gender.data
+        Phone = form.phone.data
+    else:
+        Password = password
+        Gender = None 
+        Phone = None
 
     new_user = User(Name=Name, Surname=Surname, Gender=Gender, email=Email, Password = generate_password_hash(Password).decode('utf-8'), PhoneNumber=Phone)
     
     return new_user
 
-def add_user(User, form):
+def add_user(user, form,  is_student=True):
     try:
         session = Session(bind=get_engine())
-        session.add(User)
+        session.add(user)
         session.commit()
-        add_student(User, form)
-    except Exception as e:
+        if is_student:
+            add_student(user, form)
+        else:
+            add_professor(user)
+    except exc.SQLAlchemyError as e:
         print(e)
         session.rollback()
+        if e.orig.pgcode == '23505': #uniquerror
+            return "UniqueError"
         return False 
     return True
+
+def add_professor(user):
+    try:
+        session = Session(bind=get_engine())
+        session.add_all([Professor(UserID=user.UserID), UserRole(UserID=user.UserID, RoleID=3)])
+        session.commit()
+    except:
+        session.rollback()
+        session.close()
+        
+
 
 def add_student(user, form):
 
@@ -328,7 +370,7 @@ def _add_lesson(lesson_new, type_less, classroom, link=None, password=None):
         if e.orig.diag.message_primary == "SameCourseOverlapping":
             return "SameCourseClashError"
 
-        if int(e.orig.pgcode) == 23514:
+        if int(e.orig.pgcode) == 23514: #il code 23514 indica un check error che ritorna il dbms
             return "DataError"
         
         return "UnknownError"
@@ -432,6 +474,8 @@ def get_student_courses(user_id):
 
         return query
     except Exception as e:
+        print("COSA?")
+        print(e)
         return None
 
 def get_students_by_course(course_id):
@@ -572,6 +616,14 @@ def get_schools_with_name(name):
         return session.query(School).filter(School.SchoolName.contains(name)).order_by(School.City).all()
     except:
         return []
+
+def get_school_by_id(school_id):
+    try:
+        session = Session(bind=get_engine())
+        return session.query(School).filter(School.SchoolID == school_id).first()
+    except Exception as e:
+        print(e)
+        return None
 
 def send_certificate_to_students(course_id):        
     
@@ -820,7 +872,7 @@ def update_lesson(lesson_id, form):
             flash("Lesson overlapping error")
             return "SameCourseClashError"
 
-        if int(e.orig.pgcode) == 23514:
+        if e.orig.pgcode == '23514': #check constraint error
             flash("Date error")
             return "DataError"
         
@@ -838,6 +890,15 @@ def get_answers_by_question_id(question_id):
         return session.query(QnA.Text, QnA.TextID, QnA.RefTo, QnA.Date, QnA.Time, User.Name, User.Surname, User.UserID, User.email).join(User, User.UserID == QnA.UserID).filter(QnA.RefTo == question_id).order_by(QnA.Date, QnA.Time).all()
     except:
         return []
+
+def update_user_psw(user_id, psw):
+    try:
+        session=Session(bind = get_engine())
+        session.query(User).filter(User.UserID == user_id).update({User.Password : generate_password_hash(psw).decode("utf-8")})
+        session.commit()
+    except Exception as e:
+        print(e)
+        session.rollback()
 
 '''
 ADD MI PIACE BY POST ID

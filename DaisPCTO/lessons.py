@@ -271,8 +271,8 @@ def action_lesson():
 
     elif action == 'formalize':
 
-        # if not exists_role_user(current_user.get_id(), "Admin"):
-        #     abort(401)
+        if not exists_role_user(current_user.get_id(), "QrReader"):
+            abort(401)
 
         tok = request.args.get("token")
         reservation = get_reservation_from_token(tok)
@@ -284,7 +284,7 @@ def action_lesson():
                 bookable_lesson = get_lessons_bookable(reservation.StudentID)
                 for lesson in bookable_lesson:                  
                     '''
-                        se il current user è un admin significa che chi sta facendo la richiesta è il tablet che sta davanti all'ingresso, quindi stiamo formalizzando una prenotazione frontale
+                        se il current user è un qrreader significa che chi sta facendo la richiesta è il tablet che sta davanti all'ingresso, quindi stiamo formalizzando una prenotazione frontale
                         la logica sarebbe che uno studente può prenotarsi al massimo due ore prima rispetto all'inizio della lezione ed nel giorno stesso
                     '''
                     # print(type(lesson.StartTime))

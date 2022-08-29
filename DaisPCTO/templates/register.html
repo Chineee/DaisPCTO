@@ -30,18 +30,20 @@
             {% endif %}
 
         </div>
-        <div class="col-md-4 mb-3">
-            {{ form.gender.label }}
-            {% if form.gender.errors %}
-                {{ form.gender(class="form-control is-invalid") }}
-                <div class="invalid-feedback">
-                    {{ form.gender.errors[0]}}
-                </div>
-            {% else %} 
-            {{form.gender(class="form-control")}}
-            {% endif %}
-        
-        </div>
+        {% if not registration_prof %}
+            <div class="col-md-4 mb-3">
+                {{ form.gender.label }}
+                {% if form.gender.errors %}
+                    {{ form.gender(class="form-control is-invalid") }}
+                    <div class="invalid-feedback">
+                        {{ form.gender.errors[0]}}
+                    </div>
+                {% else %} 
+                {{form.gender(class="form-control")}}
+                {% endif %}
+            
+            </div>
+        {% endif %}
     </div>
 
 
@@ -60,152 +62,159 @@
                 {% endif %}
             </div>
         </div>
+        {% if not registration_prof %}
+            <div class="col-md-6 mb-3">
+                {{ form.repeat_email.label }}
+                <div class="input-group mb-3">
+                    <label class="input-group-text" for="repeat_email">@</label>
+                    {% if form.repeat_email.errors %} 
+                        {{form.repeat_email(class="form-control is-invalid", id="repeat_email")}}
+                        <div class="invalid-feedback">
+                            {{form.repeat_email.errors[0]}}
+                        </div>
+                    {% else %}
+                        {{ form.repeat_email(class="form-control", id="repeat_email") }}
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
 
-        <div class="col-md-6 mb-3">
-            {{ form.repeat_email.label }}
-            <div class="input-group mb-3">
-                <label class="input-group-text" for="repeat_email">@</label>
-                {% if form.repeat_email.errors %} 
-                    {{form.repeat_email(class="form-control is-invalid", id="repeat_email")}}
+    {% if not registration_prof %} 
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                {{ form.address.label }}
+                {% if form.address.errors %} 
+                    {{ form.address(class="form-control is-invalid")}}
                     <div class="invalid-feedback">
-                        {{form.repeat_email.errors[0]}}
+                        {{ form.address.errors[0] }}
                     </div>
                 {% else %}
-                    {{ form.repeat_email(class="form-control", id="repeat_email") }}
+                    {{form.address(class="form-control")}}
+                {% endif %}
+            </div>
+
+            <div class="col-md-6 mb-3">
+                {{ form.student_city.label }}
+                {% if form.student_city.errors %} 
+                    {{ form.student_city(class="form-control is-invalid")}}
+                    <div class="invalid-feedback">
+                        {{ form.student_city.errors[0] }}
+                    </div>
+                {% else %}
+                    {{form.student_city(class="form-control")}}
+                {% endif %}
+                
+                <ul class="list-group" id="list-group-province" style="max-height : 300px; overflow-y: scroll; position : absolute;">
+                    
+                </ul>
+
+
+            </div>
+        </div>
+    
+
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                {{ form.password.label }}
+                {% if form.password.errors %}
+                    {{form.password(class="form-control is-invalid")}}
+                    <div class="invalid-feedback">
+                        {{form.password.errors[0]}}
+                    </div>
+                {% elif form.repeat_password.errors %}
+                    {{form.password(class="form-control is-invalid")}}
+                {% else %}
+                    {{form.password(class="form-control")}}
+                {% endif %}
+            
+            </div>
+
+            <div class="col-md-6 mb-3">
+                {{ form.repeat_password.label }}
+                {% if form.repeat_password.errors %}
+                    {{form.repeat_password(class="form-control is-invalid")}}
+                    <div class="invalid-feedback">
+                        {{form.repeat_password.errors[0]}}
+                    </div>
+                {% else %}
+                    {{form.repeat_password(class="form-control")}}
                 {% endif %}
             </div>
         </div>
-    </div>
+    
 
-    <div class="row">
-        <div class="col-md-6 mb-3">
-            {{ form.address.label }}
-            {% if form.address.errors %} 
-                {{ form.address(class="form-control is-invalid")}}
-                <div class="invalid-feedback">
-                    {{ form.address.errors[0] }}
-                </div>
-            {% else %}
-                {{form.address(class="form-control")}}
-            {% endif %}
-        </div>
 
-        <div class="col-md-6 mb-3">
-            {{ form.student_city.label }}
-            {% if form.student_city.errors %} 
-                {{ form.student_city(class="form-control is-invalid")}}
-                <div class="invalid-feedback">
-                    {{ form.student_city.errors[0] }}
-                </div>
-            {% else %}
-                {{form.student_city(class="form-control")}}
-            {% endif %}
+        <div class="row"> 
+            <div class="col-md-6 mb-3">
+                {{form.phone.label}}
+                {% if form.phone.errors %}
+                    {{form.phone(class="form-control is-invalid")}}
+                    <div class="invalid-feedback">
+                        {{form.phone.errors[0]}}
+                    </div>
+                {% else %} 
+                    {{form.phone(class="form-control")}}
+                {% endif %}
+            </div>
             
-            <ul class="list-group" id="list-group-province" style="max-height : 300px; overflow-y: scroll; position : absolute;">
+        
+
+                <div class="col-md-6 mb-3">
+                    {{form.birth_date.label}}
+                    {% if form.birth_date.errors %}
+                        {{form.birth_date(class="form-control is-invalid")}}
+                        <div class="invalid-feedback">
+                            {{form.birth_date.errors[0]}}
+                        </div>
+                    {% else %}
+                        {{form.birth_date(class="form-control")}}
+                    {% endif %}
+                </div>
+        </div>
+    
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                {{ form.school_name.label }}
+
+                {% if form.school_name.errors or form.school_id.errors %}
+                    {{form.school_name(class="form-control is-invalid")}}
+                    <div class="invalid-feedback">
+                        {{form.school_name.errors[0]}}
+                        
+                    </div>
+                {% else %}
+                    {{form.school_name(class="form-control selectpicker")}}
+                {% endif %}
                 
-            </ul>
-
-
-        </div>
-    </div>
-
-
-    <div class="row">
-        <div class="col-md-6 mb-3">
-            {{ form.password.label }}
-            {% if form.password.errors %}
-                {{form.password(class="form-control is-invalid")}}
-                <div class="invalid-feedback">
-                    {{form.password.errors[0]}}
-                </div>
-            {% elif form.repeat_password.errors %}
-                {{form.password(class="form-control is-invalid")}}
-            {% else %}
-                {{form.password(class="form-control")}}
-            {% endif %}
-           
-        </div>
-
-        <div class="col-md-6 mb-3">
-            {{ form.repeat_password.label }}
-            {% if form.repeat_password.errors %}
-                {{form.repeat_password(class="form-control is-invalid")}}
-                <div class="invalid-feedback">
-                    {{form.repeat_password.errors[0]}}
-                </div>
-            {% else %}
-                {{form.repeat_password(class="form-control")}}
-            {% endif %}
-        </div>
-    </div>
-
-
-    <div class="row"> 
-        <div class="col-md-6 mb-3">
-            {{form.phone.label}}
-            {% if form.phone.errors %}
-                {{form.phone(class="form-control is-invalid")}}
-                <div class="invalid-feedback">
-                    {{form.phone.errors[0]}}
-                </div>
-            {% else %} 
-                {{form.phone(class="form-control")}}
-            {% endif %}
-        </div>
-
-
-        <div class="col-md-6 mb-3">
-            {{form.birth_date.label}}
-            {% if form.birth_date.errors %}
-                {{form.birth_date(class="form-control is-invalid")}}
-                <div class="invalid-feedback">
-                    {{form.birth_date.errors[0]}}
-                </div>
-            {% else %}
-                {{form.birth_date(class="form-control")}}
-            {% endif %}
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-md-6 mb-3">
-            {{ form.school_name.label }}
-
-            {% if form.school_name.errors or form.school_id.errors %}
-                {{form.school_name(class="form-control is-invalid")}}
-                <div class="invalid-feedback">
-                    {{form.school_name.errors[0]}}
+                <ul class="list-group" id="list-group-schools" style="max-height : 300px; overflow-y: scroll;">
                     
-                </div>
-            {% else %}
-                {{form.school_name(class="form-control selectpicker")}}
-            {% endif %}
-            
-            <ul class="list-group" id="list-group-schools" style="max-height : 300px; overflow-y: scroll;">
-                
-            </ul>
-
-            
-            
+                </ul>          
+            </div>
+        
+            <div class="col-md-6 mb-3">
+                {{form.school_year.label}}
+    
+                {% if form.school_year.errors %}
+                    {{form.school_year(class="form-control is-invalid")}}
+                    <div class="invalid-feedback">
+                        {{form.school_year.errors[0]}}
+                    </div>
+                {% else %}
+                    {{form.school_year(class="form-control")}}
+                {% endif %}
+            </div>
         </div>
     
-        <div class="col-md-6 mb-3">
-            {{form.school_year.label}}
-  
-            {% if form.school_year.errors %}
-                {{form.school_year(class="form-control is-invalid")}}
-                <div class="invalid-feedback">
-                    {{form.school_year.errors[0]}}
-                </div>
-            {% else %}
-                {{form.school_year(class="form-control")}}
-            {% endif %}
-        </div>
-    </div>
-    
-      <input type="text" name="school_id" id="school_id" value = "" style="display : none;" /> 
+      <input type="text" name="school_id" id="school_id" value = "{% if form.school_id %}{{form.school_id.data}}{% endif %}" style="display : none;" /> 
 
-      <button class="btn" type="submit" style="background-color: #E26F98; color: white">Registrati</button>
+      {% endif %}
+      <button class="btn" type="submit" style="background-color: #E26F98; color: white">{% if not registration_prof %} Registrati {% else %} Registra professore {% endif %}</button>
+    
+    
     
 </form>
 
@@ -257,29 +266,28 @@
 
     }
 
-    //user is "finished typing," do something
+  
     function doneTyping () {
         $('#list-group-schools').empty()
-    //do something
+ 
         let nome = $('#school_name').val()
        
-
-            $.ajax({
-                type : 'get',
-                url : '/action/get/schools?name='+nome,
-                success : function (data){
-                    if (data["success"]) {
-                       
-                        for (let i = 0; i < data["result"].length; i++) {
-                            $('#list-group-schools').append("<li class='list-group-item list-group-item-action'\
-                            onclick='set_data_student_school(" + 
-                            data["result"][i]["School_id"] +")' id='" + data["result"][i]["School_id"] + "'" + "style='cursor : pointer;'>" + 
-                            data["result"][i]["School_name"] + " (" + data["result"][i]["School_city"]+") - " + data["result"][i]["School_address"] + "</li>")   
-                        } 
-                        
-                    }                 
-                },             
-            });
+        $.ajax({
+            type : 'get',
+            url : '/action/get/schools?name='+nome,
+            success : function (data){
+                if (data["success"]) {
+                    
+                    for (let i = 0; i < data["result"].length; i++) {
+                        $('#list-group-schools').append("<li class='list-group-item list-group-item-action'\
+                        onclick='set_data_student_school(" + 
+                        data["result"][i]["School_id"] +")' id='" + data["result"][i]["School_id"] + "'" + "style='cursor : pointer;'>" + 
+                        data["result"][i]["School_name"] + " (" + data["result"][i]["School_city"]+") - " + data["result"][i]["School_address"] + "</li>")   
+                    } 
+                    
+                }                 
+            },             
+        });
     }
 
     function set_data_student_school(id) {

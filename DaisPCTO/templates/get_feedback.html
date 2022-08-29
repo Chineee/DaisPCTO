@@ -2,7 +2,7 @@
 
 {% block content %}
 
-    <table class="table table-dark table-striped">
+    <table class="table" style="background-color: #ae8bc9; color : white">
         <thead>
         <tr>
             <th scope="col">#</th>
@@ -11,7 +11,7 @@
         </tr>
         </thead>
         <tbody>
-        <tr>
+        <tr style="background-color : #e8def0; color : black;">
             {% if avg_grades.CourseGrade != None %}
                 <th scope="row">1</th>
                 <td> {{"%.2f" | format(avg_grades.CourseGrade)}} </td>
@@ -23,7 +23,7 @@
 
 
     
-        <table class="table table-dark table-striped">
+        <table class="table" style="background-color: #ae8bc9; color : white">
             <thead>
             <tr>
                 <th scope="col">#</th>
@@ -33,7 +33,7 @@
             <tbody>
             {% for i in range(comments | length) %} 
                
-                <tr>
+                <tr style="background-color: {% if loop.index % 2 == 0 %} #e8def0 {% else %} #e8d7f5 {% endif %}; color : black">
                     <th scope="row">{{i+1}}</th>
                     <td> {{comments[i].Comment }} </td>
                 </tr>

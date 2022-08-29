@@ -1,3 +1,4 @@
+from operator import contains
 from flask import Blueprint, render_template, url_for, redirect, flash, abort, request, jsonify
 from flask_login import current_user, login_required
 from DaisPCTO.auth import role_required
@@ -20,6 +21,10 @@ class AddCourse(FlaskForm):
     description = TextAreaField("Descrizione", render_kw={"placeholder" : "Descrizione"})
     max_students = IntegerField("Numero massimo di studenti", validators=[NumberRange(min = 0, message="Non puoi inserire un numero di studenti negativo")], default=0)
     min_hour_certificate = IntegerField("Ore minime per ottenere il certificato", validators=[NumberRange(min=0, message="Non puoi inserire un numero di ore negative")], default=0)
+
+    def validate_course_id(self, course_id):
+        if ' ' in course_id.data:
+            raise ValidationError("L'id non può contenere spazi")
 
 
 class ChangeInformationCourse(FlaskForm):

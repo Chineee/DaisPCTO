@@ -1,10 +1,12 @@
-from flask import Flask, render_template, session as flasksession, redirect, url_for, request
+from flask import Flask, render_template, session as flasksession, redirect, url_for, request, flash
 from flask_login import current_user, LoginManager
-from DaisPCTO.db import get_user_by_id, extestone, get_schools_with_name
+from DaisPCTO.auth import role_required
+from DaisPCTO.db import get_student_certificates, compare_password, update_user_psw, get_student_courses, get_user_by_id, extestone, get_schools_with_name, get_student_by_user, get_school_by_id
 from flask_bootstrap import Bootstrap
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask.json import jsonify
 from flask_gravatar import Gravatar
+from flask_mail import Mail, Message
 import base64 
 import io
 import qrcode
@@ -30,16 +32,41 @@ import json
 
 def create_app():
     app = Flask(__name__)
+
     app.config['SECRET_KEY'] = "mysecretkey"
+    app.config['MAIL_SERVER']='smtp.gmail.com'
+    app.config['MAIL_USERNAME'] = "daispcto@gmail.com"
+    app.config['MAIL_PASSWORD'] = "dbnmksyoukdicynn"
+    app.config['MAIL_PORT'] = 465
+    app.config['MAIL_USE_TLS'] = False
+    app.config['MAIL_USE_SSL'] = True
+
     csrf = CSRFProtect()
     csrf.init_app(app)
     Bootstrap(app)
-       
+    mail = Mail(app)
     login_manager = LoginManager()
     login_manager.login_view = "auth_blueprint.login"
     login_manager.init_app(app)
     login_manager.login_message = "Devi accedere per poter visitare questa pagina!"
 
+
+    @app.route("/send_email")
+    @role_required("Admin")
+    def send_email():
+        msg = Message(
+            request.args.get("obj"),
+            sender="daispcto@gmail.com",
+            recipients = [request.args.get("recipient")]
+        )
+        msg.body = f"Gentile utente, \n\
+        sei stato registrato con successo al sito DaisPCTO! \n\n\
+        La password per accedere è la seguente :    {request.args.get('password')} \n\
+        Cambiala al più presto! \n\n\
+        Buona Giornata!"
+
+        mail.send(msg)
+        return redirect(url_for("home"))
     # admin = Admin(app, index_view=UserModelView())
 
     # admin.add_view(MyView(User, Session()))
@@ -105,11 +132,36 @@ def create_app():
         extestone()
         return ""
 
-    @app.route("/")
-    def home():            
-        return render_template("page.html", user=current_user, is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"))
-    
-    
+    @app.route("/", methods=['GET', 'POST'])
+    def home():    
+        if request.method == 'POST':
+            old_psw = request.form['oldpassword']   
+            if compare_password(current_user.Password, old_psw):
+                new_psw = request.form['newpassword']
+                new_psw_2 = request.form['newpassword2']
+                if len(new_psw) >= 8 and new_psw == new_psw_2:
+                    control = [False, False, False]
+                    for c in new_psw:
+                        if c.isupper():
+                            control[0] = True 
+                        elif c.isdigit():
+                            control[1] = True 
+                        elif c in ['@','_','-','*','$','%','&','+','£']:
+                            control[2] = True 
+                    if control[0] and control[1] and control[2]:
+                        update_user_psw(current_user.get_id(), new_psw)
+                    else:
+                        flash("la psw attuale fa cagare")
+                else:
+                    flash("Due psw diverse")
+            else:
+                flash("Vecchia psw sbagliata")
+
+
+        return render_template("page.html", user=current_user, 
+                                            is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"),
+                                            is_student = False if not current_user.is_authenticated else current_user.hasRole("Student"))    
+
     @login_manager.user_loader
     def load_user(UserID):   
         return get_user_by_id(UserID)
@@ -126,6 +178,13 @@ def create_app():
     def to_minutes(time):
         return time.total_seconds()/60
 
+    @app.template_filter("get_student_info")
+    def get_student_info(user):
+        s = get_student_by_user(user.UserID)
+        if s is not None:
+            school_name = get_school_by_id(s.SchoolID).SchoolName
+            return (s.birthDate.strftime("%d-%m-%Y"), school_name, s.City)
+
     @app.template_filter("get_completed_percentage")
     def get_completed_percentage(user_minutes, needed_hour):
         if needed_hour == 0:
@@ -141,7 +200,6 @@ def create_app():
     @app.template_filter("can_be_booked")
     def can_be_booked(lesson, number_reservation_for_each_lesson):
         '''
-
         data una lezione frontale, controlliamo il numero di studenti che hanno prenotato il posto in aula per questa, se supera o è uguale al numero di posti disponibili
         ritorniamo false. Questo valore viene controllato da jinja, e si comporta in modo diverso a seconda della risposta:
         False : Il bottone per prenotarsi sarà disattivato e non potrà essere premuto
