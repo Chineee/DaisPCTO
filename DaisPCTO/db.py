@@ -5,7 +5,7 @@ from DaisPCTO.models import Certificate, Feedback,\
 from sqlalchemy import create_engine, and_, not_, or_, not_, exc, func, case, text
 from sqlalchemy.orm import sessionmaker
 from flask_login import current_user
-from flask import flash
+from flask import flash, session as flasksession
 from flask_bcrypt import generate_password_hash, check_password_hash
 import random 
 import datetime 
@@ -23,12 +23,11 @@ engine = {
 # engine2 = create_engine("postgresql://Student:studente01@localhost/testone8", echo=False, pool_size=20, max_overflow=0)
 
 Session = sessionmaker()
-en = engine['Admin']
-sess2 = sessionmaker(bind=en)
 
-def get_engine(id_=None):
+def get_engine(flask_request = False):
     
-    if id_ is not None:
+    if flask_request: #la flask_request viene settata a true solo quando viene chiamata la get_user_by_id attraverso la load user, ovvero quando l'utente deve ancora essere
+        #caricato
         return engine['Admin']
 
     if current_user == None:
@@ -45,6 +44,33 @@ def get_engine(id_=None):
         return engine['QrReader']
 
     return None
+
+    
+
+    # if id_ is not None:
+    #     return engine['Admin']
+
+    # if current_user == None:
+    #     return engine['Anonymous']
+
+    # if not current_user.is_authenticated:
+    #     return engine['Anonymous']
+
+    # if "roles" not in flasksession:
+    #     return engine['Anonymous']
+
+    # if "Admin" in flasksession['roles']:
+    #     return engine['Admin']
+    # if "QrReader" in flasksession['roles']:
+    #     return engine['QrReader']
+    # if "Professor" in flasksession['roles']:
+    #     return engine['Professor']
+    # if "Student" in flasksession['roles']:
+    #     return engine['Student']
+    # if "Anonymous" in flasksession['roles']:
+    #     return engine['Anonymous']
+
+    # return None
 
 def extestone():
     # try:
@@ -90,18 +116,23 @@ def extestone():
 
     #     return res
 
-    try:
-        s  = sess2()
-        s.query(Feedback).all()
-        en = engine['Anonymous']
-        s = sess2()
-        s.query(Feedback).all()
-        print("ssss")
-    except Exception as e:
-        print(e)
-        raise e
+    pass
 
+
+def get_users_role(user_id):
+    try:
+        session = Session(bind=engine['Admin'])
+        roles = session.query(Role)\
+            .join(UserRole, UserRole.RoleID == Role.RoleID)\
+            .filter(UserRole.UserID == user_id)\
+            .all()
+    except exc.SQLAlchemyError as e:
+        session.close()
+        return []
     
+    roles = [r.Name for r in roles]
+    print(roles)
+    return roles
     
 def exists_role_user(user_id, role):
     try:
@@ -131,9 +162,9 @@ def get_student_by_user(user_id):
         return None
 
 
-def get_user_by_id(id):
+def get_user_by_id(id, flask_request=False):
     try:
-        session = Session(bind=get_engine(id))
+        session = Session(bind=get_engine(flask_request))
     # session.connection(execution_options={'isolation_level': 'SERIALIZABLE', "postgresql_readonly" : True})
     # try:
     #     session.add(User(UserID=10))

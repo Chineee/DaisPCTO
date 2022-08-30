@@ -74,7 +74,6 @@ class Student(Base):
     City = Column(String)
     Address = Column(String)
     
-
     __table_args__ = ()
 
 class Professor(Base):

@@ -2,7 +2,7 @@ from symtable import SymbolTableFactory
 from flask import Blueprint, jsonify, render_template, url_for, redirect, flash, abort, request, logging
 from flask_login import current_user, login_required
 from DaisPCTO.auth import role_required
-from DaisPCTO.db import can_professor_modify, get_course_by_id, can_student_send_feedback, send_feedback, feedback_comments, avg_feedback
+from DaisPCTO.db import can_professor_modify, get_course_by_id, can_student_send_feedback, send_feedback, feedback_comments, avg_feedback, get_users_role
 from flask_wtf import FlaskForm, CSRFProtect
 from wtforms import StringField, DateField, SelectField, BooleanField, SubmitField, validators, SelectMultipleField, IntegerField, TextAreaField, TimeField
 from wtforms.validators import DataRequired, ValidationError
@@ -42,7 +42,8 @@ def feedback_home(coursePage):
     return render_template("feedback.html",
                            is_professor = False,
                            user = current_user,
-                           form = form
+                           form = form,
+                           roles = get_users_role(current_user.get_id())
                            )
 
 
@@ -58,4 +59,5 @@ def get_feedback(coursePage):
                             is_professor = True,
                             user = current_user,
                             comments = feedback_comments(coursePage.upper()),
-                            avg_grades = avg_feedback(coursePage.upper()))
+                            avg_grades = avg_feedback(coursePage.upper()),
+                            roles = get_users_role(current_user.get_id()))

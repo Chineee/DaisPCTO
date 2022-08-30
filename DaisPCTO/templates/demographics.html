@@ -224,8 +224,6 @@
             google.charts.load("current", {packages:["corechart"]});
             google.charts.setOnLoadCallback(drawChart);
 
-
-
             function drawChart() {
                 
                 const table = [["Ore di lezione seguite", "Numero studenti", {role: 'style'}]]
@@ -240,15 +238,13 @@
                 }
 
                 var my_data = google.visualization.arrayToDataTable(table);
-
                 var options = {
                  
                     title: 'Grafico degli studenti che hanno seguito le lezioni',
                     vAxis : {
                         format:'0',
                         // ticks: [0, 10, 20, 30, 40, 50]
-                    }
-                  
+                    }   
                 };
 
                 var chart = new google.visualization.ColumnChart(document.getElementById('hours_att'));

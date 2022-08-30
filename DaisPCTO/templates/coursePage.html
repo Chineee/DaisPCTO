@@ -4,7 +4,7 @@
     <h1>
         <center>
             {{ course.Name }} - {{ course.CourseID }} 
-            {% if is_professor == False and course.OpenFeedback == True and can_send == True %} 
+            {% if "Student" in roles and course.OpenFeedback == True and can_send == True %} 
                 <a href="/courses/{{course.CourseID}}/feedback">
                     <button type="button" class="btn" style="background-color: #F3A65E; border-color: #F3A65E; color: white"> Invia feedback! </button>
                 </a>
@@ -132,7 +132,7 @@
 
             {{ subs }}/{% if course.MaxStudents == 0 %}-{% else %}{{ course.MaxStudents }}{% endif %}
 
-            {% if is_professor == False and current_user.is_authenticated %}
+            {% if current_user.is_authenticated and "Student" in roles %}
                 <span style="display : inline-block; margin-left: 40px">
                     {% if subs == course.MaxStudents and course.MaxStudents > 0 and iscritto == False%}
                         <button class="btn btn-danger disabled" disabled>Iscrizioni piene</button>

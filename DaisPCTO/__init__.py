@@ -1,7 +1,7 @@
 from flask import Flask, render_template, session as flasksession, redirect, url_for, request, flash
 from flask_login import current_user, LoginManager
 from DaisPCTO.auth import role_required
-from DaisPCTO.db import get_student_certificates, compare_password, update_user_psw, get_student_courses, get_user_by_id, extestone, get_schools_with_name, get_student_by_user, get_school_by_id
+from DaisPCTO.db import get_student_certificates, compare_password, get_users_role, update_user_psw, get_student_courses, get_user_by_id, extestone, get_schools_with_name, get_student_by_user, get_school_by_id
 from flask_bootstrap import Bootstrap
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask.json import jsonify
@@ -134,6 +134,7 @@ def create_app():
 
     @app.route("/", methods=['GET', 'POST'])
     def home():    
+        
         if request.method == 'POST':
             old_psw = request.form['oldpassword']   
             if compare_password(current_user.Password, old_psw):
@@ -160,11 +161,13 @@ def create_app():
 
         return render_template("page.html", user=current_user, 
                                             is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"),
-                                            is_student = False if not current_user.is_authenticated else current_user.hasRole("Student"))    
+                                            is_student = False if not current_user.is_authenticated else current_user.hasRole("Student"),
+                                            is_qr = False if not current_user.is_authenticated else current_user.hasRole("QrReader"),
+                                            roles = get_users_role(current_user.get_id()))    
 
     @login_manager.user_loader
     def load_user(UserID):   
-        return get_user_by_id(UserID)
+        return get_user_by_id(UserID, flask_request=True)
 
     @app.errorhandler(404)
     def page_not_found(e):

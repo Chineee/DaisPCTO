@@ -5,7 +5,7 @@ from DaisPCTO.auth import role_required
 from DaisPCTO.db import add_multiple_lesson, can_professor_modify, exists_role_user, formalize_student, get_classrooms, get_course_by_id, get_lesson_by_id, get_students_by_course, get_user_by_id, get_professor_by_course_id, \
     change_course_attr, add_lesson, get_lessons_by_course_id, delete_lesson, get_course_by_lesson_id,\
     confirm_attendance, change_lesson_information, get_lessons_bookable, get_full_lessons, book_lesson, delete_reservation,\
-    get_reservation_from_token, get_classrooms, formalize_student, get_lesson_from_token, update_lesson
+    get_reservation_from_token, get_classrooms, formalize_student, get_lesson_from_token, get_users_role, update_lesson
 from flask_wtf import FlaskForm, CSRFProtect
 from wtforms import StringField, DateField, SelectField, BooleanField, SubmitField, validators, SelectMultipleField, IntegerField, TextAreaField, TimeField
 from wtforms.validators import DataRequired, ValidationError
@@ -94,11 +94,6 @@ class UpdateLesson(FlaskForm):
             if classroom_update.data != "" and classroom_update is not None and classroom_update.data is not None:
                 raise ValidationError("Non è richiesta l'aula per le lezione online")
 
-@lessons.route('/')
-def lessons_home():
-    pass
-
-
 @lessons.route('/courses/<coursePage>/lessons', methods=['GET', 'POST'])
 def lessons_course_home(coursePage):
     form = AddLesson()
@@ -135,7 +130,6 @@ def lessons_course_home(coursePage):
     elif form3.submit_update.data and form3.validate_on_submit() and can_modify:
         
         answer = update_lesson(form3.lesson_id.data, form3)
-        print(answer)
         
         if answer == 'ClashError': #se l'inserimento non va a buon fine, avvertiamo il chiamante
             form3.classroom_update.errors.append("Aula già prenotata per quell'ora")
@@ -164,7 +158,8 @@ def lessons_course_home(coursePage):
                             list_lessons = list_lessons,
                             course=get_course_by_id(coursePage.upper()),
                             form2 = form2,
-                            form3 = form3
+                            form3 = form3,
+                            roles = get_users_role(current_user.get_id())
                         )
 
 
@@ -179,7 +174,8 @@ def reservations():
                             is_professor = False,
                             user=current_user,
                             subs_list = lessons_bookable,
-                            lessons_seats_reserved = number_of_reservations
+                            lessons_seats_reserved = number_of_reservations,
+                            roles = get_users_role(current_user.get_id())
                             )
 
 
@@ -195,7 +191,8 @@ def private():
                             is_professor = False,
                             user=current_user,
                             subs_list = lessons_bookable,
-                            lessons_seats_reserved = number_of_reservations
+                            lessons_seats_reserved = number_of_reservations,
+                            roles = get_users_role(current_user.get_id())
 
                             )
 
@@ -205,7 +202,10 @@ def private():
 def qreader():
     is_reader_qr = exists_role_user(current_user.get_id(), "QrReader")
 
-    return render_template("testqr.html", is_reader = is_reader_qr, user=current_user, is_professor=False if not current_user.is_authenticated else current_user.hasRole("Professor"))
+    return render_template("testqr.html", is_reader = is_reader_qr, 
+                                          user=current_user, 
+                                          is_professor=False if not current_user.is_authenticated else current_user.hasRole("Professor"),
+                                          roles = get_users_role(current_user.get_id()))
 
 #crea  la relazione studente-lezioni per certificare che lo studente ha seguito la lezione x
 #oppure se si tratta di una prenotazione di una frontallesson, esegue la prenotazione (a meno che i posti in aula non siano finiti)

@@ -52,24 +52,28 @@
           <li class="nav-item">
             <a class="nav-link {% if request.path == '/' %} active {% endif %}" aria-current="page" href="/">Home</a>
           </li>
+          {% if "QrReader" not in roles %}
           <li class="nav-item">
             <a class="nav-link {% if '/courses/' in request.path %} active {% endif %}" href="/courses"> Corsi </a>
           </li>
-          {% if is_professor == False and user.is_authenticated %}
+          {% endif %}
+          {% if "Student" in roles %}
           <li class="nav-item">
             <a href="/lessons/reservations"
               class="nav-link {% if request.path == '/lessons/reservations' %} active {% endif %}">Prenotazioni</a>
           </li>
+          {% endif %}
+          {% if "Student" in roles or "QrReader" in roles %}
           <li class="nav-item">
             <a href="/qr" class="nav-link {% if request.path == '/qr' %} active {% endif %}"> Registra Prenotazione</a>
           </li>
+          {% endif %} 
+          {% if "Admin" in roles %}
           <li class="nav-item">
             <a href="/register/professor" class="nav-link {% if request.path == '/qr' %} active {% endif %}"> Registra Professore</a>
           </li>
-          {% if is_admin %} 
-
           {% endif %}
-          {% endif %}
+   
           <li class="nav-item dropdown end-0">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown"
               aria-expanded="false">
@@ -90,18 +94,19 @@
               <li>
                 <hr class="dropdown-divider">
               </li>
-              <li><a class="dropdown-item" href="/private"> Profilo </a></li>
-              <li><a class="dropdown-item" href="/courses/mycourses"> I Miei Corsi </a></li>
-              <li><a class="dropdown-item" href="/courses/certificates"> I Miei Certificati</a></li>
+              
+              {% if "Student" in roles %} <li><a class="dropdown-item" href="/courses/certificates"> I Miei Certificati</a></li> {% endif %}
               {% endif %}
             </ul>
           </li>
+          {% if "Professor" in roles or "Admin" in roles %}
           <li class="nav-item">
-            {% if is_professor %}
+           
             <a class="nav-link {% if request.path == '/courses/add' %} active {% endif %}" aria-current="page"
               href="/courses/add"> Aggiungi Corso </a>
-            {% endif %}
+      
           </li>
+          {% endif %}
         </ul>
         {% block searchbar %}
 
@@ -109,6 +114,7 @@
       </div>
     </div>
   </nav>
+
 
   <div class="container">
 
@@ -124,7 +130,7 @@
               {{messages[0][1]}}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
           </div>
-        {% elif messages and messages[0][1] == "Il professore di riferimento ha ricevuto una mail di conferma contenente la password." %}
+        {% elif messages and ( messages[0][1] == "Il professore di riferimento ha ricevuto una mail di conferma contenente la password." or messages[0][1] == "Sei già loggato!" ) %}
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{messages[0][1]}}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -137,9 +143,9 @@
     {% if user.is_authenticated %}
       <img src="{{user.email | gravatar }}" class="rounded-circle shadow-1-strong me-3" height="300" width="300" alt="avatar" style="position : relative; top : 100px; left : 50px;">
       <div class="list-group" style="position : absolute; top : 240px; left : 750px; font-size: large;">
-        <p style="font-size: xx-large;"><strong>{{user.Name}} {{user.Surname}}</strong> -- {% if is_professor %} Professore {% elif is_student %} Studente {% else %} Admin {% endif %}</p>
+        <p style="font-size: xx-large;"><strong>{{user.Name}} {{user.Surname}}</strong> -- {% if is_professor %} Professore {% elif is_student %} Studente {% elif is_qr %} QrReader {% else %} Admin {% endif %}</p>
         <p > <strong>E-Mail :</strong> {{user.email}}</p>
-        {% if is_student %}
+        {% if "Student" in roles %}
           {% set student_info = user | get_student_info %}
           <p ><strong>Data di Nascita :</strong> {{student_info[0]}} </p>
           <p ><strong>Città di Provenienza :</strong> {{student_info[2]}} </p>

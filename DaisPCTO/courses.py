@@ -6,7 +6,7 @@ from DaisPCTO.auth import role_required
 from DaisPCTO.db import add_course, can_student_send_feedback, city_subscribed, gender_subscribed, get_course_by_id, can_professor_modify, \
     get_user_by_id, get_professor_by_course_id, change_course_attr, hours_attended, \
     count_student, change_feedback, subscribe_course, age_subscribed, \
-    delete_subscription, is_subscribed, get_courses_list, get_professor_courses, get_student_courses, send_certificate_to_students, get_student_certificates, type_school_subscribed, get_students_by_course
+    delete_subscription, is_subscribed, get_courses_list, get_professor_courses, get_users_role, get_student_courses, send_certificate_to_students, get_student_certificates, type_school_subscribed, get_students_by_course
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, EmailField, SelectField, DateField, BooleanField, SubmitField, validators, SelectMultipleField, IntegerField, TextAreaField
 from wtforms.validators import DataRequired, EqualTo, ValidationError, Length, NumberRange
@@ -45,7 +45,8 @@ def certificate():
     return render_template("certificates.html",
                             is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"),
                             user = current_user,
-                            certificates = certificates) 
+                            certificates = certificates,
+                            roles = get_users_role(current_user.get_id())) 
 
 @courses.route('/')
 def home_courses():
@@ -54,7 +55,8 @@ def home_courses():
    return render_template("courses.html",
                           course_list = course_list,
                           is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"),
-                          user = current_user
+                          user = current_user,
+                          roles = get_users_role(current_user.get_id())
                          )
               
 @courses.route('/subscriptions', methods=['GET', 'POST'])
@@ -79,7 +81,8 @@ def private():
     return render_template("courses_private.html",
                            is_professor = is_professor,
                            user = current_user,
-                           course_list = courses_list
+                           course_list = courses_list,
+                           roles = get_users_role(current_user.get_id())
                            )
 
 @courses.route('/add', methods=['GET', 'POST'])
@@ -96,7 +99,8 @@ def add():
     return render_template("addCourse.html", 
                             form=form,
                             user=current_user, 
-                            is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"))
+                            is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"),
+                            roles = get_users_role(current_user.get_id()))
 
 @courses.route('/<coursePage>', methods=['GET', 'POST'])
 def course(coursePage):
@@ -130,7 +134,8 @@ def course(coursePage):
          form = form,
          subs = count_student(coursePage.upper()),
          iscritto = is_subscribed(current_user.get_id(), coursePage.upper()),
-         can_send = can_student_send_feedback(current_user.get_id(), coursePage.upper()))
+         can_send = can_student_send_feedback(current_user.get_id(), coursePage.upper()),
+         roles = get_users_role(current_user.get_id()))
     #controlliamo chi sta accedendo
     #se è un prof che ha creato il corso o che fa parte della relazione facciamo comparire un bottone "modifica corso"
     #renderizza ad una pagina modifica corso accessibile solo ai prof che l'hanno modificata
@@ -167,7 +172,8 @@ def students_list(coursePage):
                             is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"),
                             user = current_user,
                             students = students_list_info,
-                            course = get_course_by_id(coursePage.upper())
+                            course = get_course_by_id(coursePage.upper(),
+                            roles = get_users_role(current_user.get_id()))
                             )
 
 @courses.route('/<coursePage>/demographics')
@@ -190,7 +196,8 @@ def demographics(coursePage):
                             is_professor = True,
                             user = current_user,
                             course_id = coursePage.upper(),
-                            no_student = no_student)
+                            no_student = no_student,
+                            roles = get_users_role(current_user.get_id()))
 
 
 @courses.route('/action/get/student_gender')

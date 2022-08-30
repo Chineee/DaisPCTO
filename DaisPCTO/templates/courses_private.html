@@ -18,7 +18,7 @@
 {% endblock headerPage %}
 
 {% block footerPage %}
-    {% if not is_professor %}
+    {% if "Student" in roles %}
     {% set percentage = (course_list[i].Hours | to_minutes) %}
     {% set percentage2 = percentage | get_completed_percentage(course_list[i].MinHourCertificate) %}
 

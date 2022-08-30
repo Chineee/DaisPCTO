@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, url_for, redirect, flash, abort, r
 from flask_login import current_user, login_required
 from DaisPCTO.auth import role_required
 # from DaisPCTO.models import *
-from DaisPCTO.db import get_course_by_id, get_questions_by_course, is_user_owner_post, delete_post, get_answers_by_question_id, add_post, update_post
+from DaisPCTO.db import get_course_by_id, get_questions_by_course, is_user_owner_post, delete_post, get_answers_by_question_id, add_post, update_post, get_users_role
 from flask_wtf import FlaskForm
 from wtforms import TextAreaField, IntegerField, SubmitField
 from wtforms.validators import DataRequired
@@ -29,9 +29,6 @@ def forum(coursePage):
 
     form = AddPost()
 
-    form2 = UpdatePost()
-
-
     if form.validate_on_submit():
         print('aassdasa')
         add_post(form, coursePage.upper())
@@ -52,15 +49,8 @@ def forum(coursePage):
                             user = current_user,
                             qna = qna,
                             form=form,
-                            course = get_course_by_id(coursePage.upper()))
-
-# @QnA.route('/action/post/delete')
-# @login_required
-# def delete():
-#     post_id = request.args.get('postid')
-#     if is_user_owner_post(current_user.get_id(), post_id):
-#         delete_post(post_id)
-
+                            course = get_course_by_id(coursePage.upper()),
+                            roles = get_users_role(current_user.get_id()))
 
 @QnA.route('/action/post/update', methods=['POST'])
 @login_required

@@ -2,7 +2,7 @@ from flask_login import login_required, login_user, current_user, logout_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, EmailField, SelectField, DateField, BooleanField, SubmitField, validators, SelectMultipleField
 from wtforms.validators import DataRequired, EqualTo, ValidationError, Length
-from flask import Blueprint, render_template, url_for, redirect, flash, abort, request
+from flask import Blueprint, render_template, url_for, redirect, flash, abort, request, session as flasksession
 from flask_mail import Mail, Message
 from DaisPCTO.models import *
 from DaisPCTO.db import *
@@ -128,7 +128,10 @@ def register():
         elif result == True:
             return redirect(url_for("home"))
     
-    return render_template("register.html", form=form, user=current_user, is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"))
+    return render_template("register.html", form=form, 
+                                            user=current_user, 
+                                            is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"),
+                                            roles = get_users_role(current_user.get_id()))
     
 
 @auth.route('/register/professor', methods=['GET', 'POST'])
@@ -155,7 +158,8 @@ def register_professor():
 
     return render_template("register.html", form = form, user = current_user,
                                             registration_prof = True,
-                                            is_professor = True)       
+                                            is_professor = True,
+                                            roles = get_users_role(current_user.get_id()))       
                                             
 
 @auth.route('/login', methods=['GET', 'POST'])
@@ -171,6 +175,7 @@ def login():
         if user and compare_password(user.Password, form.password.data):
             login_user(user, remember=form.remember_me.data)
             next = request.args.get('next')
+            
             return redirect(next or url_for("home"))
         else:
             form.email.errors.append("")
@@ -178,12 +183,16 @@ def login():
             flash("I campi inseriti non sono corretti")
             
 
-    return render_template("login.html", form = form, user=current_user, is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"))
+    return render_template("login.html", form = form, 
+                                        user=current_user, 
+                                        is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"),
+                                        roles = get_users_role(current_user.get_id()))
         
 
 @auth.route('/logout')
 def logout():
     logout_user()
+
     return redirect(url_for("home"))
 
 
