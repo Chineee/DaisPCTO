@@ -172,9 +172,9 @@ def students_list(coursePage):
                             is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"),
                             user = current_user,
                             students = students_list_info,
-                            course = get_course_by_id(coursePage.upper(),
+                            course = get_course_by_id(coursePage.upper()),
                             roles = get_users_role(current_user.get_id()))
-                            )
+                            
 
 @courses.route('/<coursePage>/demographics')
 @role_required("Professor")

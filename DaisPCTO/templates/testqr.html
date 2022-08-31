@@ -41,15 +41,14 @@
                 url : '/action/lessons?action=formalize&lesson_id=-1&token='+decodedText,
                 success : function(data) {
                     if (data['success'] == true) {
-                        $('.list-group').append('<div href="#" class="list-group-item-success"> PRENOTAZIONE AVVENUTA CON SUCCESSO </a>')
+                        $('.list-group').prepend('<div class="list-group-item-success"> PRENOTAZIONE AVVENUTA CON SUCCESSO </div>')
                     } else {
-                        $('.list-group').append('<a href="#" class="list-group-item-danger"> ERRORE </a>')
+                        $('.list-group').prepend('<div href="#" class="list-group-item-danger"> ERRORE </div>')
                     }
                 },
 
                 error : function() {
                     console.log(decodedText)
-                    console.log("oh merda")
                 }
                 
             })
@@ -66,7 +65,7 @@
 
         html5QrcodeScanner.render(onScanSuccess, onScanFailure);
     </script>  
-    {% else %}  
+    {% elif "Student" in roles %}  
     <script type="text/javascript">
         var csrf_token = "{{ csrf_token() }}";
 

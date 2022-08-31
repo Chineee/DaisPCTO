@@ -139,7 +139,7 @@ def exists_role_user(user_id, role):
         session = Session(bind=engine['Admin'])
         q = session.query(UserRole).join(Role).filter(and_(UserRole.UserID == user_id, Role.Name == role)).first() is not None
     except Exception as e:
-        print(e) 
+        session.close()
         q = False
     finally:
         session.close()
@@ -889,7 +889,6 @@ def update_lesson(lesson_id, form):
 
         session.query(Lesson).filter(Lesson.LessonID == lesson_id).update({Lesson.Date : form.date_update.data, Lesson.StartTime : form.start_time_update.data, Lesson.EndTime : form.end_time_update.data, Lesson.IsDual : is_new_lesson_dual})
         session.commit()
-        #se e solo se il commit è stato fatto correttamente allora controlliamo se dobbiamo fare update anche del resto
         
     except exc.SQLAlchemyError as e:
         session.rollback()

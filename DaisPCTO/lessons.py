@@ -193,8 +193,7 @@ def private():
                             subs_list = lessons_bookable,
                             lessons_seats_reserved = number_of_reservations,
                             roles = get_users_role(current_user.get_id())
-
-                            )
+                        )
 
 
 @lessons.route('/qr')
@@ -293,8 +292,7 @@ def action_lesson():
                         if date_1.total_seconds()/3600 <= 2 and date_1.total_seconds()/3600 >= 0:
                             confirm_attendance(reservation)
                             return jsonify({"success" : True})
-                        else:
-                            print("ELSE QUI AIUTO")
+                    
         
         return jsonify({"success" : False})
         
@@ -305,8 +303,8 @@ def action_lesson():
         azione pensata più per gli studenti online che ovviamente non si possono prenotare, tuttavia anche quelli in presenza possono farlo, nel caso non si siano potuti prenotare per tempo
         o per mancata scanerizzazione qrcode della loro prenotazione a causa di mal funzionamenti del tablet all'ingresso o quant'altro
         '''
-        # if not exists_role_user(current_user.get_id(), "Student"):
-        #     abort(401)
+        if not exists_role_user(current_user.get_id(), "Student"):
+            abort(401)
 
         token = request.args.get("token")
         
