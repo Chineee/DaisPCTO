@@ -41,10 +41,34 @@
 
 
         <h5>
-            Docenti
+            Docenti 
+            <!-- Button trigger modal -->
+            {% if "Professor" in roles %}
+            <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+                Aggiungi collaboratori
+            </button>
+            
+            <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">Inserisci email collaboratori</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                    <input type="text" class="form-control" id="email_prof" />
+                    </div>
+                    <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Annulla</button>
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal" onclick="add_professor('{{course.CourseID}}')">Aggiungi</button>
+                    </div>
+                </div>
+                </div>
+            </div>
+            {% endif %}
         </h5>
         <hr/>
-        <ul class="list-group d-inline-block">
+        <ul class="list-group d-inline-block" id="profs">
             {% for p in prof %}
                 <li class="list-group-item">{{ p.Name }} {{ p.Surname }}</li>
             {% endfor %}
@@ -216,6 +240,34 @@
     </div>
 
     <script>
+
+        var csrf_token = "{{ csrf_token() }}";
+
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrf_token);
+
+                }
+            }
+        });
+
+        function add_professor(course_id) {
+            let email = $('#email_prof').val()
+          
+            $.ajax({
+                url : '/courses/'+course_id+'/addprof?email=' + email,
+                type : 'post',
+                success : function(data) {
+                    if (data['success'] == true) {
+                        let name = data['name'];
+                        let surname = data['surname'];
+                        $('#profs').append('<li class = "list-group-item">' + name + " " + surname + "</li>")
+                    } 
+                } 
+            })
+        }
+
         $("#changeSubmit").click(() => {
             let max_students = $("#max_students");
             let min_hour = $("#min_hour_certificate");

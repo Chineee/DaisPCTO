@@ -45,80 +45,6 @@ def get_engine(flask_request = False):
 
     return None
 
-    
-
-    # if id_ is not None:
-    #     return engine['Admin']
-
-    # if current_user == None:
-    #     return engine['Anonymous']
-
-    # if not current_user.is_authenticated:
-    #     return engine['Anonymous']
-
-    # if "roles" not in flasksession:
-    #     return engine['Anonymous']
-
-    # if "Admin" in flasksession['roles']:
-    #     return engine['Admin']
-    # if "QrReader" in flasksession['roles']:
-    #     return engine['QrReader']
-    # if "Professor" in flasksession['roles']:
-    #     return engine['Professor']
-    # if "Student" in flasksession['roles']:
-    #     return engine['Student']
-    # if "Anonymous" in flasksession['roles']:
-    #     return engine['Anonymous']
-
-    # return None
-
-def extestone():
-    # try:
-    #     session=Session()
-    #     session.add(Lesson(LessonID=6666))
-    #     session.commit()
-    # except Exception as e:
-    #     print(e.orig.diag.message_primary)
-    #     session.rollback()
-    
-    
-    # try:
-    #     session = Session()
-    #     utenteGender = session.query(User).filter(User.Gender == 'M').first()
-    #     session.query(User).filter(User.email=='skele@gmail.com').update({User.Gender : 'Female'})
-    #     session.query(User).filter(User.email=='skele@gmail.com').update({User.Name : 'Marca'})
-    #     session.commit()
-    # except:
-    #     session.rollback()
-        #roleList = session.query(Role).all()
-
-        # for _ in range(10):
-        #     try:
-        #         session = Session()
-        #         session.add(Role(Name='Giorgio', RoleID=11))
-        #         session.commit()
-        #     except Exception as e:
-        #         session.rollback()
-        #     finally:
-        #         session.close()
-
-    # with open("Scuole.json") as f:
-    #     data = json.load(f)["@graph"]
-    #     res = []
-    #     session = Session()
-    #     for school in data:
-    #         try:
-    #             session.add(School(SchoolName = school["miur:DENOMINAZIONESCUOLA"], Type = school["miur:DESCRIZIONETIPOLOGIAGRADOISTRUZIONESCUOLA"], City = school["miur:PROVINCIA"], Region = school["miur:REGIONE"], Address = school["miur:INDIRIZZOSCUOLA"])) 
-    #             session.commit()
-    #         except:
-    #             session.rollback()
-       
-
-    #     return res
-
-    pass
-
-
 def get_users_role(user_id):
     try:
         session = Session(bind=engine['Admin'])
@@ -131,13 +57,14 @@ def get_users_role(user_id):
         return []
     
     roles = [r.Name for r in roles]
-    print(roles)
+ 
     return roles
     
 def exists_role_user(user_id, role):
     try:
         session = Session(bind=engine['Admin'])
-        q = session.query(UserRole).join(Role).filter(and_(UserRole.UserID == user_id, Role.Name == role)).first() is not None
+        # q = session.query(UserRole).join(Role).filter(and_(UserRole.UserID == user_id, Role.Name == role)).first() is not None
+        q = role in get_users_role(user_id)
     except Exception as e:
         session.close()
         q = False
@@ -228,8 +155,6 @@ def add_professor(user):
         session.rollback()
         session.close()
         
-
-
 def add_student(user, form):
 
     #MODIFICARE ADD STUDENT IN MODO CHE ADDI TUTTI GLI ALTRI CAMPI
@@ -258,6 +183,15 @@ def add_student(user, form):
 def compare_password(db_password, inserted_password):
     return check_password_hash(db_password, inserted_password)      
 
+def add_professor_course(course_id, prof_id):
+    try:
+        session = Session(bind=get_engine())
+        session.add(ProfessorCourse(CourseID=course_id, ProfessorID=prof_id))
+        session.commit()
+    except exc.SQLAlchemyError as e:
+        session.rollback()
+        
+
 def add_course(form):
     
     name = form.name.data
@@ -269,7 +203,7 @@ def add_course(form):
     try:
         session = Session(bind=get_engine())
         session.add(Course(OpenFeedback=False, CourseID=course_id, Name=name, Description = description, MaxStudents=max_students, MinHourCertificate = min_hours))
-        session.add(ProfessorCourse(CourseID=course_id, ProfessorID=current_user.get_id()))
+        add_professor_course(course_id, current_user.get_id())
         session.commit()
     except:
         session.rollback()
@@ -505,7 +439,6 @@ def get_student_courses(user_id):
 
         return query
     except Exception as e:
-        print("COSA?")
         print(e)
         return None
 
@@ -546,8 +479,7 @@ def get_lessons_bookable(user_id):
             .order_by(Lesson.Date, Lesson.StartTime, Course.Name)\
             .all()            
 
-    except Exception as e:
-        print(e)
+    except exc.SQLAlchemyError as e:
         return None
 
 def get_full_lessons():
@@ -856,8 +788,6 @@ def update_lesson(lesson_id, form):
     try:
         session = Session(bind=get_engine())
         
-        # actual_lesson = get_lesson_by_id(lesson_id)
-        
         is_current_lesson_frontal = session.query(FrontalLesson).filter(FrontalLesson.LessonID == lesson_id).first() is not None
         is_current_lesson_online = session.query(OnlineLesson).filter(OnlineLesson.LessonID == lesson_id).first() is not None
         
@@ -884,9 +814,7 @@ def update_lesson(lesson_id, form):
         elif form.lesson_type_update.data == "Duale" and not is_current_lesson_frontal:
             session.add(FrontalLesson(LessonID=lesson_id, ClassroomID = form.classroom_update.data))
             session.query(OnlineLesson).filter(OnlineLesson.LessonID == lesson_id).update({OnlineLesson.RoomLink : form.link_update.data, OnlineLesson.RoomPassword : form.password_update.data})
-        #######################
-    
-
+      
         session.query(Lesson).filter(Lesson.LessonID == lesson_id).update({Lesson.Date : form.date_update.data, Lesson.StartTime : form.start_time_update.data, Lesson.EndTime : form.end_time_update.data, Lesson.IsDual : is_new_lesson_dual})
         session.commit()
         

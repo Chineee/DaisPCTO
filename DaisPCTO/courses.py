@@ -3,10 +3,10 @@ from flask import Blueprint, render_template, url_for, redirect, flash, abort, r
 from flask_login import current_user, login_required
 from DaisPCTO.auth import role_required
 # from DaisPCTO.models import *
-from DaisPCTO.db import add_course, can_student_send_feedback, city_subscribed, gender_subscribed, get_course_by_id, can_professor_modify, \
+from DaisPCTO.db import add_course, can_student_send_feedback, city_subscribed, gender_subscribed, get_course_by_id, can_professor_modify, get_user_by_email, \
     get_user_by_id, get_professor_by_course_id, change_course_attr, hours_attended, \
     count_student, change_feedback, subscribe_course, age_subscribed, \
-    delete_subscription, is_subscribed, get_courses_list, get_professor_courses, get_users_role, get_student_courses, send_certificate_to_students, get_student_certificates, type_school_subscribed, get_students_by_course
+    delete_subscription, add_professor_course, is_subscribed, get_courses_list, get_professor_courses, get_users_role, get_student_courses, send_certificate_to_students, get_student_certificates, type_school_subscribed, get_students_by_course
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, EmailField, SelectField, DateField, BooleanField, SubmitField, validators, SelectMultipleField, IntegerField, TextAreaField
 from wtforms.validators import DataRequired, EqualTo, ValidationError, Length, NumberRange
@@ -157,7 +157,6 @@ def subs(course):
 
     return redirect(url_for("courses_blueprint.course", coursePage=course))
 
-
 @courses.route('/<coursePage>/students')
 @role_required("Professor")
 def students_list(coursePage):
@@ -175,6 +174,19 @@ def students_list(coursePage):
                             course = get_course_by_id(coursePage.upper()),
                             roles = get_users_role(current_user.get_id()))
                             
+@courses.route('/<coursePage>/addprof', methods=['POST'])
+@role_required("Professor")
+def addprof(coursePage):
+    if not can_professor_modify(current_user.get_id(), coursePage.upper()):
+        abort(401)
+        
+    user = get_user_by_email(request.args.get("email"))
+    if "Professor" not in get_users_role(user.get_id()):
+        return jsonify({"success" : False})
+
+    add_professor_course(coursePage.upper(), user.get_id())
+    
+    return jsonify({"success" : True, "name" : user.Name, "surname" : user.Surname})
 
 @courses.route('/<coursePage>/demographics')
 @role_required("Professor")
@@ -213,11 +225,9 @@ def get_student_gender():
 @role_required("Professor")
 def get_student_region():
 
-
     course_id = request.args.get("course_id").upper()
     c = city_subscribed(course_id)
-
-        
+       
     res = {}
     with open("province.json") as f:
         data = json.load(f)
@@ -267,7 +277,6 @@ def get_age_student():
             else:
                 res[age] += 1
     
-
     return jsonify({"success" : True, "ages" : res, "len" : len(res), "min" : minim, "max" : maxi})
 
 @courses.route('/action/get/hours_attended')
@@ -289,7 +298,6 @@ def get_hours_attended():
     return jsonify({"success" : True, "hours_attended" : res})
 
 """
-
 CREATE TRIGGER max_students_check
 BEFORE INSERT ON StudentsCourses
 FOR EACH ROW EXECUTE FUNCTION max_students_check_func()

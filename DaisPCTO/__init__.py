@@ -1,7 +1,7 @@
 from flask import Flask, render_template, session as flasksession, redirect, url_for, request, flash
 from flask_login import current_user, LoginManager
 from DaisPCTO.auth import role_required
-from DaisPCTO.db import get_student_certificates, compare_password, get_users_role, update_user_psw, get_student_courses, get_user_by_id, extestone, get_schools_with_name, get_student_by_user, get_school_by_id
+from DaisPCTO.db import get_student_certificates, compare_password, get_users_role, update_user_psw, get_student_courses, get_user_by_id, get_schools_with_name, get_student_by_user, get_school_by_id
 from flask_bootstrap import Bootstrap
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask.json import jsonify
@@ -127,11 +127,6 @@ def create_app():
             
             return jsonify({"success" : True, "result" : res})
 
-    @app.route('/test')
-    def test():
-        extestone()
-        return ""
-
     @app.route("/", methods=['GET', 'POST'])
     def home():    
         
@@ -151,12 +146,6 @@ def create_app():
                             control[2] = True 
                     if control[0] and control[1] and control[2]:
                         update_user_psw(current_user.get_id(), new_psw)
-                    else:
-                        flash("la psw attuale fa cagare")
-                else:
-                    flash("Due psw diverse")
-            else:
-                flash("Vecchia psw sbagliata")
 
 
         return render_template("page.html", user=current_user, 
@@ -237,7 +226,6 @@ def create_app():
         img = qr.make_image(fill_color="black", back_color="white")
         
         return img
-    
 
     app.register_error_handler(404, page_not_found)
 

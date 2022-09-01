@@ -197,7 +197,9 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn" data-bs-dismiss="modal" style="background-color: #d1d1d1; color: white">Chiudi</button>
-                        <button type="button" class="btn modal-button-success" data-bs-dismiss="modal" style="background-color: #E26F98; color: white">Salva QRcode</button>
+                        <a class="download-qr-code">
+                            <button type="button" class="btn modal-button-success" data-bs-dismiss="modal" style="background-color: #E26F98; color: white" onclick="download_image()">Salva QRcode</button>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -609,7 +611,15 @@
                 value: token
             });
 
-            $('#qrcode').attr("title", "")
+            
+        }
+
+        function download_image() {
+            var canvas = document.getElementById("qrcode-2");
+            var anchor = document.createElement("a");
+            anchor.href = canvas.toDataURL("image/png");
+            anchor.download = "Prenotazione.png";
+            anchor.click()
         }
         
 

@@ -25,7 +25,7 @@
             {% for i in range(11) %}
                 <div class="form-check">
                     <input class="form-check-input" type="radio" name="teacher_grade_set" id="teacher_grade_set" value="{{ i }}" onclick="set_teacher_grade({{ i }})">
-                    <label class="form-check-label" for="teacher_grade_set">{{ i }}</label>
+                    <label class="form-check-label" for="teacher_grade_set">{{ i }} {% if i == 0 %} - Per niente soddisfatto {% elif i == 10 %} - Completamente soddisfatto {%  endif %}</label>
                 </div>
             {% endfor %}
         </div>
