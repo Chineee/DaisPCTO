@@ -145,7 +145,7 @@
     {% if user.is_authenticated %}
       <img src="{{user.email | gravatar }}" class="rounded-circle shadow-1-strong me-3" height="300" width="300" alt="avatar" style="position : relative; top : 100px; left : 50px;">
       <div class="list-group" style="position : absolute; top : 240px; left : 750px; font-size: large;">
-        <p style="font-size: xx-large;"><strong>{{user.Name}} {{user.Surname}}</strong> -- {% if is_professor %} Professore {% elif is_student %} Studente {% elif is_qr %} QrReader {% else %} Admin {% endif %}</p>
+        <p style="font-size: xx-large;"><strong>{{user.Name}} {{user.Surname}}</strong> -- {% if "Professor" in roles %} Professor {% elif "Student" in roles %} Student {% elif "QrReader" in roles %} QrReader {% elif "Admin" in roles %} Admin {% endif %}</p>
         <p > <strong>E-Mail :</strong> {{user.email}}</p>
         {% if "Student" in roles %}
           {% set student_info = user | get_student_info %}

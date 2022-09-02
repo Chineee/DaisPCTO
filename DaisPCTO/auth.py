@@ -11,11 +11,7 @@ from functools import wraps
 class ProfessorRegisterForm(FlaskForm):
     name = StringField('Nome', validators=[DataRequired(message="Campo Richiesto")], render_kw={"placeholder":"Nome"})
     surname = StringField('Cognome', validators=[DataRequired(message="Campo Richiesto")], render_kw={"placeholder" : "Cognome"})
-    # gender = SelectField('Genere', choices=[("", "--Seleziona un genere--"),("Male", "Male"),("Female", "Female"), ("Non Binary", "NonBinary"), ("Other", "Other")], validators=[DataRequired(message="Campo richiesto")])
     email = EmailField('Email', validators=[DataRequired(message="Campo richiesto")], render_kw={"placeholder":"Email"})
-    # repeat_email = EmailField('Reinserisci Email', validators=[DataRequired(message="Campo richiesto"), EqualTo('email', message='Le email devono corrispondere!')], render_kw={"placeholder":"Ripeti Email"})
-    # password = PasswordField(validators=[DataRequired(message="Campo richiesto")])
-    # phonenumber = StringField("Numero di telefono", validators=[DataRequired(message="Campo richiesto")], render_kw={"placeholder" : "Numero di telefono"})
 
 
 class RegisterForm(FlaskForm):
@@ -40,33 +36,16 @@ class RegisterForm(FlaskForm):
         
         if password.data != self.password.data:
             raise validators.ValidationError("Le password non corrispondono!")
-            
-    
-    # def validate_email(self, email):
-
-    #     if get_user_by_email(email.data) is not None:
-    #         raise ValidationError("email già esistente!")
-            #mandare un messaggio di errore alla mail che qualcuno ha provato ad accedere al proprio acccount?
 
     def validate_repeat_email(self, email):
         if email.data != self.email.data:
             raise validators.ValidationError("Le email non corrispondono!")
 
     def validate_password(self, password):
-        throw_error = False
 
-        (category, throw_error) = ("notpassed", True) if not self.check_password_length(password.data) else ("passed", throw_error)
-
-        
-        (category, throw_error) = ("notpassed", True) if not self.check_password_caps(password.data) else ("passed", throw_error)
-
-        
-        (category, throw_error) = ("notpassed", True) if not self.check_password_special(password.data) else ("passed", throw_error)
-       
-        (category, throw_error) = ("notpassed", True) if not self.check_password_number(password.data) else ("passed", throw_error)
-         
-        if throw_error == True:
-            raise ValidationError("Inserisci una password valida!")
+        if not self.check_password_length(password.data) or self.check_password_caps(password.data) or self.check_password_special(password.data) or\
+        self.check_password_number(password.data):
+         raise ValidationError("Inserisci una password valida!")
 
     def validate_phone(self, phone):
         phone_number = phone.data
@@ -117,6 +96,7 @@ def role_required(role_name):
         return decorated_function
     return decorator
 
+
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
@@ -134,6 +114,9 @@ def register():
                                             roles = get_users_role(current_user.get_id()))
     
 
+"""
+Quando l'admin registra un professore al database viene generata una password randomica, dopodiché viene mandata una mail al prof con le informazioni necessarie
+"""
 @auth.route('/register/professor', methods=['GET', 'POST'])
 @role_required("Admin")
 def register_professor():
@@ -143,15 +126,12 @@ def register_professor():
         import string
         characters = string.ascii_letters + string.digits + string.punctuation
         password = ''.join(random.choice(characters) for i in range(8))
-        
-        
+    
         new_professor = create_user(form, password=password, is_student = False)
         result = add_user(new_professor, form, is_student=False)
         if result == 'UniqueError':
             form.email.errors.append("Email già esistente!")
         elif result == True:
-            
-            #manda email al prof
            
             flash("Il professore di riferimento ha ricevuto una mail di conferma contenente la password.")
             return redirect(f'/send_email?obj=Registrazione%20a%20DaisPCTO%21&recipient={form.email.data}&password={password}')
@@ -191,13 +171,11 @@ def login():
 
 @auth.route('/logout')
 def logout():
+    if not current_user.is_authenticated:
+        abort(401)
     logout_user()
-
     return redirect(url_for("home"))
 
 
-@auth.route('/test')
-def test():
-    extestone()
-    return "ok"
+
     

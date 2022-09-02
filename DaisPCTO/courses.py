@@ -39,6 +39,7 @@ class ChangeInformationCourse(FlaskForm):
     subscribe = SubmitField()
 
 @courses.route('/certificates')
+@role_required("Student")
 def certificate():
     certificates = get_student_certificates(current_user.get_id())
 
@@ -62,13 +63,6 @@ def home_courses():
 @courses.route('/subscriptions', methods=['GET', 'POST'])
 @login_required
 def private():
-    """
-    AGGIUNGI CAMPO CATEGORIA PER I CORSI E NELLA PAGINA DEI CORSI SUDDIVIDERLI PER CATEGORIA
-
-    TRIGGER PRENOTAZIONE LEZIONE
-
-    TRIGGER CREAZIONE LEZIONE
-    """
     is_professor = current_user.hasRole("Professor")
 
     courses_list = []
@@ -105,14 +99,11 @@ def add():
 @courses.route('/<coursePage>', methods=['GET', 'POST'])
 def course(coursePage):
 
-
     if get_course_by_id(coursePage.upper()) is None:
         abort(404)
 
     form = ChangeInformationCourse()
     can_modify = can_professor_modify(current_user.get_id(), coursePage.upper())
-
-
 
     if form.validate_on_submit() and can_modify:
         if form.submit.data:
@@ -121,9 +112,6 @@ def course(coursePage):
                 send_certificate_to_students(coursePage.upper())
         elif form.changeSubmit.data:
             change_course_attr(form, coursePage.upper())
-
-
-
 
     return render_template("coursePage.html", 
          is_professor = False if not current_user.is_authenticated else current_user.hasRole("Professor"),
@@ -136,10 +124,11 @@ def course(coursePage):
          iscritto = is_subscribed(current_user.get_id(), coursePage.upper()),
          can_send = can_student_send_feedback(current_user.get_id(), coursePage.upper()),
          roles = get_users_role(current_user.get_id()))
-    #controlliamo chi sta accedendo
-    #se è un prof che ha creato il corso o che fa parte della relazione facciamo comparire un bottone "modifica corso"
-    #renderizza ad una pagina modifica corso accessibile solo ai prof che l'hanno modificata
 
+"""
+Funzione richiamata dagli studenti per iscriversi o disiscriversi dai corsi, la route viene richiamata dopo l'avvenuta pressione di un bottone nella
+pagina principale del corso
+"""
 @courses.route('/action/<course>')
 @role_required("Student")
 def subs(course):
@@ -157,6 +146,7 @@ def subs(course):
 
     return redirect(url_for("courses_blueprint.course", coursePage=course))
 
+
 @courses.route('/<coursePage>/students')
 @role_required("Professor")
 def students_list(coursePage):
@@ -164,7 +154,6 @@ def students_list(coursePage):
     if not can_professor_modify(current_user.get_id(), coursePage.upper()):
         abort(401)
 
-    # students_list_info = hours_attended(coursePage.upper())
     students_list_info = get_students_by_course(coursePage.upper())
 
     return render_template("student_list_info.html",
@@ -173,7 +162,10 @@ def students_list(coursePage):
                             students = students_list_info,
                             course = get_course_by_id(coursePage.upper()),
                             roles = get_users_role(current_user.get_id()))
-                            
+
+"""
+Il professore che crea un corso, potrà anche aggiungere dei collaboratori che avranno accesso a tale pagina.
+"""                     
 @courses.route('/<coursePage>/addprof', methods=['POST'])
 @role_required("Professor")
 def addprof(coursePage):
@@ -188,12 +180,10 @@ def addprof(coursePage):
     
     return jsonify({"success" : True, "name" : user.Name, "surname" : user.Surname})
 
+#pagina di demografica contenente grafici statistici con informazioni utili
 @courses.route('/<coursePage>/demographics')
 @role_required("Professor")
 def demographics(coursePage):
-    #gender medio
-    #regioni di provenienza medie
-    #ogni età quanta percentuale
 
     if not can_professor_modify(current_user.get_id(), coursePage.upper()):
         abort(404)
@@ -203,7 +193,6 @@ def demographics(coursePage):
     if count_student(course_id=coursePage.upper()) == 0:
         no_student = True
 
-    
     return render_template("demographics.html",
                             is_professor = True,
                             user = current_user,
@@ -211,7 +200,7 @@ def demographics(coursePage):
                             no_student = no_student,
                             roles = get_users_role(current_user.get_id()))
 
-
+#ritornana un dizionario contenente il numero di studenti per ogni tipo di gender inserito nel database (m, f, nb, o)
 @courses.route('/action/get/student_gender')
 @role_required("Professor")
 def get_student_gender():
@@ -221,6 +210,7 @@ def get_student_gender():
     g = gender_subscribed(course_id)
     return jsonify({"success" : True, "Male" : g.Male, "Female" : g.Female, "Non-Binary": g.NonBinary, "Other" : g.Other})
 
+#ritorniamo un dizionario contenente il numero di studenti per ogni regione
 @courses.route('/action/get/region')
 @role_required("Professor")
 def get_student_region():
@@ -239,7 +229,6 @@ def get_student_region():
                     else:
                         res[i["regione"]] += 1
     
-
     return jsonify({"success" : True, "Regioni" : res, "Total" : len(c)})
 
 @courses.route('/action/get/school')
@@ -248,9 +237,13 @@ def get_student_school():
     course_id=request.args.get("course_id").upper()
     type_schools = type_school_subscribed(course_id)
     
-
     return jsonify({"success" : True, "Liceo" : type_schools.Liceo, "Tecnico" : type_schools.Tecnico, "Professionale" : type_schools.Professionale, "Altro" : type_schools.Altro})
-    
+
+"""
+ritorna un dizionario contenente quanti studenti hanno una determinata età, data un'età minima ed un età massima.
+considerando che siamo in un contesto di alternanza scuola lavoro, la differnza di età fra minima e massima degli studenti non sarà mai troppo grande
+l'età viene banalmente calcolata usando la data di nascita e la data corrente
+"""
 @courses.route('/action/get/mean_age')
 @role_required("Professor")
 def get_age_student():
@@ -279,6 +272,15 @@ def get_age_student():
     
     return jsonify({"success" : True, "ages" : res, "len" : len(res), "min" : minim, "max" : maxi})
 
+"""
+Può essere utile per il prof sapere quanto gli studenti stanno seguendo le lezioni, abbiamo deciso di fornire dati basati sulle ore piuttosto che sul numero
+di lezioni, per dare un'idea al professore di quanti studenti hanno ottenuto o stanno per ottenere il certificato di partecipazione al corso, tutti i gruppi 
+sono ovviamente disgiunti, quindi se uno studente A appartiene al gruppo di studenti che hanno seguito 10 ore, NON potrà appartenere ai gruppi di studenti con 
+ore inferiori.
+
+NB : Quando avviene una relazione Studente-Lezione, allo studente saranno aggiunte TUTTE le ore per quella lezione, non potrà mai accadere un caso in cui
+ad uno studente vengano aggiunte solo metà delle ore o solo parte delle ore di una lezione.
+"""
 @courses.route('/action/get/hours_attended')
 @role_required("Professor")
 def get_hours_attended():
@@ -296,22 +298,3 @@ def get_hours_attended():
     res = {k: v for k, v in sorted(res.items(), key=lambda item: item[1])}  
     
     return jsonify({"success" : True, "hours_attended" : res})
-
-"""
-CREATE TRIGGER max_students_check
-BEFORE INSERT ON StudentsCourses
-FOR EACH ROW EXECUTE FUNCTION max_students_check_func()
-
-CREATE FUNCTION max_students_check_func() RETURNS TRIGGER
-BEGIN
-    IF ( (
-        SELECT COUNT(*)
-        FROM StudentCourses sc JOIN Courses c USING(CourseID)
-        WHERE NEW.CourseID = c.CourseID) >= (SELECT c.MaxStudents
-                                            FROM Courses c
-                                            WHERE c.CourseID = NEW.CourseID) AND (SELECT c3."MaxStudents"                                                                                FROM "public"."Courses" AS c3 
-                                                                                  WHERE c3."CourseID" = NEW."CourseID") > 0)) THEN RETURN NULL;
-    END IF
-    RETURN NEW;
-END
-"""

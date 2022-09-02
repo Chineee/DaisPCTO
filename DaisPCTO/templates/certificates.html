@@ -5,14 +5,16 @@
     <div class="row">
         {% for c in certificates %}
             <div class="col-md-12 mb-3 float-right">
-                <div class="card text-center float-right" style="width : 750px;">
+                <div class="card text-center float-right" style="width : 750px; border-color : black;">
                     <div class="card-header text-white" style="background-color : #ae8bc9;">
                         <h4 class="float-center"> {{c.Name}} </h4>
                     </div>
                     <div class="card-body" style="background-color: #e8def0">
-                        Congratulazioni {{c.StudentName}}!! É ora disponibile l'attestato di partecipazione al corso {{c.Name}}-{{c.CourseID}}.
+                        <strong>Congratulazioni {{c.StudentName}}!! </strong> É ora disponibile l'attestato di partecipazione al corso {{c.Name}} - {{c.CourseID}} <br><hr/>
+                        Hai seguito questo corso per <strong>{{c.Hours}}</strong> Ore su <strong>{{c.MinHourCertificate}}.0 </strong> ore minime richieste
                     </div>
-                    <div class="card-footer float-end" style="background-color : #ae8bc9;">
+                    
+                    <div class="card-footer" style="background-color : #ae8bc9; color : white;">
                         <button type="button" class="btn float-end text-white" style="background-color: #f4cb4f; border-color: #f4cb4f; color: black !important">Scaricami!</button>
                     </div>
                 </div>

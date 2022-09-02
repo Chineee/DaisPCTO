@@ -12,23 +12,26 @@ import datetime
 import json
 
 engine = {
-    "Admin" : create_engine("postgresql://postgres:123456@localhost/testone8", echo=False, pool_size=50, max_overflow=0),
+    "Admin" : create_engine("postgresql://postgres:123456@localhost/testone8", echo=False, pool_size=20, max_overflow=0),
     "Student" : create_engine("postgresql://Student:studente01@localhost/testone8",echo=False, pool_size=20, max_overflow=0),
     "Professor" : create_engine("postgresql://Professor:123456@localhost/testone8",echo=False, pool_size=20, max_overflow=0),
     "Anonymous" : create_engine("postgresql://Anonymous:12345678@localhost/testone8", echo=False, pool_size=20, max_overflow=0),
     "QrReader" : create_engine("postgresql://QrReader:123456@localhost/testone8", echo=False, pool_size=20, max_overflow=0),
 }
 
-# studente = create_engine("postgresql://Student:ewfdwefd@localhost/testone8",echo=False, pool_size=20, max_overflow=0)
-# engine2 = create_engine("postgresql://Student:studente01@localhost/testone8", echo=False, pool_size=20, max_overflow=0)
-
 Session = sessionmaker()
+
+"""
+Ogni volta che inizia una transazione viene fatta una connessione con il database in base al ruolo dell'utente corrente.
+Il ruolo viene controllato avendo l'id del current_user, e guardando dentro la relativa tabella UserRole.
+Nel DBMS sono definiti i ruoli con permessi diversi per avere una maggiore sicurezza.
+"""
 
 def get_engine(flask_request = False):
     
     if flask_request: #la flask_request viene settata a true solo quando viene chiamata la get_user_by_id attraverso la load user, ovvero quando l'utente deve ancora essere
         #caricato
-        return engine['Admin']
+        return engine['Anonymous']
 
     if current_user == None:
         return engine['Anonymous']
@@ -63,8 +66,7 @@ def get_users_role(user_id):
 def exists_role_user(user_id, role):
     try:
         session = Session(bind=engine['Admin'])
-        # q = session.query(UserRole).join(Role).filter(and_(UserRole.UserID == user_id, Role.Name == role)).first() is not None
-        q = role in get_users_role(user_id)
+        q = session.query(UserRole).join(Role).filter(and_(UserRole.UserID == user_id, Role.Name == role)).first() is not None
     except Exception as e:
         session.close()
         q = False
@@ -79,6 +81,7 @@ def get_course_by_id(course_id):
     except:
         return None
 
+"""Ritorniamo un oggetto student dato il suo ID"""
 def get_student_by_user(user_id):
     try:
         session = Session(bind=get_engine())
@@ -88,7 +91,7 @@ def get_student_by_user(user_id):
         session.rollback()
         return None
 
-
+"""Ritorniamo un oggetto di tipo User dato il suo id, flask_request è settato a true quando la funzione che la richiama viene dalla load_user della libreria di flask_login"""
 def get_user_by_id(id, flask_request=False):
     try:
         session = Session(bind=get_engine(flask_request))
@@ -103,6 +106,7 @@ def get_user_by_id(id, flask_request=False):
     except Exception as e:
         return None
 
+"""Ritorniamo un oggetto di tipo User dato la sua mail"""
 def get_user_by_email(email):
     try:
         session = Session(bind=get_engine())
@@ -110,7 +114,11 @@ def get_user_by_email(email):
     except Exception as e:
         print(e)
         return None
-    
+
+"""
+Viene passato un oggetto di tipo form contenente tutti i campi per creare uno user, se la richiesta viene dalla register viene creato uno studente, altrimenti
+viene creato un professore
+"""
 def create_user(form, password = None, is_student=True):
 
     Name = form.name.data
@@ -129,6 +137,13 @@ def create_user(form, password = None, is_student=True):
     
     return new_user
 
+"""
+Viene aggiunto un utente al database.
+Il codice di errore 23505 è definito da psycopg2 ed indica che stiamo che stiamo inserendo una riga con un attribute che ha come vincolo Unique già esistente
+Nella tabella User l'attributo con vincolo Unique è la mail, di conseguenza entra in errore se proviamo ad inserire un utente con una mail già registrata.
+Nel caso questo dovesse accadere, verrà visualizzato un messaggio di errore nel form di registrazione.
+Se l'inserimento nella tabella va a buon fine si provvederà ad inserire l'utente anche nella tabella di studente o professore a seconda di chi sta facendo la richiesta.
+"""
 def add_user(user, form,  is_student=True):
     try:
         session = Session(bind=get_engine())
@@ -141,11 +156,12 @@ def add_user(user, form,  is_student=True):
     except exc.SQLAlchemyError as e:
         print(e)
         session.rollback()
-        if e.orig.pgcode == '23505': #uniquerror
+        if e.orig.pgcode == '23505': 
             return "UniqueError"
         return False 
     return True
 
+"""Viene aggiunto un professore al database"""
 def add_professor(user):
     try:
         session = Session(bind=get_engine())
@@ -154,11 +170,11 @@ def add_professor(user):
     except:
         session.rollback()
         session.close()
-        
+
+"""Viene aggiunto uno studente al database"""
 def add_student(user, form):
 
     #MODIFICARE ADD STUDENT IN MODO CHE ADDI TUTTI GLI ALTRI CAMPI
-
     school_id = form.school_id.data
     student_city = form.student_city.data.partition(',')[0]
     student_birth_date = form.birth_date.data
@@ -180,9 +196,16 @@ def add_student(user, form):
     except Exception as e:
         session.rollback()
 
+"""
+Confronto di password in fase di login per gli utenti non autenticati e per gli utenti autenticati che hanno intenzione di cambiare la propria password
+"""
 def compare_password(db_password, inserted_password):
     return check_password_hash(db_password, inserted_password)      
 
+"""
+Alla creazione di un corso viene aggiunta la relativa riga nella tabella associative ProfessorCourse, con il prof che ha creato il corso ed il corso stesso.
+Il professore ha inoltre la possibilità di aggiungere collaboratori al corso.
+"""
 def add_professor_course(course_id, prof_id):
     try:
         session = Session(bind=get_engine())
@@ -190,8 +213,10 @@ def add_professor_course(course_id, prof_id):
         session.commit()
     except exc.SQLAlchemyError as e:
         session.rollback()
-        
 
+"""
+Funzione per aggiungere un corso dato un oggetto di tipo FlaskForm
+""" 
 def add_course(form):
     
     name = form.name.data
@@ -203,12 +228,16 @@ def add_course(form):
     try:
         session = Session(bind=get_engine())
         session.add(Course(OpenFeedback=False, CourseID=course_id, Name=name, Description = description, MaxStudents=max_students, MinHourCertificate = min_hours))
-        add_professor_course(course_id, current_user.get_id())
         session.commit()
-    except:
+        add_professor_course(course_id, current_user.get_id())
+    except exc.SQLAlchemyError as e:
+        print(e)
         session.rollback()
         
-#ritorna true se e solo se esiste una tupla che contenga l'id del professore e l'id del corso all'interno della tabella professorcourse
+"""
+ritorna true se e solo se esiste una tupla che contenga l'id del professore e l'id del corso all'interno della tabella professorcourse,
+se questo risulta essere vero allora esiste una relazione fra professore e corso e quindi l'utente messo in input ha accesso al corso.
+"""
 def can_professor_modify(prof_id, course_id):
     try:
         session = Session(bind=get_engine())
@@ -216,7 +245,7 @@ def can_professor_modify(prof_id, course_id):
     except Exception as e:
         print(e)
         return False
-
+"""Ritorna una lista contenente oggetti di tipo User che sono professori e che possono accedere al corso"""
 def get_professor_by_course_id(course_id):
     try:
         session = Session(bind=get_engine())
@@ -225,6 +254,7 @@ def get_professor_by_course_id(course_id):
         session.close()
         return None
 
+"""Conta quanti studenti sono iscritti ad un corso"""
 def count_student(course_id):
     try:
         session = Session(bind=get_engine())
@@ -233,6 +263,11 @@ def count_student(course_id):
     except:
         return None
 
+"""
+Funzione di update per modificare dati del corso in questione (Solo professori che hanno accesso al corso possono farlo, controlli che vengono effettuati prima
+di chiamare la funzione, in ogni caso se nel caso peggiore l'utente non dovesse essere un professore, il DBMS ritornerà un errore perché solo Professori possono fare 
+update sulla tabelle Courses)
+"""
 def change_course_attr(form, course_id):
     try:
         session = Session(bind=get_engine())
@@ -254,6 +289,9 @@ def change_course_attr(form, course_id):
     finally:
         session.close()
 
+"""
+Funzione per aprire o chiudere i feedback di un corso
+"""
 def change_feedback(course_id):
     try: 
         session = Session(bind=get_engine())       
@@ -267,6 +305,9 @@ def change_feedback(course_id):
     finally:
         session.close()
 
+"""
+Funzione per studenti per iscriversi ad un corso
+"""
 def subscribe_course(student_id, course_id):
     try:
         session = Session(bind=get_engine())
@@ -275,6 +316,9 @@ def subscribe_course(student_id, course_id):
     except:
         session.rollback()
 
+"""
+Funzione per controllare se uno studente è iscritto ad un cortso
+"""
 def is_subscribed(student_id, course_id):
     try:
         session = Session(bind=get_engine())
@@ -285,6 +329,9 @@ def is_subscribed(student_id, course_id):
     except:
         return False
 
+"""
+Funzione per studenti per disiscriversi da un corso
+"""
 def delete_subscription(student_id, course_id): 
     try:
         session = Session(bind=get_engine())      
@@ -294,6 +341,11 @@ def delete_subscription(student_id, course_id):
     except:
         session.rollback()
 
+"""
+Funzione per i professori per aggiungere una nuova lezione, il token viene generato secondo i dati scritti sotto, e saremo sempre certi che sarà univoco,
+dato che non potrà MAI esserci una lezione nella stessa data, stessa ora di inizio e stessa ora di fine e stesso ID del corso. Inoltre due lezioni diverse
+non potranno alloggiare nella medesima aula nello stesso range di orario
+"""
 def add_lesson(form, course_id, professor):
     date = form.date.data
     start_time = form.start_time.data
@@ -309,6 +361,12 @@ def add_lesson(form, course_id, professor):
 
     return _add_lesson(lesson_new, type_lesson, classroom, link, password)
 
+"""
+Funzione di supporto per aggiungere una lezione al database, il DBMS ritornerà errori differenti a seconda dei casi. "ClashError" indica due lezioni nella stessa aula
+nello stesso range di orario.
+"SameCourseOverlapping" indica che ci sono due lezioni dello stesso corso nellol stesso range di orario, che esse siano online, frontali o duali non ha importanza.
+Il codice di errore 23514 di psycopg2 invece indica che stiamo violando un checkconstraint, nella tabella lesson il check impone che StartTime sia strettamente minore di EndTime
+"""
 def _add_lesson(lesson_new, type_less, classroom, link=None, password=None):
     try: 
         session = Session(bind=get_engine())
@@ -343,6 +401,12 @@ def _add_lesson(lesson_new, type_less, classroom, link=None, password=None):
         session.close()
     return "Success"
 
+"""
+Sempre una funzione per i professori ma aggiunge più lezioni insieme, dati richiesti:
+Data inizio A, Data fine B, Orario e tipo di lezioni:
+A quel punto verranno aggiunte tutte le lezioni settimanalmente che vanno dal giorno A compreso al giorno B compreso (se possibile, altrimenti eslcuso).
+Il sistema aggiungerà tutte le lezioni possibile, se ci dovesse essere un overlapping, escluderà SOLO quelle che danno errore, e non tutte quante.
+"""
 def add_multiple_lesson(form, course_id, professor):
     """
     VOGLIAMO FARE IN MODO CHE AGGIUNGA TUTTE LE LEZIONI CHE SI POSSONO AGGIUNGERE, IGNORANDO QUELLE CHE NON SI POSSONO AGGIUNGERE
@@ -364,6 +428,9 @@ def add_multiple_lesson(form, course_id, professor):
     
         diff_date = diff_date + datetime.timedelta(days=7)
 
+"""
+Funzione per i professori per eliminare una lezione
+"""
 def delete_lesson(lesson_id):
     try:
         session = Session(bind=get_engine())
@@ -375,6 +442,13 @@ def delete_lesson(lesson_id):
         return False 
     return True
 
+"""
+Ritorna una lista contenente tutte le lezioni di un corso, con le relative aula (se si tratta di lezioni frontali o duali) ed i relativi link di accesso
+(se si tratta di lezioni online o duali) e tutte le altre informazioni necessarie agli studenti come: Data e Orario.
+il parametro isouter=True indica una LEFT OUTER JOIN al fine di facilitare l'ottenimento di TUTTE le informazioni di una lezione (se esistenti,
+altrimenti verranno settate a Null)
+facendo una singola query
+"""
 def get_lessons_by_course_id(course_id):
     try:
         session = Session(bind=get_engine())
@@ -388,13 +462,19 @@ def get_lessons_by_course_id(course_id):
         print(e)
         return None
 
+"""
+Funzione che ritorna un oggetto di tipo Course data una sua lezione
+"""
 def get_course_by_lesson_id(lesson_id):
     try:
         session = Session(bind=get_engine())
         return session.query(Course).filter(and_(Lesson.LessonID == lesson_id, Course.CourseID == Lesson.CourseID)).first()
     except:
         return None
-        
+
+"""
+Funzione per i professori per modificare il topic di una lezione, nel nostro caso il topic della lezione corrisponderà anche a link e materiali utili per gli studenti
+"""    
 def change_lesson_information(lesson_id, data):
     try:
         session = Session(bind=get_engine()) 
@@ -405,6 +485,9 @@ def change_lesson_information(lesson_id, data):
         return False 
     return True
 
+"""
+Ritorna una lista contenente tutti i corsi disponibili
+"""
 def get_courses_list():
     try:
         session = Session(bind=get_engine())
@@ -413,6 +496,9 @@ def get_courses_list():
         print(e)
         return []
 
+"""
+Ritorna una lista di tutti i professori appartenenti alla tabella ProfessorsCourses
+"""
 def get_professor_courses(user_id):
     try:
         session = Session(bind=get_engine())
@@ -424,7 +510,9 @@ def get_professor_courses(user_id):
     except:
         return None
 
-
+"""
+Ritorna una lista di tutti gli studenti iscritti a dei corsi, con le relative informazioni principali, tra cui quante ore di lezioni hanno seguito per ogni corso
+"""
 def get_student_courses(user_id):
     try:
         session = Session(bind=get_engine())
@@ -442,6 +530,9 @@ def get_student_courses(user_id):
         print(e)
         return None
 
+"""
+Ritorna una lista di tutti gli studenti iscritti ad un corso specifico
+"""
 def get_students_by_course(course_id):
     try:
         session = Session(bind=get_engine())
@@ -454,6 +545,9 @@ def get_students_by_course(course_id):
         print(e)
         return []
 
+"""
+Ritorna un oggetto di tipo lesson dato il suo ID
+"""
 def get_lesson_by_id(lesson_id):
     try:
         session = Session(bind=get_engine())
@@ -461,6 +555,12 @@ def get_lesson_by_id(lesson_id):
     except:
         return None
 
+"""
+Ritorna una lista contenente oggetti di tipo Lesson, che hanno la caratteristica di essere disponibile alla prenotazione (per lezioni frontali).
+In particolare ritorna una lista di lezioni frontali con le relative informazioni, che hanno le seguenti caratteristiche:
+    Se la data è uguale alla data corrente, allora Lesson.StartTime deve essere maggiore dell'ore corrente.
+    Altrimenti la data della lezione deve essere al massimo fra 6 giorni rispetto alla data corrente
+"""
 def get_lessons_bookable(user_id):
     try:
         
@@ -482,6 +582,9 @@ def get_lessons_bookable(user_id):
     except exc.SQLAlchemyError as e:
         return None
 
+"""
+Ritorna il numero di posti prenotati per ogni lezione frontale
+"""
 def get_full_lessons():
     try:
         session = Session(bind=get_engine())
@@ -495,6 +598,10 @@ def get_full_lessons():
         print(e)
         return []
 
+"""
+Funzione per gli studenti per prenotare un posto ad una lezione frontale, il token che viene generato funziona in simil modo al token generato per le lezioni
+L'errore che ritorna il DBMS "SeatsNoMore" indica che non ci sono più posti a sedere e quindi la prenotazione fallisce
+"""
 def book_lesson(frontalLesson_id, course_id):
     try:
         session = Session(bind=get_engine())
@@ -504,13 +611,15 @@ def book_lesson(frontalLesson_id, course_id):
         
     except exc.SQLAlchemyError as e:
         session.rollback()
-        print(e)
         if e.orig.diag.message_primary == 'SeatsNoMore':
             return False
         return False
 
     return True
-        
+
+"""
+Funzione per gli studenti per annullare la prenotazione in aula di una lezione frontale
+"""      
 def delete_reservation(frontalLesson_id):
     try:
         session = Session(bind=get_engine())
@@ -524,6 +633,9 @@ def delete_reservation(frontalLesson_id):
         return False
     return True
 
+"""
+Ritorna un oggetto di tipo reservation dato il suo token
+"""
 def get_reservation_from_token(token):
     try:
         session = Session(bind=get_engine())
@@ -532,6 +644,10 @@ def get_reservation_from_token(token):
         print(e)
         return None
 
+"""
+Funzione per confermare la presenza di uno studente ad una lezione frontale (viene cambiato hasvalidation a true della prenotazione e poi viene creata la relazione
+student-lesson)
+"""
 def confirm_attendance(reservation):
     try:
         session = Session(bind=get_engine())
@@ -540,7 +656,7 @@ def confirm_attendance(reservation):
         formalize_student(reservation.StudentID, reservation.FrontalLessonID)
     except Exception as e:
         session.rollback()
-
+"""Viene creata la relazione student-lesson"""
 def formalize_student(user_id, lesson_id):
     try:
         session = Session(bind=get_engine())
@@ -549,6 +665,7 @@ def formalize_student(user_id, lesson_id):
     except Exception as e:
         session.rollback()
 
+"""Funzione che ritorna un oggetto di tipo Lesson dato il suo token"""
 def get_lesson_from_token(token):
     try:
         session = Session(bind=get_engine())
@@ -556,7 +673,7 @@ def get_lesson_from_token(token):
     except:
         session.rollback()
         session.close()
-
+"""Funzione che ritorna tutte le aule disponibili"""
 def get_classrooms():
     try:
         session = Session(bind=get_engine())
@@ -565,7 +682,7 @@ def get_classrooms():
         print(e)
         session.rollback()
         return []
-
+"""Funzione che ritorna tutte le scuole registrate nel database"""
 def get_schools():
     try:
         session = Session(bind=get_engine())
@@ -573,6 +690,7 @@ def get_schools():
     except:
         return []
 
+"""Funzione che ritorna le scuole che contengono un determinato nome passato in input"""
 def get_schools_with_name(name):
     try:
         session = Session(bind=get_engine())
@@ -580,6 +698,7 @@ def get_schools_with_name(name):
     except:
         return []
 
+"""Funzione che ritorna un oggetto di tipo School dato il suo ID"""
 def get_school_by_id(school_id):
     try:
         session = Session(bind=get_engine())
@@ -588,6 +707,10 @@ def get_school_by_id(school_id):
         print(e)
         return None
 
+"""
+Funzione chiamata dai professori che serve per mandare l'attestato di partecipazione a tutti gli studenti che rispettano i requisiti minimi, ovvero
+a tutti quei studenti che hanno seguito al più le ore minime richieste per ottenere il certificato
+"""
 def send_certificate_to_students(course_id):        
     
     # hours = session.query(Course).filter(Course.CourseID == course_id.upper()).first().MinHourCertificate
@@ -608,24 +731,33 @@ def send_certificate_to_students(course_id):
                 finally:
                     session.close()
 
+"""
+Funzione chiamata da uno studente per visualizzare tutti i suoi certificati
+"""
 def get_student_certificates(user_id):
     try:
         session = Session(bind=get_engine())
-        return session.query(User.Name.label("StudentName"), Certificate.StudentID, Certificate.CourseID, Certificate.CertificateID, Certificate.Hours, Course.Name)\
-        .join(Course, Course.CourseID == Certificate.CourseID)\
-        .join(User, User.UserID == Certificate.StudentID)\
-        .filter(Certificate.StudentID == user_id).all()
+        return session.query(User.Name.label("StudentName"), Certificate.StudentID, Certificate.CourseID, Certificate.CertificateID, Certificate.Hours, Course.Name, Course.MinHourCertificate)\
+            .join(Course, Course.CourseID == Certificate.CourseID)\
+            .join(User, User.UserID == Certificate.StudentID)\
+            .filter(Certificate.StudentID == user_id).all()
     except Exception as e:
         print(e)
         return None
 
+"""
+Funzione chiamata da uno studente per veririficare se uno studente può inviare un feedback
+NB : che uno studente può inviare SOLO UN feedback per corso
+"""
 def can_student_send_feedback(user_id, course_id):
     try:
         session = Session(bind=get_engine())
         return session.query(StudentCourse).filter(and_(StudentCourse.CourseID == course_id, StudentCourse.StudentID == user_id, StudentCourse.HasSentFeedback == False)).first() is not None
     except Exception as e:
         return False
-
+"""
+Funzione per studenti per inviare i feedback
+"""
 def send_feedback(form, course_id):
     try:
         session = Session(bind=get_engine())
@@ -637,6 +769,9 @@ def send_feedback(form, course_id):
     
         session.rollback()
 
+"""
+Funzione per professori per ottenere la media dei voti che gli studenti hanno mandato nei feedback di un determinato corso
+"""
 def avg_feedback(course_id):
     try:
         session = Session(bind=get_engine())
@@ -645,6 +780,9 @@ def avg_feedback(course_id):
 
         return None
 
+"""
+Funzione per ottenere invece tutti i commenti che gli studenti hanno mandato durante il feedback di un determinato corso
+"""
 def feedback_comments(course_id):
     try:
         session = Session(bind=get_engine())
@@ -652,6 +790,9 @@ def feedback_comments(course_id):
     except:
         return []
 
+"""
+Funzione che conta tutti gli studenti suddivisi per gender
+"""
 def gender_subscribed(course_id):
     try:
         session = Session(bind=get_engine())
@@ -663,7 +804,9 @@ def gender_subscribed(course_id):
     except Exception as e:
         print(e)
         return None
-
+"""
+Funzione per ottenere tutte le date di nascita degli studenti iscritti ad un corso
+"""
 def age_subscribed(course_id):
     try:
         session = Session(bind=get_engine())
@@ -671,13 +814,18 @@ def age_subscribed(course_id):
     except:
         return []
 
+"""
+funzione per ottenere tutte le città degli studenti iscritti ad un corso
+"""
 def city_subscribed(course_id):
     try:
         session = Session(bind=get_engine())
         return session.query(Student.City).join(StudentCourse, StudentCourse.StudentID == Student.UserID).filter(StudentCourse.CourseID == course_id).all()
     except:
         return
-
+"""
+funzione che conta i 3 tipi di scuole degli studenti iscritti ad un corso.
+"""
 def type_school_subscribed(course_id):
     try:
         session = Session(bind=get_engine())
@@ -691,6 +839,9 @@ def type_school_subscribed(course_id):
     except Exception as e:
         return None
 
+"""
+Funzione che ritorna quante ore di lezioni hanno seguito tutti gli studenti iscritti ad un determianto corso
+"""
 def hours_attended(course_id):
     try:
         session = Session(bind=get_engine())
@@ -699,42 +850,15 @@ def hours_attended(course_id):
             .filter(Lesson.CourseID == course_id)\
             .group_by(StudentLesson.StudentID).all()
         
-        # q3 = session.query(StudentLesson.StudentID).join(Lesson, Lesson.LessonID == StudentLesson.LessonID).filter(Lesson.CourseID == course_id)
-        
-        # q2 = session.query(StudentCourse)\
-        #     .filter(StudentCourse.CourseID == course_id)\
-        #     .filter(StudentCourse.StudentID.not_in(q3))
-
-        # print("aaa")
-    
-        # return q2.union(q1).all()
         return q1
 
-#     q1 = session.\
-#      query(beard.person.label('person'),
-#            beard.beardID.label('beardID'),
-#            beard.beardStyle.label('beardStyle'),
-#            sqlalchemy.sql.null().label('moustachID'),
-#            sqlalchemy.sql.null().label('moustachStyle'),
-#      ).\
-#      filter(beard.person == 'bob')
-
-# q2 = session.\
-#      query(moustache.person.label('person'),
-#            sqlalchemy.sql.null().label('beardID'), 
-#            sqlalchemy.sql.null().label('beardStyle'),
-#            moustache.moustachID,
-#            moustache.moustachStyle,
-#      ).\
-#      filter(moustache.person == 'bob')
-
-        # result = q1.union(q2).all()
-
-    except Exception as e:
-        print("sss")
-        print(type(e))
+    except exc.SQLAlchemyError as e:
+        print(e)
         return []
 
+"""
+Funzione che ritorna tutte le domande principali del forum di un determinato corso
+"""
 def get_questions_by_course(course_id):
     try:
         session = Session(bind=get_engine())
@@ -746,13 +870,18 @@ def get_questions_by_course(course_id):
     except Exception as e:
         return None
 
+"""
+funzione che controlla se un utente è il creatore di una domanda o post
+"""
 def is_user_owner_post(user_id, post_id):
     try:
         session = Session(bind=get_engine())
         return session.query(QnA).filter(and_(QnA.UserID == user_id, QnA.TextID == post_id)).first() is not None
     except:
         return False
-
+"""
+Funzione per eliminare una domanda o post
+"""
 def delete_post(post_id):
     try:
         session = Session(bind=get_engine())
@@ -760,7 +889,9 @@ def delete_post(post_id):
         session.commit()
     except:
         session.rollback()
-
+"""
+Funzione per aggiungere un post, che essa sia domanda o risposta è indifferente
+"""
 def add_post(form, course_id):
     try:
         session = Session(bind=get_engine())
@@ -774,6 +905,10 @@ def add_post(form, course_id):
     except Exception as e:
         session.rollback()   
 
+
+"""
+Funzione per fare l'update di un post
+"""
 def update_post(text, post_id):
     try:
         session = Session(bind=get_engine())
@@ -783,7 +918,11 @@ def update_post(text, post_id):
         session.rollback()
         return False
     return True
-
+"""
+Funzione per i professori per aggiornare tutte le informazioni disponibili di una lezione, cambiandone anche il tipo, da frontale a online, da online a frontale 
+ecc ecc. 
+Eliminando o aggiornando le relative lezioni nel database ove non più necessarie.
+"""
 def update_lesson(lesson_id, form):
     try:
         session = Session(bind=get_engine())
@@ -842,6 +981,9 @@ def update_lesson(lesson_id, form):
     
     return "Success"
 
+"""
+Ritorna tutte le risposte ad una domanda dato il suo ID
+"""
 def get_answers_by_question_id(question_id):
     try:
         session = Session(bind=get_engine())
@@ -849,6 +991,9 @@ def get_answers_by_question_id(question_id):
     except:
         return []
 
+"""
+Aggiorna la password di un utente
+"""
 def update_user_psw(user_id, psw):
     try:
         session=Session(bind = get_engine())
@@ -857,27 +1002,3 @@ def update_user_psw(user_id, psw):
     except Exception as e:
         print(e)
         session.rollback()
-
-'''
-ADD MI PIACE BY POST ID
-
-DELETE MI PIACE BY POST ID
-
-'''
-
-"""
-
-(Lesson.Date - date.today).days <= 7
-
-SELECT "Courses"."CourseID", SUM(CASE WHEN ("Lessons"."StartTime" IS NOT NULL AND "Lessons"."EndTime" IS NOT NULL) THEN "Lessons"."EndTime" - "Lessons"."StartTime" ELSE '00:00:00' END)
-FROM "StudentsCourses" NATURAL JOIN "Courses" NATURAL LEFT JOIN "Lessons" NATURAL LEFT JOIN "StudentsLessons"
-WHERE "StudentsCourses"."StudentID" = 1
-ORDER BY "Courses"."Name"
-GROUP BY "Courses"."CourseID"
-
-FROM "Courses" NATURAL JOIN "StudentsCourses" NATURAL LEFT JOIN "StudentsLessons" NATURAL LEFT JOIN "Lessons"
-
-FROM "Courses" LEFT OUTER JOIN "Lessons" ON "Courses"."CourseID" = "Lessons"."CourseID" LEFT OUTER JOIN "StudentsLessons" ON "Lessons"."LessonID" = "StudentsLessons"."LessonID" JOIN "StudentsCourses" ON "Courses"."CourseID" = "Stude
-ntsCourses"."CourseID"
-
-"""

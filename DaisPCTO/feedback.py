@@ -1,3 +1,4 @@
+import profile
 from symtable import SymbolTableFactory
 from flask import Blueprint, jsonify, render_template, url_for, redirect, flash, abort, request, logging
 from flask_login import current_user, login_required
@@ -22,7 +23,12 @@ class SendFeedback(FlaskForm):
         if teacher_grade.data < 0 or teacher_grade.data > 10:
             raise ValidationError();
 
-    
+
+"""la feedback home è una pagina accessibile solo dagli studenti solo quando il corso di riferimento ha i feedback disponibili (che sono apribili solo da uno dei prof
+di riferimento), la pagina presenta un semplice form contenente due  valutazioni da 1 a 10 (obbligatorie) da dare al corso e al professore, ed un commento facoltative.
+Tutti i voti e tutti i commenti risulteranno essere anonimi
+"""
+
 @feedback.route('/courses/<coursePage>/feedback', methods=['get', 'post'])
 @role_required("Student")
 def feedback_home(coursePage):
@@ -47,13 +53,14 @@ def feedback_home(coursePage):
                            )
 
 
+"""
+Concetto di questa route molto simile a quella spiegata sopra, ma il professore può visualizzare una media dei voti forniti dagli studenti ed una serie di commenti.
+"""
 @feedback.route('/courses/<coursePage>/get_feedback')
 @role_required("Professor")
 def get_feedback(coursePage):
     if not can_professor_modify(current_user.get_id(), coursePage.upper()):
         abort(401)
-
-    h = feedback_comments(coursePage.upper())
 
     return render_template("get_feedback.html",
                             is_professor = True,
