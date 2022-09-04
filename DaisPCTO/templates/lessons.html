@@ -525,9 +525,7 @@
            
             if (visible == true) {
                 $("#changeLessonInfo").modal('show');
-                // let info = $('#changeLessonInfo').data("lesson")
-                // $('#lesson_id').val(info)
-                // console.log(info)
+         
             }
 
 
@@ -588,11 +586,11 @@
                         
                         $("#lesson-topic-"+lesson_index).html(lesson_topic)
                     }
-                    else console.log("errore errorino")
+                    else console.log("errore")
 
                 },
                 error : function(data) {
-                    console.log(data)
+                   
                 }
             })
         });
@@ -626,8 +624,6 @@
         $('.btn_to_delete_lesson').on('click', function () {
             let info = $(this).parent().data("lesson");
             $("#exampleModal").data("lesson", info);
-            // let doc = document.getElementById("lesson-topic-0").innerHTML
-            //console.log(doc.replaceAll("&lt;", "<").replaceAll('&gt;', '>'))
         });
         
         
@@ -651,8 +647,7 @@
                     },
 
                     error : function(data) {
-                        console.log(data['status'])
-                        console.log('non hai i permessi adatti');
+                        
                     }
 
                 });

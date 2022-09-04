@@ -766,7 +766,7 @@ def send_feedback(form, course_id):
         session.query(StudentCourse).filter(StudentCourse.CourseID == course_id.upper(), StudentCourse.StudentID == current_user.get_id()).update({StudentCourse.HasSentFeedback : not_(StudentCourse.HasSentFeedback)})
         session.commit()
     except Exception as e:
-    
+        print(e)
         session.rollback()
 
 """

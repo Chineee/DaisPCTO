@@ -215,7 +215,8 @@ La pagina qr_scanner ha due versioni:
 def qreader():
     is_reader_qr = exists_role_user(current_user.get_id(), "QrReader")
 
-    return render_template("qr_scanner.html", is_reader = is_reader_qr, 
+    return render_template("qr_scanner.html", 
+                                          is_reader = is_reader_qr, 
                                           user=current_user, 
                                           is_professor=False if not current_user.is_authenticated else current_user.hasRole("Professor"),
                                           roles = get_users_role(current_user.get_id()))

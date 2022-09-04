@@ -131,8 +131,7 @@ def register_professor():
         result = add_user(new_professor, form, is_student=False)
         if result == 'UniqueError':
             form.email.errors.append("Email già esistente!")
-        elif result == True:
-           
+        elif result == True:     
             flash("Il professore di riferimento ha ricevuto una mail di conferma contenente la password.")
             return redirect(f'/send_email?obj=Registrazione%20a%20DaisPCTO%21&recipient={form.email.data}&password={password}')
 

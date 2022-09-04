@@ -197,7 +197,7 @@ def create_app():
         True : Nessun cambiamento.
 
         NB che questi sono controlli solo per la parte front-end e non backend. I controlli "veri" per verificare se uno studente può o meno prenotarsi ad una lezione
-        vengono effettuati tramite trigger di postgresql.
+        vengono effettuati tramite trigger di postgresql una volta che l'utente corrente ha fatto la richiesta.
         '''
     
         for booked in number_reservation_for_each_lesson:

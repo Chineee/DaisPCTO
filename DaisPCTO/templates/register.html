@@ -254,7 +254,6 @@
             url : '/action/get/province?name='+nome,
             success : function (data){
                 if (data["success"]) {
-                    console.log(data["result"])
                     for (let i = 0; i < data["result"].length; i++) {
                             $('#list-group-province').append("<li class='list-group-item list-group-item-action' onclick='set_student_city(" 
                             + '"' + data["result"][i]["nome"] + '", ' + '"' + data["result"][i]["sigla"] + '")' + "'"+ ">" 
@@ -294,11 +293,6 @@
         $('#school_name').val($('#'+id).text())
         $('#list-group-schools').empty()
         let a = $('#school_id').val(id)
-        console.log($('#school_id').val())
-
-        
-        // $('#school_id').val(id)
-        // console.log($('#school_id').val())
     }
 
     function set_student_city(name, sig) {

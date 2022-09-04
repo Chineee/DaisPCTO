@@ -86,7 +86,7 @@ def add():
     if form.validate_on_submit():
         if get_course_by_id(form.course_id.data) is None:
             add_course(form)
-            return redirect(url_for("home"))
+            return redirect(url_for("courses_blueprint.course", coursePage=form.course_id.data))
         else:
             form.course_id.errors.append("Corso già esistente")
        
