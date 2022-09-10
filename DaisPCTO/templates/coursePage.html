@@ -43,7 +43,7 @@
         <h5>
             Docenti 
             <!-- Button trigger modal -->
-            {% if "Professor" in roles %}
+            {% if "Professor" in roles and can_modify %}
             <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
                 Aggiungi collaboratori
             </button>

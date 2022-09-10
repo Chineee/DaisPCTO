@@ -43,8 +43,8 @@ class RegisterForm(FlaskForm):
 
     def validate_password(self, password):
 
-        if not self.check_password_length(password.data) or self.check_password_caps(password.data) or self.check_password_special(password.data) or\
-        self.check_password_number(password.data):
+        if not self.check_password_length(password.data) or not self.check_password_caps(password.data) or not self.check_password_special(password.data) or\
+        not self.check_password_number(password.data):
          raise ValidationError("Inserisci una password valida!")
 
     def validate_phone(self, phone):
@@ -95,7 +95,6 @@ def role_required(role_name):
             return f(*args, **kwargs)
         return decorated_function
     return decorator
-
 
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
