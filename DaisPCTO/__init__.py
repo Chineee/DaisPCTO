@@ -18,7 +18,7 @@ def create_app():
     app.config['SECRET_KEY'] = "mysecretkey"
     app.config['MAIL_SERVER']='smtp.gmail.com'
     app.config['MAIL_USERNAME'] = "daispcto@gmail.com"
-    app.config['MAIL_PASSWORD'] = "dbnmksyoukdicynn"
+    app.config['MAIL_PASSWORD'] = "psw"
     app.config['MAIL_PORT'] = 465
     app.config['MAIL_USE_TLS'] = False
     app.config['MAIL_USE_SSL'] = True
